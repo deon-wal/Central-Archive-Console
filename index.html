@@ -2,211 +2,197 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BUREAU // CENTRAL_ARCHIVE</title>
+    <title>THE BUREAU // SIC MUNDUS ARCHIVE</title>
     <style>
         :root {
-            --bg: #010409;
-            --accent: #00ffd5;
-            --danger: #ff3e3e;
-            --panel: rgba(10, 20, 35, 0.8);
-            --border: rgba(0, 255, 213, 0.2);
+            --1953: #eab308; /* Dark Yellow */
+            --1986: #22ff66; /* CRT Green */
+            --accent: var(--1986);
+            --bg: #0d0c0a;
+            --rust: #7c2d12;
+            --panel: rgba(20, 20, 18, 0.95);
         }
 
         * { cursor: crosshair; box-sizing: border-box; }
         body {
-            background-color: var(--bg);
-            color: #c4d6eb;
+            background: var(--bg);
+            color: #d1d5db;
             font-family: "Courier New", monospace;
             margin: 0;
             overflow: hidden;
             display: flex;
-            flex-direction: column;
             height: 100vh;
         }
 
-        /* Scanline & Grid Effect */
-        body::after {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 100;
+        /* --- THE STRING THEORY CANVAS --- */
+        #connections {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.3; pointer-events: none;
         }
 
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.4; }
-
-        header {
-            padding: 20px 40px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--border);
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
-        }
-
-        .branding h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--accent); }
-        .branding span { font-size: 0.6rem; opacity: 0.5; }
-
-        main {
-            display: grid;
-            grid-template-columns: 300px 1fr 300px;
-            gap: 20px;
-            padding: 20px;
+        /* --- GAUDÍ SKELETAL FRAME --- */
+        .console-frame {
+            position: relative;
+            z-index: 10;
             flex: 1;
+            margin: 20px;
+            background: var(--panel);
+            border: 12px solid #1a1c1d;
+            border-radius: 40px 150px 40px 100px; /* Bone-like curves */
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            box-shadow: 20px 20px 60px #000;
             overflow: hidden;
         }
 
-        .ui-box {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            display: flex; flex-direction: column;
-            position: relative;
+        /* --- LEFT NAVIGATION: THE FILING CABINET --- */
+        .sidebar {
+            background: rgba(0,0,0,0.3);
+            border-right: 2px solid var(--rust);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .ui-box-header {
-            padding: 8px 12px;
-            background: rgba(0, 255, 213, 0.1);
-            font-size: 0.7rem;
-            font-weight: bold;
-            border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between;
+        .era-selector {
+            margin-bottom: 40px;
+            border: 1px solid var(--accent);
+            padding: 10px;
         }
 
-        /* Project Grid */
-        #project-matrix {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            padding: 20px;
+        .era-btn {
+            background: transparent; border: none; color: var(--accent);
+            width: 100%; text-align: left; padding: 10px;
+            font-size: 0.8rem; opacity: 0.5; transition: 0.3s;
+        }
+
+        .era-btn.active { opacity: 1; font-weight: bold; background: rgba(255,255,255,0.05); }
+
+        /* --- PROJECT GRID --- */
+        .main-view {
+            padding: 40px;
             overflow-y: auto;
+            position: relative;
         }
 
         .project-card {
-            border: 1px solid var(--border);
-            padding: 20px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 0 40px 0 0;
+            transition: 0.4s;
             text-decoration: none;
             color: inherit;
-            transition: 0.3s;
-            background: rgba(255,255,255,0.02);
-            position: relative;
+            display: block;
         }
 
         .project-card:hover {
             border-color: var(--accent);
-            background: rgba(0, 255, 213, 0.05);
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(0, 255, 213, 0.1);
+            transform: translateX(10px);
+            background: rgba(255,255,255,0.05);
+            box-shadow: -10px 0 0 var(--accent);
         }
 
-        .project-card h3 { margin: 0 0 10px; font-size: 1rem; color: var(--accent); }
-        .project-card p { font-size: 0.75rem; line-height: 1.4; opacity: 0.7; margin: 0; }
-        .project-card .code { position: absolute; bottom: 5px; right: 10px; font-size: 0.6rem; opacity: 0.3; }
+        .project-card h3 { color: var(--accent); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .project-card p { font-size: 0.85rem; line-height: 1.6; opacity: 0.7; }
 
-        /* Live Feed Corner */
-        #live-feed {
-            position: fixed; bottom: 20px; right: 20px;
-            width: 320px; height: 180px;
-            font-size: 0.65rem; padding: 10px;
-            background: rgba(0,0,0,0.8);
-            border: 1px solid var(--border);
-            overflow: hidden;
-            color: var(--accent);
-            z-index: 50;
+        /* --- LIVE TELEMETRY (BRAZIL STYLE) --- */
+        .hud-corner {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 250px; background: #000; border: 1px solid var(--rust);
+            padding: 10px; font-size: 0.6rem; color: var(--accent);
         }
 
-        #feed-content div { margin-bottom: 4px; border-left: 2px solid var(--accent); padding-left: 5px; animation: slideIn 0.2s ease-out; }
+        .glitch { animation: glitch 1s infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 1px); opacity: 0.8; }
+            40% { transform: translate(1px, -1px); }
+            100% { transform: translate(0); }
+        }
 
-        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
-
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); }
+        ::-webkit-scrollbar-thumb { background: var(--rust); }
     </style>
 </head>
 <body>
 
-<canvas id="bg-canvas"></canvas>
+<canvas id="connections"></canvas>
 
-<header>
-    <div class="branding">
-        <h1>BUREAU_ARCHIVE</h1>
-        <span>STATUS: SYSTEM_READY // CLEARANCE: ALPHA</span>
-    </div>
-    <div style="text-align: right">
-        <div id="clock" style="color: var(--accent); font-weight: bold;">00:00:00</div>
-        <div style="font-size: 0.6rem; opacity: 0.4;">HOBART_TAS_AU</div>
-    </div>
-</header>
-
-<main>
-    <div class="ui-box">
-        <div class="ui-box-header"><span>SUBJECT_DOSSIER</span> <span>ID: 8821</span></div>
-        <div style="padding: 20px; font-size: 0.8rem;">
-            <p><strong>NAME:</strong> [DEON WAL]</p>
-            <p><strong>ROLE:</strong> ARCHIVIST</p>
-            <p><strong>LAST_LOGIN:</strong> 2026-03-16</p>
-            <hr style="border: 0; border-top: 1px dashed var(--border); margin: 20px 0;">
-            <div style="font-size: 0.7rem; opacity: 0.6; line-height: 1.6;">
-                Specializing in the cross-section of live telemetry and experimental narrative protocols.
-            </div>
+<div class="console-frame">
+    <aside class="sidebar">
+        <div style="font-size: 0.6rem; opacity: 0.4; margin-bottom: 10px;">ID_VERIFY: 8821-TAS</div>
+        <h2 style="font-size: 1.2rem; color: var(--accent); letter-spacing: 4px;">THE BUREAU</h2>
+        
+        <div class="era-selector">
+            <div style="font-size: 0.5rem; margin-bottom: 5px; opacity: 0.5;">TEMPORAL_FOCUS</div>
+            <button class="era-btn" onclick="setEra('1953')">1953 // THE NUCLEAR DAWN</button>
+            <button class="era-btn active" onclick="setEra('1986')">1986 // THE CRT ERA</button>
+            <button class="era-btn" onclick="setEra('2019')">2019 // THE COLLAPSE</button>
         </div>
-    </div>
 
-    <div class="ui-box" style="grid-column: span 2;">
-        <div class="ui-box-header"><span>ACTIVE_OPERATIONS</span> <span>COUNT: <span id="proj-count">0</span></span></div>
-        <div id="project-matrix">
+        <div style="flex: 1; font-size: 0.7rem; line-height: 2; opacity: 0.6;">
+            [X] Everything is Connected.<br>
+            [X] The beginning is the end.<br>
+            [X] Tic-Toc. Tic-Toc.
+        </div>
+
+        <div id="clock" style="font-size: 1.1rem; border-top: 1px solid var(--rust); padding-top: 10px;">00:00:00</div>
+    </aside>
+
+    <main class="main-view">
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--rust); margin-bottom: 30px; padding-bottom: 10px;">
+            <span class="glitch">STATUS: TRANSMITTING...</span>
+            <span style="opacity: 0.4;">HOBART_STATION // TAS</span>
+        </div>
+
+        <div id="project-list">
             </div>
-    </div>
-</main>
 
-<div id="live-feed">
-    <div style="font-size: 0.6rem; border-bottom: 1px solid var(--border); margin-bottom: 8px; padding-bottom: 4px; display: flex; justify-content: space-between;">
-        <span>LIVE_TELEM_FEED</span>
-        <span style="color: var(--danger)">● LIVE</span>
-    </div>
-    <div id="feed-content"></div>
+        <div class="hud-corner">
+            <div style="border-bottom: 1px solid var(--accent); margin-bottom: 5px; padding-bottom: 3px;">SIGNAL_PACKETS</div>
+            <div id="signal-log"></div>
+        </div>
+    </main>
 </div>
 
 <script>
-    // 1. ADD NEW PROJECTS HERE
     const projects = [
-        {
-            title: "Substrate Protocol",
-            desc: "Experimental deep-layer data architecture and visualization.",
-            url: "https://deon-wal.github.io/Substrate-Protocol/",
-            code: "OP_SUB_01"
-        },
-        {
-            title: "Department of Unfinished Events",
-            desc: "The central hub for archiving the inexplicable and the incomplete.",
-            url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/",
-            code: "OP_DUE_04"
-        },
-        {
-            title: "Anomaly Observatory",
-            desc: "Real-time global monitor for seismic and solar deviations.",
-            url: "https://deon-wal.github.io/Anomaly-Observatory/",
-            code: "OP_OBS_05"
-        }
+        { name: "Substrate Protocol", desc: "A recursive architecture for visual telemetry. Deep-layer data mapping.", url: "https://deon-wal.github.io/Substrate-Protocol/" },
+        { name: "Department of Unfinished Events", name_short: "D.U.E.", desc: "The central repository for chronologically displaced artifacts and records.", url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/" },
+        { name: "Anomaly Observatory", desc: "Live monitoring of seismic and solar collapse. Everything is connected.", url: "https://deon-wal.github.io/Anomaly-Observatory/" }
     ];
 
-    // Build the grid
-    const matrix = document.getElementById('project-matrix');
-    document.getElementById('proj-count').innerText = projects.length;
-    
+    // Populate Projects
+    const list = document.getElementById('project-list');
     projects.forEach(p => {
-        const card = document.createElement('a');
-        card.className = 'project-card';
-        card.href = p.url;
-        card.target = "_blank";
-        card.innerHTML = `
-            <span class="code">${p.code}</span>
-            <h3>${p.title}</h3>
-            <p>${p.desc}</p>
+        list.innerHTML += `
+            <a href="${p.url}" target="_blank" class="project-card">
+                <h3>${p.name_short || p.name}</h3>
+                <p>${p.desc}</p>
+                <div style="margin-top: 10px; font-size: 0.6rem; opacity: 0.4;">ACCESS_LEVEL: ALPHA-9</div>
+            </a>
         `;
-        matrix.appendChild(card);
     });
 
-    // 2. Background Animation (Vector Grid)
-    const canvas = document.getElementById('bg-canvas');
+    // Era Switcher Logic
+    function setEra(year) {
+        const root = document.documentElement;
+        document.querySelectorAll('.era-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if(year === '1953') {
+            root.style.setProperty('--accent', 'var(--1953)');
+        } else if(year === '1986') {
+            root.style.setProperty('--accent', 'var(--1986)');
+        } else {
+            root.style.setProperty('--accent', '#ffffff');
+        }
+    }
+
+    // Canvas "String Theory" Background
+    const canvas = document.getElementById('connections');
     const ctx = canvas.getContext('2d');
     let width, height;
 
@@ -214,55 +200,37 @@
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
     }
-
     window.addEventListener('resize', resize);
     resize();
 
     function draw() {
         ctx.clearRect(0, 0, width, height);
-        ctx.strokeStyle = 'rgba(0, 255, 213, 0.05)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+        ctx.lineWidth = 0.5;
 
-        const time = Date.now() * 0.001;
-        const step = 40;
-
-        for (let x = 0; x < width; x += step) {
+        const time = Date.now() * 0.0005;
+        for(let i=0; i<8; i++) {
             ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x + Math.sin(time + x) * 10, height);
+            ctx.moveTo(0, height * Math.sin(time + i));
+            ctx.bezierCurveTo(width/3, height/i, width/1.5, height * Math.cos(time), width, height/2);
             ctx.stroke();
         }
         requestAnimationFrame(draw);
     }
     draw();
 
-    // 3. Live Feed Simulation
-    const feed = document.getElementById('feed-content');
-    const messages = [
-        "Packet received from Sector 7",
-        "DUE_DB: Archiving event fragment...",
-        "Anomaly detected: 4.2 Magnitude",
-        "Syncing with Substrate Protocol...",
-        "Encryption handshake verified.",
-        "Buffer overflow in Log_042",
-        "Solar flux normal (SSN 124)",
-        "New operation node established."
-    ];
-
-    function updateFeed() {
-        const div = document.createElement('div');
-        const msg = messages[Math.floor(Math.random() * messages.length)];
-        const time = new Date().toLocaleTimeString().split(' ')[0];
-        div.innerHTML = `[${time}] ${msg}`;
-        feed.prepend(div);
-        if (feed.children.length > 8) feed.removeChild(feed.lastChild);
-    }
-    setInterval(updateFeed, 2500);
-
-    // 4. Clock
+    // Signal Log
+    const log = document.getElementById('signal-log');
+    const msgs = ["PNEUMATIC_TUBE_READY", "WINDEN_CAVE_SYNC", "MAGNITUDE_4.2", "SIC_MUNDUS_EST", "LOG_FILE_042_OPEN"];
     setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
+        const d = document.createElement('div');
+        d.innerText = `> ${msgs[Math.floor(Math.random()*msgs.length)]}`;
+        log.prepend(d);
+        if(log.children.length > 4) log.removeChild(log.lastChild);
+    }, 3000);
+
+    // Clock
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 </script>
 
 </body>
