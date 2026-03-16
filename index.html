@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUREAU // CENTRAL_ARCHIVE</title>
+    <style>
+        :root {
+            --bg: #010409;
+            --accent: #00ffd5;
+            --danger: #ff3e3e;
+            --panel: rgba(10, 20, 35, 0.8);
+            --border: rgba(0, 255, 213, 0.2);
+        }
+
+        * { cursor: crosshair; box-sizing: border-box; }
+        body {
+            background-color: var(--bg);
+            color: #c4d6eb;
+            font-family: "Courier New", monospace;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Scanline & Grid Effect */
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 100;
+        }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.4; }
+
+        header {
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+        }
+
+        .branding h1 { margin: 0; font-size: 1.2rem; letter-spacing: 4px; color: var(--accent); }
+        .branding span { font-size: 0.6rem; opacity: 0.5; }
+
+        main {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            padding: 20px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .ui-box {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: relative;
+        }
+
+        .ui-box-header {
+            padding: 8px 12px;
+            background: rgba(0, 255, 213, 0.1);
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between;
+        }
+
+        /* Project Grid */
+        #project-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .project-card {
+            border: 1px solid var(--border);
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: 0.3s;
+            background: rgba(255,255,255,0.02);
+            position: relative;
+        }
+
+        .project-card:hover {
+            border-color: var(--accent);
+            background: rgba(0, 255, 213, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 255, 213, 0.1);
+        }
+
+        .project-card h3 { margin: 0 0 10px; font-size: 1rem; color: var(--accent); }
+        .project-card p { font-size: 0.75rem; line-height: 1.4; opacity: 0.7; margin: 0; }
+        .project-card .code { position: absolute; bottom: 5px; right: 10px; font-size: 0.6rem; opacity: 0.3; }
+
+        /* Live Feed Corner */
+        #live-feed {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 320px; height: 180px;
+            font-size: 0.65rem; padding: 10px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            color: var(--accent);
+            z-index: 50;
+        }
+
+        #feed-content div { margin-bottom: 4px; border-left: 2px solid var(--accent); padding-left: 5px; animation: slideIn 0.2s ease-out; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
+    </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<header>
+    <div class="branding">
+        <h1>BUREAU_ARCHIVE</h1>
+        <span>STATUS: SYSTEM_READY // CLEARANCE: ALPHA</span>
+    </div>
+    <div style="text-align: right">
+        <div id="clock" style="color: var(--accent); font-weight: bold;">00:00:00</div>
+        <div style="font-size: 0.6rem; opacity: 0.4;">HOBART_TAS_AU</div>
+    </div>
+</header>
+
+<main>
+    <div class="ui-box">
+        <div class="ui-box-header"><span>SUBJECT_DOSSIER</span> <span>ID: 8821</span></div>
+        <div style="padding: 20px; font-size: 0.8rem;">
+            <p><strong>NAME:</strong> [DEON WAL]</p>
+            <p><strong>ROLE:</strong> ARCHIVIST</p>
+            <p><strong>LAST_LOGIN:</strong> 2026-03-16</p>
+            <hr style="border: 0; border-top: 1px dashed var(--border); margin: 20px 0;">
+            <div style="font-size: 0.7rem; opacity: 0.6; line-height: 1.6;">
+                Specializing in the cross-section of live telemetry and experimental narrative protocols.
+            </div>
+        </div>
+    </div>
+
+    <div class="ui-box" style="grid-column: span 2;">
+        <div class="ui-box-header"><span>ACTIVE_OPERATIONS</span> <span>COUNT: <span id="proj-count">0</span></span></div>
+        <div id="project-matrix">
+            </div>
+    </div>
+</main>
+
+<div id="live-feed">
+    <div style="font-size: 0.6rem; border-bottom: 1px solid var(--border); margin-bottom: 8px; padding-bottom: 4px; display: flex; justify-content: space-between;">
+        <span>LIVE_TELEM_FEED</span>
+        <span style="color: var(--danger)">● LIVE</span>
+    </div>
+    <div id="feed-content"></div>
+</div>
+
+<script>
+    // 1. ADD NEW PROJECTS HERE
+    const projects = [
+        {
+            title: "Substrate Protocol",
+            desc: "Experimental deep-layer data architecture and visualization.",
+            url: "https://deon-wal.github.io/Substrate-Protocol/",
+            code: "OP_SUB_01"
+        },
+        {
+            title: "Department of Unfinished Events",
+            desc: "The central hub for archiving the inexplicable and the incomplete.",
+            url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/",
+            code: "OP_DUE_04"
+        },
+        {
+            title: "Anomaly Observatory",
+            desc: "Real-time global monitor for seismic and solar deviations.",
+            url: "https://deon-wal.github.io/Anomaly-Observatory/",
+            code: "OP_OBS_05"
+        }
+    ];
+
+    // Build the grid
+    const matrix = document.getElementById('project-matrix');
+    document.getElementById('proj-count').innerText = projects.length;
+    
+    projects.forEach(p => {
+        const card = document.createElement('a');
+        card.className = 'project-card';
+        card.href = p.url;
+        card.target = "_blank";
+        card.innerHTML = `
+            <span class="code">${p.code}</span>
+            <h3>${p.title}</h3>
+            <p>${p.desc}</p>
+        `;
+        matrix.appendChild(card);
+    });
+
+    // 2. Background Animation (Vector Grid)
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.strokeStyle = 'rgba(0, 255, 213, 0.05)';
+        ctx.lineWidth = 1;
+
+        const time = Date.now() * 0.001;
+        const step = 40;
+
+        for (let x = 0; x < width; x += step) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x + Math.sin(time + x) * 10, height);
+            ctx.stroke();
+        }
+        requestAnimationFrame(draw);
+    }
+    draw();
+
+    // 3. Live Feed Simulation
+    const feed = document.getElementById('feed-content');
+    const messages = [
+        "Packet received from Sector 7",
+        "DUE_DB: Archiving event fragment...",
+        "Anomaly detected: 4.2 Magnitude",
+        "Syncing with Substrate Protocol...",
+        "Encryption handshake verified.",
+        "Buffer overflow in Log_042",
+        "Solar flux normal (SSN 124)",
+        "New operation node established."
+    ];
+
+    function updateFeed() {
+        const div = document.createElement('div');
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        const time = new Date().toLocaleTimeString().split(' ')[0];
+        div.innerHTML = `[${time}] ${msg}`;
+        feed.prepend(div);
+        if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+    }
+    setInterval(updateFeed, 2500);
+
+    // 4. Clock
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+</script>
+
+</body>
+</html>
