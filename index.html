@@ -1,237 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>THE BUREAU // SIC MUNDUS ARCHIVE</title>
-    <style>
-        :root {
-            --1953: #eab308; /* Dark Yellow */
-            --1986: #22ff66; /* CRT Green */
-            --accent: var(--1986);
-            --bg: #0d0c0a;
-            --rust: #7c2d12;
-            --panel: rgba(20, 20, 18, 0.95);
-        }
+<meta charset="UTF-8">
+<title>THE BUREAU // SIC MUNDUS ARCHIVE</title>
+<style>
+:root {
+    --1953: #d8b45f;
+    --1986: #22ff66;
+    --2019: #ff4488;
+    --accent: var(--1986);
+    --bg: #0c0b08;
+    --rust: #6b2a10;
+    --panel: rgba(15,15,12,0.95);
+}
 
-        * { cursor: crosshair; box-sizing: border-box; }
-        body {
-            background: var(--bg);
-            color: #d1d5db;
-            font-family: "Courier New", monospace;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            height: 100vh;
-        }
+/* --- GLOBAL --- */
+* { box-sizing:border-box; cursor: crosshair; }
+body { margin:0; font-family:"Courier New", monospace; display:flex; height:100vh; overflow:hidden; background:var(--bg); color:#d1c9b1; }
 
-        /* --- THE STRING THEORY CANVAS --- */
-        #connections {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0; opacity: 0.3; pointer-events: none;
-        }
+/* --- CANVAS + SCANLINES --- */
+#connections { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:0.25; mix-blend-mode:screen; }
+#scanlines {
+    position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03),
+        rgba(255,255,255,0.03) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    z-index:5;
+}
 
-        /* --- GAUDÍ SKELETAL FRAME --- */
-        .console-frame {
-            position: relative;
-            z-index: 10;
-            flex: 1;
-            margin: 20px;
-            background: var(--panel);
-            border: 12px solid #1a1c1d;
-            border-radius: 40px 150px 40px 100px; /* Bone-like curves */
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            box-shadow: 20px 20px 60px #000;
-            overflow: hidden;
-        }
+/* --- CONSOLE FRAME --- */
+.console-frame {
+    position:relative; z-index:10; flex:1; margin:20px; background:var(--panel);
+    border:12px solid #1a1c1d; border-radius:50px 100px 50px 100px;
+    display:grid; grid-template-columns:350px 1fr; box-shadow:20px 20px 60px #000; overflow:hidden;
+}
 
-        /* --- LEFT NAVIGATION: THE FILING CABINET --- */
-        .sidebar {
-            background: rgba(0,0,0,0.3);
-            border-right: 2px solid var(--rust);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-        }
+/* --- SIDEBAR --- */
+.sidebar { background:rgba(0,0,0,0.3); border-right:2px solid var(--rust); padding:30px; display:flex; flex-direction:column; }
+.era-selector { margin-bottom:40px; border:1px solid var(--accent); padding:10px; }
+.era-btn { background:transparent; border:none; color:var(--accent); width:100%; text-align:left; padding:10px; font-size:0.8rem; opacity:0.5; transition:0.3s; }
+.era-btn.active { opacity:1; font-weight:bold; background:rgba(255,255,255,0.05); }
 
-        .era-selector {
-            margin-bottom: 40px;
-            border: 1px solid var(--accent);
-            padding: 10px;
-        }
+/* --- MAIN VIEW --- */
+.main-view { padding:40px; overflow-y:auto; position:relative; filter:contrast(1.1) brightness(0.95); }
+.project-card {
+    background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:25px; margin-bottom:20px;
+    border-radius:0 40px 0 0; text-decoration:none; color:inherit; display:block;
+    transition:0.3s transform, 0.3s box-shadow, 0.3s border-color, 0.3s filter;
+}
+.project-card:hover {
+    border-color:var(--accent); transform:translateX(10px) rotateZ(0.2deg); 
+    box-shadow:-8px 0 15px rgba(255,255,0,0.4); filter:brightness(1.15);
+}
+.project-card h3 { color:var(--accent); margin:0 0 10px; text-transform:uppercase; letter-spacing:2px; }
+.project-card p { font-size:0.85rem; line-height:1.6; opacity:0.7; }
 
-        .era-btn {
-            background: transparent; border: none; color: var(--accent);
-            width: 100%; text-align: left; padding: 10px;
-            font-size: 0.8rem; opacity: 0.5; transition: 0.3s;
-        }
+/* --- HUD --- */
+.hud-corner { position:absolute; bottom:20px; right:20px; width:250px; background:#000; border:1px solid var(--rust); padding:10px; font-size:0.6rem; color:var(--accent); }
+.hud-corner div { transition:0.2s all ease; }
+.hud-corner .flash { transform:scale(1.05); color:#fff; opacity:1; }
 
-        .era-btn.active { opacity: 1; font-weight: bold; background: rgba(255,255,255,0.05); }
+/* --- GLITCH --- */
+.glitch { animation:glitch 1s infinite; }
+@keyframes glitch { 0% {transform:translate(0);} 20%{transform:translate(-1px,1px); opacity:0.7;} 40%{transform:translate(1px,-1px);} 60%{transform:translate(-1px,-1px);} 80%{transform:translate(1px,1px);} 100%{transform:translate(0);} }
 
-        /* --- PROJECT GRID --- */
-        .main-view {
-            padding: 40px;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .project-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 0 40px 0 0;
-            transition: 0.4s;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-
-        .project-card:hover {
-            border-color: var(--accent);
-            transform: translateX(10px);
-            background: rgba(255,255,255,0.05);
-            box-shadow: -10px 0 0 var(--accent);
-        }
-
-        .project-card h3 { color: var(--accent); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 2px; }
-        .project-card p { font-size: 0.85rem; line-height: 1.6; opacity: 0.7; }
-
-        /* --- LIVE TELEMETRY (BRAZIL STYLE) --- */
-        .hud-corner {
-            position: absolute; bottom: 20px; right: 20px;
-            width: 250px; background: #000; border: 1px solid var(--rust);
-            padding: 10px; font-size: 0.6rem; color: var(--accent);
-        }
-
-        .glitch { animation: glitch 1s infinite; }
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-1px, 1px); opacity: 0.8; }
-            40% { transform: translate(1px, -1px); }
-            100% { transform: translate(0); }
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--rust); }
-    </style>
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-thumb { background:var(--rust); }
+</style>
 </head>
 <body>
 
 <canvas id="connections"></canvas>
+<div id="scanlines"></div>
 
 <div class="console-frame">
     <aside class="sidebar">
-        <div style="font-size: 0.6rem; opacity: 0.4; margin-bottom: 10px;">ID_VERIFY: 8821-TAS</div>
-        <h2 style="font-size: 1.2rem; color: var(--accent); letter-spacing: 4px;">THE BUREAU</h2>
-        
+        <div style="font-size:0.6rem; opacity:0.4; margin-bottom:10px;">ID_VERIFY: 8821-TAS</div>
+        <h2 style="font-size:1.2rem; color:var(--accent); letter-spacing:4px;">THE BUREAU</h2>
         <div class="era-selector">
-            <div style="font-size: 0.5rem; margin-bottom: 5px; opacity: 0.5;">TEMPORAL_FOCUS</div>
-            <button class="era-btn" onclick="setEra('1953')">1953 // THE NUCLEAR DAWN</button>
-            <button class="era-btn active" onclick="setEra('1986')">1986 // THE CRT ERA</button>
+            <div style="font-size:0.5rem; margin-bottom:5px; opacity:0.5;">TEMPORAL_FOCUS</div>
+            <button class="era-btn active" onclick="setEra('1953')">1953 // THE NUCLEAR DAWN</button>
+            <button class="era-btn" onclick="setEra('1986')">1986 // THE CRT ERA</button>
             <button class="era-btn" onclick="setEra('2019')">2019 // THE COLLAPSE</button>
         </div>
-
-        <div style="flex: 1; font-size: 0.7rem; line-height: 2; opacity: 0.6;">
-            [X] Everything is Connected.<br>
-            [X] The beginning is the end.<br>
-            [X] Tic-Toc. Tic-Toc.
+        <div style="flex:1; font-size:0.7rem; line-height:2; opacity:0.6;">
+            [X] Everything is Connected.<br>[X] The beginning is the end.<br>[X] Tic-Toc. Tic-Toc.
         </div>
-
-        <div id="clock" style="font-size: 1.1rem; border-top: 1px solid var(--rust); padding-top: 10px;">00:00:00</div>
+        <div id="clock" style="font-size:1.1rem; border-top:1px solid var(--rust); padding-top:10px;">00:00:00</div>
     </aside>
 
     <main class="main-view">
-        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--rust); margin-bottom: 30px; padding-bottom: 10px;">
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--rust); margin-bottom:30px; padding-bottom:10px;">
             <span class="glitch">STATUS: TRANSMITTING...</span>
-            <span style="opacity: 0.4;">HOBART_STATION // TAS</span>
+            <span style="opacity:0.4;">HOBART_STATION // TAS</span>
         </div>
-
-        <div id="project-list">
-            </div>
-
+        <div id="project-list"></div>
         <div class="hud-corner">
-            <div style="border-bottom: 1px solid var(--accent); margin-bottom: 5px; padding-bottom: 3px;">SIGNAL_PACKETS</div>
+            <div style="border-bottom:1px solid var(--accent); margin-bottom:5px; padding-bottom:3px;">SIGNAL_PACKETS</div>
             <div id="signal-log"></div>
         </div>
     </main>
 </div>
 
 <script>
-    const projects = [
-        { name: "Substrate Protocol", desc: "A recursive architecture for visual telemetry. Deep-layer data mapping.", url: "https://deon-wal.github.io/Substrate-Protocol/" },
-        { name: "Department of Unfinished Events", name_short: "D.U.E.", desc: "The central repository for chronologically displaced artifacts and records.", url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/" },
-        { name: "Anomaly Observatory", desc: "Live monitoring of seismic and solar collapse. Everything is connected.", url: "https://deon-wal.github.io/Anomaly-Observatory/" }
-    ];
+// --- PROJECTS ---
+const projects = [
+    {name:"Substrate Protocol", desc:"A recursive architecture for visual telemetry. Deep-layer data mapping.", url:"https://deon-wal.github.io/Substrate-Protocol/"},
+    {name:"Department of Unfinished Events", name_short:"D.U.E.", desc:"The central repository for chronologically displaced artifacts and records.", url:"https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/"},
+    {name:"Anomaly Observatory", desc:"Live monitoring of seismic and solar collapse. Everything is connected.", url:"https://deon-wal.github.io/Anomaly-Observatory/"},
+    {name:"Temporal Distortion Mapper", desc:"Maps time anomalies in real-time. Watch reality bend.", url:"#"},
+    {name:"Signal Interceptor X", desc:"Decrypts cosmic transmissions before they hit public logs.", url:"#"}
+];
+const list=document.getElementById('project-list');
+projects.forEach(p=>{
+    list.innerHTML+=`<a href="${p.url}" target="_blank" class="project-card">
+        <h3>${p.name_short||p.name}</h3><p>${p.desc}</p>
+        <div style="margin-top:10px;font-size:0.6rem;opacity:0.4;">ACCESS_LEVEL: ALPHA-9</div></a>`;
+});
 
-    // Populate Projects
-    const list = document.getElementById('project-list');
-    projects.forEach(p => {
-        list.innerHTML += `
-            <a href="${p.url}" target="_blank" class="project-card">
-                <h3>${p.name_short || p.name}</h3>
-                <p>${p.desc}</p>
-                <div style="margin-top: 10px; font-size: 0.6rem; opacity: 0.4;">ACCESS_LEVEL: ALPHA-9</div>
-            </a>
-        `;
+// --- ERA SWITCHER ---
+function setEra(year){
+    const root=document.documentElement;
+    document.querySelectorAll('.era-btn').forEach(btn=>btn.classList.remove('active'));
+    event.target.classList.add('active');
+    if(year==='1953'){ root.style.setProperty('--accent', 'var(--1953)'); currentEra='1953'; }
+    else if(year==='1986'){ root.style.setProperty('--accent','var(--1986)'); currentEra='1986'; }
+    else{ root.style.setProperty('--accent','var(--2019)'); currentEra='2019'; }
+}
+let currentEra='1986';
+
+// --- CLOCK ---
+setInterval(()=>{document.getElementById('clock').innerText=new Date().toLocaleTimeString();},1000);
+
+// --- SIGNAL LOG ---
+const log=document.getElementById('signal-log');
+const msgs=["PNEUMATIC_TUBE_READY","WINDEN_CAVE_SYNC","MAGNITUDE_4.2","SIC_MUNDUS_EST","LOG_FILE_042_OPEN","ANOMALY_DETECTED","QUANTUM_FEEDBACK"];
+setInterval(()=>{
+    const d=document.createElement('div'); d.innerText=`> ${msgs[Math.floor(Math.random()*msgs.length)]}`;
+    d.classList.add('flash'); log.prepend(d); if(log.children.length>5) log.removeChild(log.lastChild);
+    setTimeout(()=>d.classList.remove('flash'),200);
+},1500);
+
+// --- PARTICLE NETWORK + ERA ANIMATION ---
+const canvas=document.getElementById('connections'); const ctx=canvas.getContext('2d'); let w,h;
+function resize(){ w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; }
+window.addEventListener('resize',resize); resize();
+
+const nodes=Array.from({length:50},()=>({x:Math.random()*w, y:Math.random()*h, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3}));
+
+function draw(){
+    ctx.clearRect(0,0,w,h);
+
+    // ERA SPECIFIC EFFECTS
+    if(currentEra==='1953'){ ctx.shadowBlur=15; ctx.shadowColor='rgba(216,180,95,0.3)'; }
+    else if(currentEra==='1986'){ ctx.shadowBlur=5; ctx.shadowColor='rgba(34,255,102,0.5)'; }
+    else{ ctx.shadowBlur=20; ctx.shadowColor='rgba(255,68,136,0.5)'; }
+
+    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=0.3;
+
+    nodes.forEach(n=>{
+        // Slow jitter for 1953, CRT flicker for 1986, collapse shake for 2019
+        if(currentEra==='1953'){ n.vx+=(Math.random()-0.5)*0.02; n.vy+=(Math.random()-0.5)*0.02; }
+        else if(currentEra==='1986'){ n.vx+=(Math.random()-0.5)*0.05; n.vy+=(Math.random()-0.5)*0.05; }
+        else{ n.vx+=(Math.random()-0.5)*0.1; n.vy+=(Math.random()-0.5)*0.1; }
+        n.x+=n.vx; n.y+=n.vy;
+        if(n.x<0||n.x>w) n.vx*=-1; if(n.y<0||n.y>h) n.vy*=-1;
     });
 
-    // Era Switcher Logic
-    function setEra(year) {
-        const root = document.documentElement;
-        document.querySelectorAll('.era-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-
-        if(year === '1953') {
-            root.style.setProperty('--accent', 'var(--1953)');
-        } else if(year === '1986') {
-            root.style.setProperty('--accent', 'var(--1986)');
-        } else {
-            root.style.setProperty('--accent', '#ffffff');
+    for(let i=0;i<nodes.length;i++){
+        for(let j=i+1;j<nodes.length;j++){
+            const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+            const dist=Math.sqrt(dx*dx+dy*dy);
+            if(dist<150){ ctx.globalAlpha=(150-dist)/150*0.2; ctx.beginPath(); ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.stroke(); }
         }
     }
 
-    // Canvas "String Theory" Background
-    const canvas = document.getElementById('connections');
-    const ctx = canvas.getContext('2d');
-    let width, height;
-
-    function resize() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    function draw() {
-        ctx.clearRect(0, 0, width, height);
-        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
-        ctx.lineWidth = 0.5;
-
-        const time = Date.now() * 0.0005;
-        for(let i=0; i<8; i++) {
-            ctx.beginPath();
-            ctx.moveTo(0, height * Math.sin(time + i));
-            ctx.bezierCurveTo(width/3, height/i, width/1.5, height * Math.cos(time), width, height/2);
-            ctx.stroke();
-        }
-        requestAnimationFrame(draw);
-    }
-    draw();
-
-    // Signal Log
-    const log = document.getElementById('signal-log');
-    const msgs = ["PNEUMATIC_TUBE_READY", "WINDEN_CAVE_SYNC", "MAGNITUDE_4.2", "SIC_MUNDUS_EST", "LOG_FILE_042_OPEN"];
-    setInterval(() => {
-        const d = document.createElement('div');
-        d.innerText = `> ${msgs[Math.floor(Math.random()*msgs.length)]}`;
-        log.prepend(d);
-        if(log.children.length > 4) log.removeChild(log.lastChild);
-    }, 3000);
-
-    // Clock
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+    requestAnimationFrame(draw);
+}
+draw();
 </script>
-
 </body>
 </html>
