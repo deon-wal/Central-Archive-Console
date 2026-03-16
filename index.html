@@ -1,188 +1,444 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>THE BUREAU // SIC MUNDUS ARCHIVE</title>
+<meta charset="utf-8" />
+<title>THE BUREAU // SIC MUNDUS ARCHIVE — Winden 1953</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-:root {
-    --1953: #d8b45f;
-    --1986: #22ff66;
-    --2019: #ff4488;
-    --accent: var(--1986);
-    --bg: #0c0b08;
-    --rust: #6b2a10;
-    --panel: rgba(15,15,12,0.95);
+:root{
+  --accent:#bfa16a;    /* muted sepia */
+  --bg:#0d0c0a;
+  --panel:rgba(12,10,8,0.96);
+  --rust:#5c2e1a;
+  --muted:#bfb3a0;
+  --glass: rgba(255,255,255,0.03);
 }
 
-/* --- GLOBAL --- */
-* { box-sizing:border-box; cursor: crosshair; }
-body { margin:0; font-family:"Courier New", monospace; display:flex; height:100vh; overflow:hidden; background:var(--bg); color:#d1c9b1; }
+/* reset + global */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);font-family:"Courier New",monospace;color:var(--muted);cursor:crosshair}
+a{color:inherit;text-decoration:none}
 
-/* --- CANVAS + SCANLINES --- */
-#connections { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:0.25; mix-blend-mode:screen; }
-#scanlines {
-    position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none;
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.03),
-        rgba(255,255,255,0.03) 1px,
-        transparent 1px,
-        transparent 2px
-    );
-    z-index:5;
+/* film grain + overlays */
+#grain{
+  position:fixed;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(transparent 0 1px, rgba(255,255,255,0.02) 1px 2px);
+  mix-blend-mode:soft-light;opacity:0.18;z-index:30;
+}
+#flicker{position:fixed;inset:0;pointer-events:none;z-index:25;opacity:0.06;background:linear-gradient(transparent, rgba(0,0,0,0.05));animation:lampFlicker 6s infinite}
+@keyframes lampFlicker{
+  0%{opacity:.04} 5%{opacity:.18} 7%{opacity:.04} 20%{opacity:.08} 100%{opacity:.06}
 }
 
-/* --- CONSOLE FRAME --- */
+/* frame */
+.app {
+  display:flex;
+  height:100vh;
+  padding:20px;
+  gap:20px;
+}
 .console-frame {
-    position:relative; z-index:10; flex:1; margin:20px; background:var(--panel);
-    border:12px solid #1a1c1d; border-radius:50px 100px 50px 100px;
-    display:grid; grid-template-columns:350px 1fr; box-shadow:20px 20px 60px #000; overflow:hidden;
+  flex:1;
+  border-radius:48px 100px 48px 100px;
+  border:10px solid #111;
+  background:var(--panel);
+  display:grid;
+  grid-template-columns:350px 1fr;
+  overflow:hidden;
+  box-shadow: 0 22px 60px rgba(0,0,0,.9);
 }
 
-/* --- SIDEBAR --- */
-.sidebar { background:rgba(0,0,0,0.3); border-right:2px solid var(--rust); padding:30px; display:flex; flex-direction:column; }
-.era-selector { margin-bottom:40px; border:1px solid var(--accent); padding:10px; }
-.era-btn { background:transparent; border:none; color:var(--accent); width:100%; text-align:left; padding:10px; font-size:0.8rem; opacity:0.5; transition:0.3s; }
-.era-btn.active { opacity:1; font-weight:bold; background:rgba(255,255,255,0.05); }
+/* sidebar */
+.sidebar{padding:28px;border-right:2px solid var(--rust);display:flex;flex-direction:column;gap:16px}
+.logo{font-size:1.2rem;color:var(--accent);letter-spacing:4px}
+.id{font-size:.64rem;opacity:.45}
+.era-selector{border:1px solid rgba(255,255,255,0.04);padding:10px}
+.era-btn{display:block;background:transparent;border:0;color:var(--accent);text-align:left;padding:8px;font-size:.86rem;opacity:.7}
+.notes{flex:1;font-size:.78rem;line-height:1.9;opacity:.65}
 
-/* --- MAIN VIEW --- */
-.main-view { padding:40px; overflow-y:auto; position:relative; filter:contrast(1.1) brightness(0.95); }
-.project-card {
-    background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); padding:25px; margin-bottom:20px;
-    border-radius:0 40px 0 0; text-decoration:none; color:inherit; display:block;
-    transition:0.3s transform, 0.3s box-shadow, 0.3s border-color, 0.3s filter;
-}
-.project-card:hover {
-    border-color:var(--accent); transform:translateX(10px) rotateZ(0.2deg); 
-    box-shadow:-8px 0 15px rgba(255,255,0,0.4); filter:brightness(1.15);
-}
-.project-card h3 { color:var(--accent); margin:0 0 10px; text-transform:uppercase; letter-spacing:2px; }
-.project-card p { font-size:0.85rem; line-height:1.6; opacity:0.7; }
+/* main view */
+.main-view{position:relative;padding:34px;overflow:auto;filter:contrast(1.03) brightness(.9)}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.03);padding-bottom:12px}
+.status{color:var(--accent);font-weight:700;letter-spacing:1.2px}
+.station{opacity:.45;font-size:.86rem}
 
-/* --- HUD --- */
-.hud-corner { position:absolute; bottom:20px; right:20px; width:250px; background:#000; border:1px solid var(--rust); padding:10px; font-size:0.6rem; color:var(--accent); }
-.hud-corner div { transition:0.2s all ease; }
-.hud-corner .flash { transform:scale(1.05); color:#fff; opacity:1; }
+/* content grid (left = live + list, right = svc detail) */
+.content-grid{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start}
 
-/* --- GLITCH --- */
-.glitch { animation:glitch 1s infinite; }
-@keyframes glitch { 0% {transform:translate(0);} 20%{transform:translate(-1px,1px); opacity:0.7;} 40%{transform:translate(1px,-1px);} 60%{transform:translate(-1px,-1px);} 80%{transform:translate(1px,1px);} 100%{transform:translate(0);} }
+/* live feed panel */
+.live-panel{background:linear-gradient(180deg, rgba(0,0,0,0.22), rgba(0,0,0,0.12));border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:8px;display:flex;flex-direction:column;gap:8px}
+.feed-header{display:flex;justify-content:space-between;align-items:center}
+.live-ind{display:inline-flex;align-items:center;gap:8px}
+.live-dot{width:10px;height:10px;border-radius:50%;background:#9b2f2f;box-shadow:0 0 8px rgba(155,47,47,0.8)}
+.live-canvas{background:#020200;border:2px solid rgba(255,255,255,0.03);border-radius:6px;overflow:hidden;position:relative}
+.live-caption{font-size:.72rem;opacity:.7;padding-top:6px}
 
-/* --- SCROLLBAR --- */
-::-webkit-scrollbar { width:4px; }
-::-webkit-scrollbar-thumb { background:var(--rust); }
+/* project list */
+.project-list{margin-top:12px;display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto;padding-right:6px}
+.project-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);padding:14px;border-radius:10px;transition:transform .22s,box-shadow .22s;cursor:pointer}
+.project-card:hover{transform:translateX(6px);box-shadow:-8px 0 20px rgba(191,161,106,0.09)}
+.project-card h3{margin:0;color:var(--accent);font-size:.95rem;letter-spacing:1px}
+.project-card p{margin:6px 0 0;font-size:.82rem;opacity:.7}
+
+/* hud / signal */
+.hud-corner{position:absolute;right:38px;bottom:30px;width:280px;background:rgba(0,0,0,0.6);border:1px solid var(--rust);padding:10px;border-radius:6px;font-size:.64rem;color:var(--accent)}
+.signal-item{font-family:monospace;font-size:.74rem;opacity:.86;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.02)}
+.signal-item:last-child{border-bottom:0}
+
+/* svc detail column */
+.detail-panel{background:linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.06));border-radius:8px;padding:16px;border:1px solid rgba(255,255,255,0.03);min-height:420px}
+.detail-title{display:flex;justify-content:space-between;align-items:center}
+.detail-title h4{margin:0;color:var(--accent)}
+.meta{margin-top:10px;font-size:.75rem;opacity:.78}
+.svc-image{margin-top:12px;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);background:#0b0a08;padding:12px}
+.svc-image svg{display:block;width:100%;height:auto;max-height:240px;filter:sepia(.4) contrast(.9) saturate(.6)}
+
+/* modal for large svc */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;visibility:hidden;opacity:0;transition:opacity .2s}
+.modal.open{visibility:visible;opacity:1}
+.modal .card{background:var(--panel);padding:18px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);max-width:920px;width:100%}
+.modal .card .meta{color:var(--muted)}
+.close-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:6px 8px;border-radius:6px;color:var(--muted);cursor:pointer}
+
+/* clock */
+#clock{font-size:1rem;opacity:.86}
+
+/* small utility */
+.small{font-size:.74rem;opacity:.7}
 </style>
 </head>
 <body>
+  <div id="grain"></div>
+  <div id="flicker"></div>
 
-<canvas id="connections"></canvas>
-<div id="scanlines"></div>
+  <div class="app">
+    <div class="console-frame">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="id">ID_VERIFY: 8821-TAS</div>
+        <div class="logo">THE BUREAU</div>
 
-<div class="console-frame">
-    <aside class="sidebar">
-        <div style="font-size:0.6rem; opacity:0.4; margin-bottom:10px;">ID_VERIFY: 8821-TAS</div>
-        <h2 style="font-size:1.2rem; color:var(--accent); letter-spacing:4px;">THE BUREAU</h2>
         <div class="era-selector">
-            <div style="font-size:0.5rem; margin-bottom:5px; opacity:0.5;">TEMPORAL_FOCUS</div>
-            <button class="era-btn active" onclick="setEra('1953')">1953 // THE NUCLEAR DAWN</button>
-            <button class="era-btn" onclick="setEra('1986')">1986 // THE CRT ERA</button>
-            <button class="era-btn" onclick="setEra('2019')">2019 // THE COLLAPSE</button>
+          <div style="font-size:.7rem;opacity:.6">TEMPORAL_FOCUS</div>
+          <button class="era-btn active">1953 // Winden — Local Archive</button>
         </div>
-        <div style="flex:1; font-size:0.7rem; line-height:2; opacity:0.6;">
-            [X] Everything is Connected.<br>[X] The beginning is the end.<br>[X] Tic-Toc. Tic-Toc.
-        </div>
-        <div id="clock" style="font-size:1.1rem; border-top:1px solid var(--rust); padding-top:10px;">00:00:00</div>
-    </aside>
 
-    <main class="main-view">
-        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--rust); margin-bottom:30px; padding-bottom:10px;">
-            <span class="glitch">STATUS: TRANSMITTING...</span>
-            <span style="opacity:0.4;">HOBART_STATION // TAS</span>
+        <div class="notes">
+          [X] Everything is Connected.<br>
+          [X] The beginning is the end.<br>
+          [X] Tic-Toc. Tic-Toc.
         </div>
-        <div id="project-list"></div>
-        <div class="hud-corner">
-            <div style="border-bottom:1px solid var(--accent); margin-bottom:5px; padding-bottom:3px;">SIGNAL_PACKETS</div>
-            <div id="signal-log"></div>
+
+        <div id="clock">00:00:00</div>
+      </aside>
+
+      <!-- MAIN VIEW -->
+      <main class="main-view">
+        <div class="header">
+          <div class="status glitch">STATUS: TRANSMITTING...</div>
+          <div class="station small">HOBART_STATION // TAS</div>
         </div>
-    </main>
-</div>
+
+        <div class="content-grid">
+          <!-- LEFT: LIVE + PROJECTS -->
+          <div>
+            <!-- LIVE FEED -->
+            <section class="live-panel" aria-live="polite">
+              <div class="feed-header">
+                <div class="live-ind"><span class="live-dot"></span><strong class="small">LIVE: Winden — Fieldcam 03</strong></div>
+                <div id="live-timestamp" class="small" style="opacity:.7"></div>
+              </div>
+
+              <div class="live-canvas" style="height:280px">
+                <canvas id="liveFeed" width="880" height="480" style="width:100%;height:100%;display:block"></canvas>
+              </div>
+              <div class="live-caption">Camera feed — low light. Motion sensor: <span id="motion-status">idle</span>.</div>
+            </section>
+
+            <!-- PROJECT LIST -->
+            <div style="margin-top:18px">
+              <div style="font-size:.85rem;margin-bottom:8px;color:var(--accent)">REPOSITORY</div>
+              <div class="project-list" id="project-list" role="list"></div>
+            </div>
+          </div>
+
+          <!-- RIGHT: SVC DETAIL -->
+          <aside class="detail-panel" id="detail-panel" aria-live="polite">
+            <div class="detail-title">
+              <h4 id="detail-name">Substrate Protocol</h4>
+              <button class="close-btn" id="open-large">View Image</button>
+            </div>
+            <div class="meta" id="detail-desc">A recursive architecture for visual telemetry. Deep-layer data mapping. ACCESS_LEVEL: ALPHA-9</div>
+
+            <div class="svc-image" id="svc-image" title="Click to enlarge (View Image)">
+              <!-- Inline SVG / photo inserted by JS -->
+            </div>
+
+            <div style="margin-top:12px" class="small">
+              <div><strong>Last sync:</strong> <span id="last-sync">—</span></div>
+              <div style="margin-top:6px"><strong>Operator:</strong> H. Kahn</div>
+              <div style="margin-top:6px"><strong>Notes:</strong> Archive fragment 042 — partially corrupted; recovered 1953 timestamp.</div>
+            </div>
+          </aside>
+        </div>
+
+        <!-- SIGNAL HUD -->
+        <div class="hud-corner" aria-live="polite">
+          <div style="border-bottom:1px solid rgba(255,255,255,0.03);padding-bottom:6px;margin-bottom:8px">SIGNAL_PACKETS</div>
+          <div id="signal-log" style="max-height:160px;overflow:auto">
+            <!-- log entries appended by JS -->
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- modal for large svc image -->
+  <div id="modal" class="modal" role="dialog" aria-hidden="true">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong id="modal-title">SVC DETAIL</strong><div class="meta" id="modal-sub">Archive schematic — SVC-09</div></div>
+        <button class="close-btn" id="modal-close">Close</button>
+      </div>
+      <div style="margin-top:12px" id="modal-body"></div>
+    </div>
+  </div>
 
 <script>
-// --- PROJECTS ---
+/* ============================
+   Projects + SVC inline svg
+   ============================ */
 const projects = [
-    {name:"Substrate Protocol", desc:"A recursive architecture for visual telemetry. Deep-layer data mapping.", url:"https://deon-wal.github.io/Substrate-Protocol/"},
-    {name:"Department of Unfinished Events", name_short:"D.U.E.", desc:"The central repository for chronologically displaced artifacts and records.", url:"https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/"},
-    {name:"Anomaly Observatory", desc:"Live monitoring of seismic and solar collapse. Everything is connected.", url:"https://deon-wal.github.io/Anomaly-Observatory/"},
-    {name:"Temporal Distortion Mapper", desc:"Maps time anomalies in real-time. Watch reality bend.", url:"#"},
-    {name:"Signal Interceptor X", desc:"Decrypts cosmic transmissions before they hit public logs.", url:"#"}
+  {
+    id: "substrate",
+    name: "Substrate Protocol",
+    desc: "A recursive architecture for visual telemetry. Deep-layer data mapping.",
+    svc: svcSVG("Substrate Protocol","SVC-01 — Optical Mapper","A vintage schematic overlay showing lens arrays & timing."),
+  },
+  {
+    id: "due",
+    name: "Department of Unfinished Events",
+    name_short: "D.U.E.",
+    desc: "Chronologically displaced artifacts and records.",
+    svc: svcSVG("D.U.E.","SVC-09 — Archive Fragment","Photographic plate & ledger scan; partial burn marks."),
+  },
+  {
+    id: "anomaly",
+    name: "Anomaly Observatory",
+    desc: "Live monitoring of seismic and solar collapse. Everything is connected.",
+    svc: svcSVG("Anomaly Observatory","SVC-07 — Seismograph","Paper drum seismograph scan; timestamp inked 1953."),
+  }
 ];
-const list=document.getElementById('project-list');
+
+/* helper: produce an inline SVG styled like a 1950s schematic/photo (sepia) */
+function svcSVG(title, label, caption){
+  // returns a string containing SVG markup
+  const svg = `
+   <svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">
+     <defs>
+       <filter id="grain"><feTurbulence baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0.1"/></filter>
+       <linearGradient id="sepgrad" x1="0" x2="1"><stop offset="0" stop-color="#2b2518"/><stop offset="1" stop-color="#8b7351" stop-opacity="0.9"/></linearGradient>
+     </defs>
+     <rect width="100%" height="100%" fill="#0b0a08"/>
+     <g transform="translate(40,40)">
+       <rect width="720" height="340" rx="6" fill="url(#sepgrad)" opacity="0.95"/>
+       <g fill="none" stroke="#d7c8a2" stroke-opacity="0.95" stroke-width="1.2">
+         <path d="M30 30 L680 30" stroke-dasharray="4 4"/>
+         <path d="M30 60 L680 60"/>
+         <circle cx="120" cy="160" r="38" stroke-width="1.6"/>
+         <circle cx="120" cy="160" r="6" fill="#d7c8a2"/>
+         <rect x="200" y="110" width="340" height="120" rx="4" stroke-width="1.4"/>
+         <path d="M360 110 L360 230" stroke-dasharray="3 3"/>
+         <path d="M200 150 Q270 120 330 150" />
+         <path d="M420 150 Q490 180 560 150" />
+       </g>
+
+       <g fill="#d7c8a2" opacity="0.95" font-size="16" font-family="Courier,monospace">
+         <text x="18" y="24" font-size="12">${label}</text>
+         <text x="18" y="320" font-size="13">${title}</text>
+         <text x="18" y="338" font-size="11" opacity="0.9">${caption}</text>
+       </g>
+
+       <g transform="translate(520,40)" fill="#b9a67f" font-family="Courier,monospace" opacity="0.9">
+         <rect x="-18" y="0" width="180" height="38" rx="4" fill="rgba(0,0,0,0.06)"/>
+         <text x="0" y="22" font-size="13">SVC META</text>
+         <text x="0" y="36" font-size="11" opacity="0.85">frame: 1953-11-03</text>
+       </g>
+     </g>
+     <rect width="100%" height="100%" fill="transparent" filter="url(#grain)" opacity="0.04"/>
+   </svg>
+  `;
+  return svg;
+}
+
+/* populate project list */
+const projectListEl = document.getElementById('project-list');
 projects.forEach(p=>{
-    list.innerHTML+=`<a href="${p.url}" target="_blank" class="project-card">
-        <h3>${p.name_short||p.name}</h3><p>${p.desc}</p>
-        <div style="margin-top:10px;font-size:0.6rem;opacity:0.4;">ACCESS_LEVEL: ALPHA-9</div></a>`;
+  const a = document.createElement('div');
+  a.className = 'project-card';
+  a.setAttribute('role','listitem');
+  a.innerHTML = `<h3>${p.name_short || p.name}</h3><p>${p.desc}</p>`;
+  a.onclick = ()=> selectProject(p.id);
+  projectListEl.appendChild(a);
 });
 
-// --- ERA SWITCHER ---
-function setEra(year){
-    const root=document.documentElement;
-    document.querySelectorAll('.era-btn').forEach(btn=>btn.classList.remove('active'));
-    event.target.classList.add('active');
-    if(year==='1953'){ root.style.setProperty('--accent', 'var(--1953)'); currentEra='1953'; }
-    else if(year==='1986'){ root.style.setProperty('--accent','var(--1986)'); currentEra='1986'; }
-    else{ root.style.setProperty('--accent','var(--2019)'); currentEra='2019'; }
+/* default selected project */
+let selected = projects[0];
+function selectProject(id){
+  selected = projects.find(x=>x.id===id) || projects[0];
+  document.getElementById('detail-name').innerText = selected.name;
+  document.getElementById('detail-desc').innerText = selected.desc + " — ACCESS_LEVEL: ALPHA-9";
+  document.getElementById('svc-image').innerHTML = selected.svc;
+  document.getElementById('last-sync').innerText = new Date().toLocaleString();
 }
-let currentEra='1986';
 
-// --- CLOCK ---
-setInterval(()=>{document.getElementById('clock').innerText=new Date().toLocaleTimeString();},1000);
+/* initial load */
+selectProject(selected.id);
 
-// --- SIGNAL LOG ---
-const log=document.getElementById('signal-log');
-const msgs=["PNEUMATIC_TUBE_READY","WINDEN_CAVE_SYNC","MAGNITUDE_4.2","SIC_MUNDUS_EST","LOG_FILE_042_OPEN","ANOMALY_DETECTED","QUANTUM_FEEDBACK"];
+/* modal behavior for large image */
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modal-body');
+document.getElementById('open-large').addEventListener('click', ()=>{
+  modalBody.innerHTML = selected.svc + `<div style="margin-top:12px;color:var(--muted)"><strong>Notes:</strong> High-resolution archival scan. Handle with care.</div>`;
+  document.getElementById('modal-title').innerText = selected.name + " — SVC DETAIL";
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+});
+document.getElementById('modal-close').addEventListener('click', ()=>{ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); });
+
+/* clock */
+setInterval(()=>{ document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+/* signal log (live-ish) */
+const signalLog = document.getElementById('signal-log');
+const msgs = ["PNEUMATIC_TUBE_READY","WINDEN_CAVE_SYNC","MAGNITUDE_4.2","SIC_MUNDUS_EST","LOG_FILE_042_OPEN","ANOMALY_DETECTED","PLATE_READ_#042"];
+function pushSignal(){
+  const item = document.createElement('div');
+  item.className = 'signal-item';
+  item.textContent = `> ${msgs[Math.floor(Math.random()*msgs.length)]}   — ${new Date().toLocaleTimeString()}`;
+  signalLog.prepend(item);
+  if(signalLog.children.length>12) signalLog.removeChild(signalLog.lastChild);
+}
+setInterval(pushSignal, 2200);
+pushSignal();
+
+/* ============================
+   Live Feed Simulation (canvas)
+   ============================ */
+const liveCanvas = document.getElementById('liveFeed');
+const Lctx = liveCanvas.getContext('2d');
+let lw = liveCanvas.width, lh = liveCanvas.height;
+
+function resizeLive(){
+  // keep canvas native pixels; CSS controls displayed size
+  lw = liveCanvas.width = Math.max(640, Math.floor(liveCanvas.clientWidth * 1));
+  lh = liveCanvas.height = Math.max(360, Math.floor(liveCanvas.clientHeight * 1));
+}
+window.addEventListener('resize', resizeLive);
+resizeLive();
+
+let particles = [];
+for(let i=0;i<18;i++){
+  particles.push({
+    x: Math.random()*lw,
+    y: Math.random()*lh,
+    r: 6+Math.random()*26,
+    vx: (Math.random()-0.5)*0.6,
+    vy: (Math.random()-0.5)*0.6,
+    a: 0.02 + Math.random()*0.06
+  });
+}
+
+function drawLive(time){
+  // subtle vignette / lowlight
+  Lctx.fillStyle = "#020200";
+  Lctx.fillRect(0,0,lw,lh);
+
+  // moving "dust" blobs (simulate distant motion in night forest)
+  particles.forEach(p=>{
+    p.x += p.vx; p.y += p.vy;
+    if(p.x < -80) p.x = lw + 80;
+    if(p.x > lw + 80) p.x = -80;
+    if(p.y < -80) p.y = lh + 80;
+    if(p.y > lh + 80) p.y = -80;
+    const g = Lctx.createRadialGradient(p.x, p.y, p.r*0.1, p.x, p.y, p.r);
+    g.addColorStop(0, "rgba(200,180,140,0.18)");
+    g.addColorStop(1, "rgba(40,30,20,0)");
+    Lctx.globalCompositeOperation = 'lighter';
+    Lctx.fillStyle = g;
+    Lctx.beginPath();
+    Lctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    Lctx.fill();
+    Lctx.globalCompositeOperation = 'source-over';
+  });
+
+  // simulated faint scanlines
+  Lctx.fillStyle = "rgba(0,0,0,0.06)";
+  for(let y=0;y<lh;y+=2){
+    Lctx.fillRect(0,y,lw,1);
+  }
+
+  // a "subject" silhouette (animated horizontal pass)
+  const sx = (Math.sin(time/1200)+1)/2 * (lw*0.6) + lw*0.1;
+  const sy = lh*0.6 + Math.sin(time/800)*6;
+  Lctx.fillStyle = "rgba(12,10,8,0.85)";
+  Lctx.beginPath();
+  Lctx.ellipse(sx,sy,40,80,0,0,Math.PI*2);
+  Lctx.fill();
+
+  // subtle noise overlay
+  const noise = Lctx.createImageData(64,64);
+  for(let i=0;i<noise.data.length;i+=4){
+    const v = 120 + Math.floor(Math.random()*40);
+    noise.data[i]=v; noise.data[i+1]=v; noise.data[i+2]=v; noise.data[i+3]=4;
+  }
+  Lctx.putImageData(noise, Math.floor(Math.random()*(lw-64)), Math.floor(Math.random()*(lh-64)));
+
+  // HUD overlays: timestamp and motion status
+  const ts = new Date().toLocaleString();
+  Lctx.fillStyle = "rgba(191,161,106,0.95)";
+  Lctx.font = "14px Courier New";
+  Lctx.fillText(ts, 10, lh - 12);
+  // motion detector: simple threshold based on moving particles
+  const motion = particles.some(p => Math.abs(p.vx) > 0.5 || Math.abs(p.vy) > 0.5);
+  document.getElementById('live-timestamp').innerText = ts.split(',')[1].trim();
+  document.getElementById('motion-status').innerText = motion ? "active" : "idle";
+
+  requestAnimationFrame(drawLive);
+}
+requestAnimationFrame(drawLive);
+
+/* slight particle speed modulation to simulate motion bursts */
 setInterval(()=>{
-    const d=document.createElement('div'); d.innerText=`> ${msgs[Math.floor(Math.random()*msgs.length)]}`;
-    d.classList.add('flash'); log.prepend(d); if(log.children.length>5) log.removeChild(log.lastChild);
-    setTimeout(()=>d.classList.remove('flash'),200);
-},1500);
+  particles.forEach(p=>{
+    p.vx += (Math.random()-0.5)*0.6;
+    p.vy += (Math.random()-0.5)*0.6;
+    p.vx = Math.max(-1.2, Math.min(1.2, p.vx));
+    p.vy = Math.max(-1.2, Math.min(1.2, p.vy));
+  });
+}, 3000);
 
-// --- PARTICLE NETWORK + ERA ANIMATION ---
-const canvas=document.getElementById('connections'); const ctx=canvas.getContext('2d'); let w,h;
-function resize(){ w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; }
-window.addEventListener('resize',resize); resize();
+/* small ambient flicker effect on the live dot */
+setInterval(()=>{
+  document.querySelector('.live-dot').style.background = (Math.random()>0.3) ? "#9b2f2f" : "#5a1a1a";
+}, 800);
 
-const nodes=Array.from({length:50},()=>({x:Math.random()*w, y:Math.random()*h, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3}));
+/* helper to show a few more initial signals and projects details loaded */
+for(let i=0;i<3;i++) pushSignal();
+selectProject('substrate');
 
-function draw(){
-    ctx.clearRect(0,0,w,h);
+/* keyboard hint: press 'L' to toggle log push (for quick stress) */
+let logRunning = true;
+document.addEventListener('keydown', (e)=>{
+  if(e.key.toLowerCase() === 'l') {
+    logRunning = !logRunning;
+    if(logRunning) { signalInterval = setInterval(pushSignal,2200); pushSignal(); }
+    else clearInterval(signalInterval);
+  }
+});
 
-    // ERA SPECIFIC EFFECTS
-    if(currentEra==='1953'){ ctx.shadowBlur=15; ctx.shadowColor='rgba(216,180,95,0.3)'; }
-    else if(currentEra==='1986'){ ctx.shadowBlur=5; ctx.shadowColor='rgba(34,255,102,0.5)'; }
-    else{ ctx.shadowBlur=20; ctx.shadowColor='rgba(255,68,136,0.5)'; }
+/* store interval handle to allow toggle */
+let signalInterval = setInterval(pushSignal,2200);
 
-    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent'); ctx.lineWidth=0.3;
-
-    nodes.forEach(n=>{
-        // Slow jitter for 1953, CRT flicker for 1986, collapse shake for 2019
-        if(currentEra==='1953'){ n.vx+=(Math.random()-0.5)*0.02; n.vy+=(Math.random()-0.5)*0.02; }
-        else if(currentEra==='1986'){ n.vx+=(Math.random()-0.5)*0.05; n.vy+=(Math.random()-0.5)*0.05; }
-        else{ n.vx+=(Math.random()-0.5)*0.1; n.vy+=(Math.random()-0.5)*0.1; }
-        n.x+=n.vx; n.y+=n.vy;
-        if(n.x<0||n.x>w) n.vx*=-1; if(n.y<0||n.y>h) n.vy*=-1;
-    });
-
-    for(let i=0;i<nodes.length;i++){
-        for(let j=i+1;j<nodes.length;j++){
-            const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
-            const dist=Math.sqrt(dx*dx+dy*dy);
-            if(dist<150){ ctx.globalAlpha=(150-dist)/150*0.2; ctx.beginPath(); ctx.moveTo(nodes[i].x,nodes[i].y); ctx.lineTo(nodes[j].x,nodes[j].y); ctx.stroke(); }
-        }
-    }
-
-    requestAnimationFrame(draw);
-}
-draw();
 </script>
 </body>
 </html>
