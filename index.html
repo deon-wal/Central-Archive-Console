@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>THE BUREAU // NODE_7 // MASTER_OS</title>
+    <title>THE BUREAU // NODE_7 // THE ARCHITECT</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
         :root {
@@ -12,6 +12,7 @@
             --panel: #0d0d0c;
             --rust: #2a1f16;
             --alert: #ff0000;
+            --blue: #0096ff;
             --text: #c4beaf;
             --burn: 0;
         }
@@ -29,60 +30,58 @@
         #shutter {
             position: fixed; inset: 0; z-index: 10000;
             background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                        rgba(212, 175, 55, 0.2) 0%, 
-                        rgba(0,0,0,1) 15%);
+                        rgba(212, 175, 55, 0.2) 0%, rgba(0,0,0,1) 15%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: transform 1.5s cubic-bezier(0.8, 0, 0.2, 1), opacity 1s;
         }
-        #shutter.open { transform: scale(1.5); opacity: 0; pointer-events: none; }
+        #shutter.open { transform: scale(1.5) rotate(5deg); opacity: 0; pointer-events: none; }
 
         /* --- THE OS INTERFACE --- */
-        #os-workspace {
-            position: relative; width: 100vw; height: 100vh;
-            background: #050505; perspective: 1000px;
-        }
+        #os-workspace { position: relative; width: 100vw; height: 100vh; background: #050505; }
 
         .window {
             position: absolute; background: var(--panel); border: 1px solid var(--rust);
             display: flex; flex-direction: column; min-width: 300px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: filter 0.3s; z-index: 10;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); transition: filter 0.3s; z-index: 10;
         }
 
         .window-header {
             padding: 10px; background: var(--rust); color: var(--accent);
             font-family: 'Space Mono'; font-size: 10px; font-weight: bold;
-            cursor: grab; display: flex; justify-content: space-between;
-            user-select: none;
+            cursor: grab; display: flex; justify-content: space-between; user-select: none;
+            border-bottom: 1px solid var(--accent-dim);
         }
 
         /* --- COMPONENTS --- */
-        #nav-list { overflow-y: auto; flex: 1; max-height: 400px; }
+        #nav-list { overflow-y: auto; flex: 1; max-height: 250px; }
         .fs-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 10px; }
-        .fs-item:hover { background: rgba(212,175,55,0.1); }
-        .fs-item.active { border-left: 3px solid var(--accent); background: rgba(212, 175, 55, 0.05); }
+        .fs-item:hover { background: rgba(212,175,55,0.1); padding-left: 20px; transition: 0.2s; }
+        .fs-item.active { border-left: 3px solid var(--accent); background: rgba(212, 175, 55, 0.05); color: #fff; }
 
-        #svg-stage { height: 300px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--rust); padding: 20px; }
+        #svg-stage { height: 250px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--rust); padding: 10px; }
         svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px var(--accent-dim)); }
 
-        #teleCanvas { width: 100%; height: 300px; background: #000; }
+        #teleCanvas { width: 100%; height: 180px; background: #000; }
+        #radarCanvas { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--accent-dim); }
 
         #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
-        #log-stream { height: 120px; font-size: 9px; color: var(--accent); padding: 10px; overflow: hidden; font-family: 'Space Mono'; }
+        #log-stream { height: 100px; font-size: 9px; color: var(--accent); padding: 10px; overflow: hidden; font-family: 'Space Mono'; }
+
+        .img-container { padding: 15px; font-family: 'Inter'; font-size: 11px; overflow-y: auto; max-height: 200px; color: #fff; line-height: 1.5; }
+        .img-container img { max-width: 100%; border: 1px solid var(--accent-dim); margin: 10px 0; opacity: 0.8; }
 
         /* --- CRT & GLITCH --- */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px; z-index: 5000; pointer-events: none;
-            opacity: 0.5; pointer-events: none;
+            background-size: 100% 4px; z-index: 5000; pointer-events: none; opacity: 0.5;
         }
 
-        .rumble { animation: rumble 0.1s infinite; }
-        @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-2px, 2px); } 100% { transform: translate(0,0); } }
+        .rumble { animation: rumble 0.1s infinite; filter: contrast(1.5) sepia(0.5); }
+        @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-3px, 3px); } 100% { transform: translate(0,0); } }
 
-        .btn-breach { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; border-radius: 50px; transition: 0.3s; }
-        .btn-breach:hover { background: var(--accent); color: #000; }
+        .btn-breach { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; border-radius: 50px; transition: 0.3s; font-weight: bold; }
+        .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
     </style>
 </head>
 <body class="crt">
@@ -95,39 +94,49 @@
 
     <div id="os-workspace">
         
-        <div class="window" style="top:20px; left:20px; width:calc(100% - 40px); z-index:1;">
-            <div class="window-header" style="cursor:default;">
+        <div class="window" style="top:20px; left:20px; width:calc(100% - 40px); z-index:1; flex-direction: row; justify-content: space-between; align-items: center; padding-right: 20px;">
+            <div class="window-header" style="cursor:default; border:none; width: 300px;">
                 <div>NODE_7_SYSTEM_INTEGRITY</div>
-                <div>VOID_INTEGRITY: <span id="integrity-val">99%</span> // <span id="clock">00:00:00</span></div>
+                <div>BAT_SYNC: <span id="integrity-val">99%</span></div>
             </div>
+            <canvas id="radarCanvas"></canvas>
+            <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-size: 10px; font-weight: bold;">00:00:00</div>
         </div>
 
-        <div class="window drag" style="top:100px; left:20px; width:320px;">
+        <div class="window drag" style="top:80px; left:20px; width:320px;">
             <div class="window-header">REGISTRY_VOL_I <span>[DRAG]</span></div>
             <div id="nav-list"></div>
-            <div style="padding:15px; border-top:1px solid var(--rust);">
-                <div style="font-size:8px; color:var(--accent);">CORE_ENTROPY</div>
+            <div style="padding:15px; border-top:1px solid var(--rust); background:#080807;">
+                <div style="font-size:8px; color:var(--accent);">CORE_ENTROPY / HEAT</div>
                 <div style="height:2px; background:#111; margin-top:5px;"><div id="entropy-fill" style="height:100%; background:var(--accent); width:33%;"></div></div>
             </div>
         </div>
 
-        <div class="window drag" style="top:100px; left:360px; width:calc(100% - 800px);">
-            <div class="window-header">VOID_OSCILLATION <span>[DRAG]</span></div>
+        <div class="window drag" style="top:80px; left:350px; width:calc(100% - 800px);">
+            <div class="window-header">VOID_OSCILLATION // SYNC <span id="tele-meta">--</span> <span>[DRAG]</span></div>
             <canvas id="teleCanvas"></canvas>
+            <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent-dim); background: #000;">MOUSE_VELOCITY_OVERRIDE_ACTIVE</div>
         </div>
 
-        <div class="window drag" style="top:100px; right:20px; width:400px;">
+        <div class="window drag" style="top:320px; left:350px; width:calc(100% - 800px); height: 260px;">
+            <div class="window-header">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
+            <div class="img-container" id="imaging-output">
+                AWAITING PROTOCOL SELECTION...
+            </div>
+        </div>
+
+        <div class="window drag" style="top:80px; right:20px; width:420px;">
             <div class="window-header">MANIFEST_ANALYSIS <span>[DRAG]</span></div>
             <div id="svg-stage"></div>
             <div style="padding:20px;">
                 <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px;">--</h2>
-                <p id="obj-desc" style="font-size:11px; line-height:1.6; height:80px; opacity:0.8;"></p>
+                <p id="obj-desc" style="font-size:11px; line-height:1.6; height:60px; opacity:0.8;"></p>
                 <button class="btn-breach" style="width:100%; border-radius:0; padding:10px; font-size:10px;" id="action-btn">INIT_SCAN</button>
             </div>
         </div>
 
         <div class="window drag" style="bottom:20px; left:20px; width:calc(100% - 40px);">
-            <div class="window-header">BUREAU_TERMINAL_V7 <span>[DRAG]</span></div>
+            <div class="window-header">BUREAU_TERMINAL_V8 // ROOT <span>[DRAG]</span></div>
             <div id="log-stream"></div>
             <input type="text" id="cli-input" placeholder="CMD: MEMO [TEXT], LOGS, EXPORT, WINDEN_33..." autocomplete="off">
         </div>
@@ -136,19 +145,79 @@
 
 <script>
 /* ========================================
-   1. MASTER ARCHIVE DATA
+   1. MASTER ARCHIVE DATA (SVC INTEGRATION)
    ======================================== */
 const archiveData = [
-  { name: "The Apparatus", id: "apparatus", freq: 55, desc: "Dual-chamber brass device utilizing Cesium-137. Key for transit.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.2"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` },
-  { name: "Substrate Protocol", id: "substrate", freq: 110, desc: "Recursive architecture for visual telemetry. Deep mapping.", url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="1"/><line x1="10" y1="10" x2="90" y2="90" stroke="var(--accent)" stroke-width="0.2"/></svg>` },
-  { name: "D.U.E.", id: "due", freq: 44, desc: "Department of Unfinished Events. Displaced records.", url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
-  { name: "Project Noah", id: "noah", freq: 33, desc: "The cycle is complete. Sic Mundus Creatus Est.", hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="2"/></svg>` }
+  { 
+    name: "The Apparatus", 
+    id: "apparatus", 
+    freq: 55, 
+    desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
+    imgText: "NO VISUAL RECORD FOUND FOR CESIUM TRANSIT DEVICE.",
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.2"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` 
+  },
+  { 
+    name: "Substrate Protocol (SVC)", 
+    id: "substrate", 
+    freq: 110, 
+    desc: "Scalable Video Coding (SVC) architecture. Hierarchical spatial, temporal, and fidelity mapping.", 
+    url: "Substrate-Protocol/", 
+    imgText: "Retrieving Blueprint Data...<br><br>The Substrate Protocol relies on a robust foundational layer, supplemented by semi-transparent enhancement layers for spatial and temporal scaling. <br><br> [Image of Scalable Video Coding base and enhancement layers] <br><br> Visualizing the dependency of enhancement layers on the primary base layer payload.",
+    // The "Executed" SVC 3D layered Graphic requested by the prompt
+    svg: `<svg viewBox="0 0 100 100">
+        <g transform="translate(50, 75) scale(1, 0.45) rotate(45)">
+            <rect x="-35" y="-35" width="70" height="70" fill="rgba(0, 150, 255, 0.15)" stroke="var(--blue)" stroke-width="1.5"/>
+            <line x1="-35" y1="-35" x2="-35" y2="-95" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"><animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite"/></line>
+            <line x1="35" y1="35" x2="35" y2="-25" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"/>
+            <line x1="-35" y1="35" x2="-35" y2="-25" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"/>
+            <line x1="35" y1="-35" x2="35" y2="-95" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/></line>
+            <rect x="-35" y="-65" width="70" height="70" fill="rgba(212, 175, 55, 0.15)" stroke="var(--accent)" stroke-width="1"/>
+            <path d="M -15 -65 L -15 -25 M 15 -65 L 15 -25 M -35 -45 L 35 -45 M -35 -15 L 35 -15" stroke="var(--accent)" stroke-width="0.3" opacity="0.5"/>
+            <rect x="-35" y="-95" width="70" height="70" fill="rgba(255, 0, 0, 0.15)" stroke="var(--alert)" stroke-width="1.5"/>
+            <circle cx="0" cy="-60" r="5" fill="var(--alert)"><animate attributeName="r" values="3;6;3" dur="1s" repeatCount="indefinite"/></circle>
+        </g>
+    </svg>` 
+  },
+  { 
+    name: "Temporal Frame Scaling", 
+    id: "temporal", 
+    freq: 88, 
+    desc: "Analysis of frame density and temporal interpolation within the Void anomaly.", 
+    imgText: "Analyzing temporal displacement... <br><br> [Image of temporal scalability in video coding] <br><br> Notice the hierarchical frame density. Lower levels represent the base temporal flow, while higher levels represent predicted/enhanced temporal states.",
+    svg: `<svg viewBox="0 0 100 100">
+        <path d="M 10 50 Q 30 10 50 50 T 90 50" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <path d="M 10 50 Q 30 30 50 50 T 90 50" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="4 2"/>
+        <circle cx="50" cy="50" r="4" fill="var(--alert)"/>
+        <circle cx="90" cy="50" r="4" fill="var(--accent)"/>
+        <circle cx="10" cy="50" r="4" fill="var(--accent)"/>
+    </svg>` 
+  },
+  { 
+    name: "D.U.E.", 
+    id: "due", 
+    freq: 44, 
+    desc: "Department of Unfinished Events. Displaced records vault.", 
+    url: "Department-Of-Unfinished-Events-DUE", 
+    imgText: "VAULT SECURED. NO ADDITIONAL IMAGING AVAILABLE.",
+    svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>` 
+  },
+  { 
+    name: "Project Noah", 
+    id: "noah", 
+    freq: 33, 
+    desc: "The cycle is complete. Sic Mundus Creatus Est.", 
+    hidden: true, 
+    imgText: "RESTRICTED. THE BEGINNING IS THE END.",
+    svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="2"/></svg>` 
+  }
 ];
 
 /* ========================================
-   2. AUDIO ENGINE (BINAURAL)
+   2. BINAURAL AUDIO & MOUSE VELOCITY
    ======================================== */
 let audioCtx, mainOsc, panner;
+let mouseVelocity = 0;
+
 const startAudio = (f) => {
     if(!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -164,25 +233,39 @@ const startAudio = (f) => {
     mainOsc.start();
 };
 
-/* ========================================
-   3. SYSTEM LOGIC
-   ======================================== */
+const playClick = () => {
+    if(!audioCtx) return;
+    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+    o.frequency.value = 300; g.gain.value = 0.05;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.05);
+};
+
+// Shutter Flashlight, Binaural Panning, and Velocity Tracking
 document.addEventListener('mousemove', e => {
     document.getElementById('shutter').style.setProperty('--x', e.clientX + 'px');
     document.getElementById('shutter').style.setProperty('--y', e.clientY + 'px');
+    
     if(panner) {
         const panVal = (e.clientX / window.innerWidth) * 2 - 1;
         panner.pan.setValueAtTime(panVal, audioCtx.currentTime);
     }
+
+    // Calculate mouse velocity for Telemetry distortion
+    mouseVelocity = Math.min(100, Math.sqrt(e.movementX**2 + e.movementY**2));
 });
 
+/* ========================================
+   3. SYSTEM LOGIC & DRAG
+   ======================================== */
 function unlockSystem() {
     startAudio(55);
     document.getElementById('shutter').classList.add('open');
     addLog("BREACH_SUCCESSFUL. NODE_7 ONLINE.");
+    addLog("MOUNTING_KERNEL...");
+    addLog("SVC_DECODER_INITIALIZED.");
 }
 
-// Drag Logic
 let activeWin = null, offset = [0,0];
 document.querySelectorAll('.window-header').forEach(h => {
     h.onmousedown = (e) => {
@@ -200,6 +283,20 @@ document.onmousemove = (e) => {
 };
 document.onmouseup = () => { if(activeWin) activeWin.style.zIndex = 10; activeWin = null; };
 
+// Decryption Effect
+const decryptText = (el, target) => {
+    const chars = "!<>-_\\/[]{}—=+*^?#________";
+    let iterations = 0;
+    const interval = setInterval(() => {
+        el.innerHTML = target.split("").map((letter, index) => {
+            if(index < iterations) return target[index];
+            return chars[Math.floor(Math.random() * chars.length)];
+        }).join("");
+        if(iterations >= target.length) clearInterval(interval);
+        iterations += 1/2;
+    }, 20);
+};
+
 function populate() {
     const list = document.getElementById('nav-list');
     list.innerHTML = '';
@@ -210,9 +307,16 @@ function populate() {
         d.onclick = () => {
             document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
             d.classList.add('active');
-            document.getElementById('obj-title').innerText = item.name;
+            
+            decryptText(document.getElementById('obj-title'), item.name);
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
+            
+            // Push image text to the new imaging panel
+            const imgPanel = document.getElementById('imaging-output');
+            imgPanel.innerHTML = "";
+            decryptText(imgPanel, item.imgText);
+
             startAudio(item.freq);
             
             const btn = document.getElementById('action-btn');
@@ -223,6 +327,7 @@ function populate() {
                 btn.innerText = "INITIALIZE_SCAN";
                 btn.onclick = () => { document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),200); };
             }
+            addLog(`MOUNTING: ${item.id}`);
         };
         list.appendChild(d);
     });
@@ -244,11 +349,16 @@ cli.onkeydown = (e) => {
             const m = JSON.parse(localStorage.getItem('b_m') || '[]');
             const blob = new Blob([m.map(i => `[${i.t}] REPORT: ${i.c}`).join('\n')], {type: 'text/plain'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'INCIDENT_REPORT.txt'; a.click();
+            addLog("REPORT_GENERATED.");
         } else if(val === 'WINDEN_33') {
-            archiveData[3].hidden = false; populate();
-            addLog("AUTH_GRANTED.");
+            archiveData[4].hidden = false; populate();
+            addLog("AUTH_GRANTED: PROJECT_NOAH_VISIBLE.");
+            document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),400);
+        } else if(val === 'CLEAR') {
+            document.getElementById('log-stream').innerHTML = '';
         }
         cli.value = '';
+        playClick();
     }
 };
 
@@ -259,34 +369,38 @@ function addLog(m) {
     s.prepend(d);
 }
 
-const canvas = document.getElementById('teleCanvas');
-const ctx = canvas.getContext('2d');
-function draw(t) {
-    canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-    ctx.clearRect(0,0,canvas.width, canvas.height);
-    ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1;
-    ctx.beginPath();
-    for(let i=0; i<canvas.width; i+=2) {
-        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * 50;
-        ctx.lineTo(i,y);
+/* ========================================
+   4. CANVASES (TELEMETRY & RADAR)
+   ======================================== */
+const tCanvas = document.getElementById('teleCanvas');
+const tCtx = tCanvas.getContext('2d');
+let currentFreq = 55;
+
+function drawTelemetry(t) {
+    tCanvas.width = tCanvas.offsetWidth; tCanvas.height = tCanvas.offsetHeight;
+    tCtx.clearRect(0,0,tCanvas.width, tCanvas.height);
+    tCtx.strokeStyle = '#d4af37'; tCtx.lineWidth = 1;
+    tCtx.beginPath();
+    
+    // Mouse velocity spikes the amplitude and frequency distortion
+    const amp = 30 + (mouseVelocity * 0.8);
+    const noise = mouseVelocity * 0.2;
+    mouseVelocity *= 0.95; // Decay
+    
+    for(let i=0; i<tCanvas.width; i+=2) {
+        const y = tCanvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * amp + (Math.random() * noise - noise/2);
+        tCtx.lineTo(i,y);
     }
-    ctx.stroke();
-    requestAnimationFrame(draw);
+    tCtx.stroke();
+    requestAnimationFrame(drawTelemetry);
 }
 
-// Hardware Sync
-if(navigator.getBattery) {
-    navigator.getBattery().then(bat => {
-        const up = () => document.getElementById('integrity-val').innerText = (bat.level * 100).toFixed(0) + "%";
-        bat.addEventListener('levelchange', up); up();
-    });
-}
-
-populate(); draw(0);
-setInterval(() => {
-    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-    document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
-}, 1000);
-</script>
-</body>
-</html>
+const rCanvas = document.getElementById('radarCanvas');
+const rCtx = rCanvas.getContext('2d');
+function drawRadar(t) {
+    rCanvas.width = 40; rCanvas.height = 40;
+    rCtx.clearRect(0,0,40,40);
+    rCtx.translate(20,20);
+    rCtx.rotate(t * 0.003);
+    rCtx.fillStyle = 'rgba(212, 175, 55, 0.5)';
+    rCtx.beginPath();
