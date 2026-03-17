@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>THE BUREAU // NODE_7 // THE ARCHITECT</title>
+    <title>THE BUREAU // NODE_7 // TERMINUS</title>
     <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" />
     <style>
         :root {
@@ -15,6 +15,7 @@
             --blue: #0096ff;
             --text: #c4beaf;
             --burn: 0;
+            --system-opacity: 0.15; /* Starts powered down */
         }
 
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
@@ -23,21 +24,28 @@
         body { 
             background: var(--bg); color: var(--text); 
             font-family: 'Inter', sans-serif; overflow: hidden; 
-            height: 100vh; touch-action: none; /* Prevent mobile pull-to-refresh */
+            height: 100vh; touch-action: none;
         }
-
-        /* --- THE SHUTTER (NEURAL LINK) --- */
-        #shutter {
-            position: fixed; inset: 0; z-index: 10000;
-            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                        rgba(212, 175, 55, 0.2) 0%, rgba(0,0,0,1) 15%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: transform 1.5s cubic-bezier(0.8, 0, 0.2, 1), opacity 1s;
-        }
-        #shutter.open { transform: scale(1.5) rotate(5deg); opacity: 0; pointer-events: none; }
 
         /* --- THE OS INTERFACE --- */
-        #os-workspace { position: relative; width: 100vw; height: 100vh; background: #050505; }
+        #os-workspace { 
+            position: relative; width: 100vw; height: 100vh; background: #050505; 
+        }
+
+        /* Container that holds all OS panels so they can be dimmed together */
+        #os-panels {
+            width: 100%; height: 100%;
+            opacity: var(--system-opacity);
+            pointer-events: none; /* Disabled until boot */
+            transition: opacity 2s ease, filter 2s ease;
+            filter: grayscale(1) blur(2px);
+        }
+
+        #os-panels.booted {
+            opacity: 1;
+            pointer-events: all;
+            filter: grayscale(0) blur(0px);
+        }
 
         .window {
             position: absolute; background: var(--panel); border: 1px solid var(--rust);
@@ -49,10 +57,19 @@
             padding: 10px; background: var(--rust); color: var(--accent);
             font-family: 'Space Mono'; font-size: 10px; font-weight: bold;
             cursor: grab; display: flex; justify-content: space-between; user-select: none;
-            border-bottom: 1px solid var(--accent-dim);
-            touch-action: none;
+            border-bottom: 1px solid var(--accent-dim); touch-action: none;
         }
         .window-header:active { cursor: grabbing; }
+
+        /* --- CENTRAL BOOT MODAL --- */
+        #boot-modal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 20000; text-align: center; width: 450px;
+            background: rgba(13, 13, 12, 0.95); border: 1px solid var(--accent);
+            padding: 40px; box-shadow: 0 0 50px rgba(212, 175, 55, 0.1);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.9); pointer-events: none; }
 
         /* --- COMPONENTS --- */
         #nav-list { overflow-y: auto; flex: 1; max-height: 250px; }
@@ -84,81 +101,83 @@
         .rumble { animation: rumble 0.1s infinite; filter: contrast(1.5) sepia(0.5); }
         @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-3px, 3px); } 100% { transform: translate(0,0); } }
 
-        .btn-breach { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; border-radius: 50px; transition: 0.3s; font-weight: bold; }
+        .btn-breach { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.3s; font-weight: bold; width: 100%; }
         .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
 
-        /* Responsive Initial Positioning */
+        /* Responsive */
         @media (max-width: 800px) {
             .window { width: 90vw !important; left: 5vw !important; }
             #win-nav { top: 80px; }
             #win-tele { top: 380px; }
             #win-img { top: 620px; }
-            #win-man { display: none; } /* Hide manifest on tiny screens to save space */
+            #win-man { display: none; }
             #win-cli { top: 920px; bottom: auto !important; }
         }
     </style>
 </head>
 <body class="crt">
 
-    <div id="shutter">
-        <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:20px;">THE BUREAU</div>
-        <h1 style="font-size: 5vw; font-weight: 900; margin-bottom: 40px; color:#fff; text-align: center;">EVERYTHING IS CONNECTED.</h1>
-        <button class="btn-breach" onclick="unlockSystem()">INITIALIZE_BREACH_SEQUENCE</button>
-    </div>
-
     <div id="os-workspace">
         
-        <div class="window" style="top:20px; left:20px; width:calc(100% - 40px); z-index:1; flex-direction: row; justify-content: space-between; align-items: center; padding-right: 20px;">
-            <div class="window-header" style="cursor:default; border:none; width: 300px; background: transparent;">
-                <div>NODE_7_SYSTEM_INTEGRITY</div>
-                <div>BAT_SYNC: <span id="integrity-val">99%</span></div>
+        <div id="boot-modal">
+            <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:10px; font-size: 1.2rem;">THE BUREAU</div>
+            <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 30px; color:#fff; letter-spacing: -1px;">EVERYTHING IS CONNECTED.</h1>
+            <div style="font-family:'Space Mono'; font-size: 9px; opacity: 0.5; margin-bottom: 30px;">SYSTEM OFFLINE. AWAITING MANUAL OVERRIDE.</div>
+            <button class="btn-breach" onclick="unlockSystem()">[ POWER ON NODE_7 ]</button>
+        </div>
+
+        <div id="os-panels">
+            <div class="window" style="top:20px; left:20px; width:calc(100% - 40px); z-index:1; flex-direction: row; justify-content: space-between; align-items: center; padding-right: 20px;">
+                <div class="window-header" style="cursor:default; border:none; width: 300px; background: transparent;">
+                    <div>NODE_7_SYSTEM_INTEGRITY</div>
+                    <div>BAT_SYNC: <span id="integrity-val">--%</span></div>
+                </div>
+                <canvas id="radarCanvas"></canvas>
+                <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-size: 10px; font-weight: bold;">00:00:00</div>
             </div>
-            <canvas id="radarCanvas"></canvas>
-            <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-size: 10px; font-weight: bold;">00:00:00</div>
-        </div>
 
-        <div class="window drag" id="win-nav" style="top:80px; left:20px; width:320px;">
-            <div class="window-header">REGISTRY_VOL_I <span>[DRAG]</span></div>
-            <div id="nav-list"></div>
-            <div style="padding:15px; border-top:1px solid var(--rust); background:#080807;">
-                <div style="font-size:8px; color:var(--accent);">CORE_ENTROPY / HEAT</div>
-                <div style="height:2px; background:#111; margin-top:5px;"><div id="entropy-fill" style="height:100%; background:var(--accent); width:33%; transition: width 0.5s;"></div></div>
+            <div class="window drag" id="win-nav" style="top:80px; left:20px; width:320px;">
+                <div class="window-header">REGISTRY_VOL_I <span>[DRAG]</span></div>
+                <div id="nav-list"></div>
+                <div style="padding:15px; border-top:1px solid var(--rust); background:#080807;">
+                    <div style="font-size:8px; color:var(--accent);">CORE_ENTROPY / HEAT</div>
+                    <div style="height:2px; background:#111; margin-top:5px;"><div id="entropy-fill" style="height:100%; background:var(--accent); width:0%; transition: width 0.5s;"></div></div>
+                </div>
+            </div>
+
+            <div class="window drag" id="win-tele" style="top:80px; left:350px; width:calc(100% - 800px);">
+                <div class="window-header">VOID_OSCILLATION // SYNC <span id="tele-meta">--</span> <span>[DRAG]</span></div>
+                <canvas id="teleCanvas"></canvas>
+                <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent-dim); background: #000; display: flex; justify-content: space-between;">
+                    <span>MOUSE_VELOCITY_OVERRIDE_ACTIVE</span>
+                    <span id="drift-val">0.00ms</span>
+                </div>
+            </div>
+
+            <div class="window drag" id="win-img" style="top:320px; left:350px; width:calc(100% - 800px); height: 260px;">
+                <div class="window-header">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
+                <div class="img-container" id="imaging-output">
+                    > SYSTEM BOOT REQUIRED.<br>
+                    > AWAITING PROTOCOL SELECTION...
+                </div>
+            </div>
+
+            <div class="window drag" id="win-man" style="top:80px; right:20px; width:420px;">
+                <div class="window-header">MANIFEST_ANALYSIS <span>[DRAG]</span></div>
+                <div id="svg-stage"></div>
+                <div style="padding:20px;">
+                    <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px;">--</h2>
+                    <p id="obj-desc" style="font-size:11px; line-height:1.6; height:60px; opacity:0.8;"></p>
+                    <button class="btn-breach" style="padding:10px; font-size:10px;" id="action-btn">INIT_SCAN</button>
+                </div>
+            </div>
+
+            <div class="window drag" id="win-cli" style="bottom:20px; left:20px; width:calc(100% - 40px);">
+                <div class="window-header">BUREAU_TERMINAL_V9 // ROOT <span>[DRAG]</span></div>
+                <div id="log-stream"></div>
+                <input type="text" id="cli-input" placeholder="CMD: MEMO [TEXT], LOGS, EXPORT, WINDEN_33..." autocomplete="off">
             </div>
         </div>
-
-        <div class="window drag" id="win-tele" style="top:80px; left:350px; width:calc(100% - 800px);">
-            <div class="window-header">VOID_OSCILLATION // SYNC <span id="tele-meta">--</span> <span>[DRAG]</span></div>
-            <canvas id="teleCanvas"></canvas>
-            <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent-dim); background: #000; display: flex; justify-content: space-between;">
-                <span>MOUSE_VELOCITY_OVERRIDE_ACTIVE</span>
-                <span id="drift-val">0.00ms</span>
-            </div>
-        </div>
-
-        <div class="window drag" id="win-img" style="top:320px; left:350px; width:calc(100% - 800px); height: 260px;">
-            <div class="window-header">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
-            <div class="img-container" id="imaging-output">
-                > AWAITING PROTOCOL SELECTION...<br>
-                > USE REGISTRY TO MOUNT DATA FRAGMENTS.
-            </div>
-        </div>
-
-        <div class="window drag" id="win-man" style="top:80px; right:20px; width:420px;">
-            <div class="window-header">MANIFEST_ANALYSIS <span>[DRAG]</span></div>
-            <div id="svg-stage"></div>
-            <div style="padding:20px;">
-                <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px;">--</h2>
-                <p id="obj-desc" style="font-size:11px; line-height:1.6; height:60px; opacity:0.8;"></p>
-                <button class="btn-breach" style="width:100%; border-radius:0; padding:10px; font-size:10px;" id="action-btn">INIT_SCAN</button>
-            </div>
-        </div>
-
-        <div class="window drag" id="win-cli" style="bottom:20px; left:20px; width:calc(100% - 40px);">
-            <div class="window-header">BUREAU_TERMINAL_V9 // ROOT <span>[DRAG]</span></div>
-            <div id="log-stream"></div>
-            <input type="text" id="cli-input" placeholder="CMD: MEMO [TEXT], LOGS, EXPORT, WINDEN_33..." autocomplete="off">
-        </div>
-
     </div>
 
 <script>
@@ -182,7 +201,7 @@ const archiveData = [
     type: 'sine',
     desc: "Scalable Video Coding (SVC) architecture. Hierarchical spatial, temporal, and fidelity mapping.", 
     url: "Substrate-Protocol/", 
-    imgText: "> RETRIEVING BLUEPRINT DATA...<br><br>The Substrate Protocol relies on a robust foundational layer, supplemented by semi-transparent enhancement layers for spatial and temporal scaling. <br><br><strong>[DIAGRAM: SCALABLE VIDEO CODING BASE AND ENHANCEMENT LAYERS]</strong><br><br>Visualizing the mathematical dependency of enhancement layers on the primary base layer payload.",
+    imgText: "> RETRIEVING BLUEPRINT DATA...<br><br>The Substrate Protocol relies on a robust foundational layer, supplemented by semi-transparent enhancement layers for spatial and temporal scaling. <br><br><strong></strong><br><br>Visualizing the mathematical dependency of enhancement layers on the primary base layer payload.",
     svg: `<svg viewBox="0 0 100 100">
         <g transform="translate(50, 75) scale(1, 0.45) rotate(45)">
             <rect x="-35" y="-35" width="70" height="70" fill="rgba(0, 150, 255, 0.15)" stroke="var(--blue)" stroke-width="1.5"/>
@@ -203,7 +222,7 @@ const archiveData = [
     freq: 88, 
     type: 'triangle',
     desc: "Analysis of frame density and temporal interpolation within the Void anomaly.", 
-    imgText: "> ANALYZING TEMPORAL DISPLACEMENT...<br><br><strong>[DIAGRAM: TEMPORAL SCALABILITY FRAME RATE LAYERS IN VIDEO CODING]</strong><br><br>Notice the hierarchical frame density. Lower levels represent the base temporal flow (15fps), while higher levels represent predicted/enhanced temporal states (60+fps) bridging the timeline gaps.",
+    imgText: "> ANALYZING TEMPORAL DISPLACEMENT...<br><br><strong></strong><br><br>Notice the hierarchical frame density. Lower levels represent the base temporal flow (15fps), while higher levels represent predicted/enhanced temporal states (60+fps) bridging the timeline gaps.",
     svg: `<svg viewBox="0 0 100 100">
         <path d="M 10 50 Q 30 10 50 50 T 90 50" fill="none" stroke="var(--accent)" stroke-width="2"/>
         <path d="M 10 50 Q 30 30 50 50 T 90 50" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="4 2"/>
@@ -242,6 +261,7 @@ const archiveData = [
 let audioCtx, mainOsc, panner;
 let mouseVelocity = 0;
 let lastMousePos = {x: 0, y: 0};
+let systemBooted = false;
 
 const startAudio = (f, type='sine') => {
     if(!audioCtx) {
@@ -271,8 +291,7 @@ const playClick = () => {
    3. SYSTEM LOGIC & TOUCH/DRAG
    ======================================== */
 function handleInputMove(clientX, clientY) {
-    document.getElementById('shutter').style.setProperty('--x', clientX + 'px');
-    document.getElementById('shutter').style.setProperty('--y', clientY + 'px');
+    if(!systemBooted) return;
     
     if(panner) {
         const panVal = (clientX / window.innerWidth) * 2 - 1;
@@ -296,18 +315,30 @@ document.addEventListener('touchmove', e => {
 }, {passive: true});
 
 function unlockSystem() {
+    systemBooted = true;
     startAudio(55, 'sawtooth');
-    document.getElementById('shutter').classList.add('open');
-    addLog("BREACH_SUCCESSFUL. NODE_7 ONLINE.");
+    
+    // Hide Modal, Show Panels
+    document.getElementById('boot-modal').classList.add('hidden');
+    document.getElementById('os-panels').classList.add('booted');
+    
+    document.body.classList.add('rumble'); 
+    setTimeout(()=>document.body.classList.remove('rumble'), 300);
+
+    addLog("SYSTEM_BOOT: OK.");
     addLog("MOUNTING_KERNEL...");
     addLog("SVC_DECODER_INITIALIZED.");
+    
+    // Start drawings
+    drawTelemetry(0);
+    drawRadar(0);
 }
 
 // Universal Drag Logic (Mouse + Touch)
 let activeWin = null, offset = [0,0];
 
 const startDrag = (e, h) => {
-    if(!h.parentElement.classList.contains('drag')) return;
+    if(!systemBooted || !h.parentElement.classList.contains('drag')) return;
     activeWin = h.parentElement;
     activeWin.style.zIndex = 100;
     const cX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -318,7 +349,7 @@ const startDrag = (e, h) => {
 
 const doDrag = (e) => {
     if(activeWin) {
-        e.preventDefault(); // prevent scrolling while dragging
+        e.preventDefault();
         const cX = e.touches ? e.touches[0].clientX : e.clientX;
         const cY = e.touches ? e.touches[0].clientY : e.clientY;
         activeWin.style.left = (cX - offset[0]) + 'px';
@@ -345,7 +376,6 @@ const decryptText = (el, target) => {
     const chars = "!<>-_\\/[]{}—=+*^?#________";
     let iterations = 0;
     
-    // Check if target contains HTML (like <br> or <strong>). If so, we do a simpler block reveal to avoid breaking tags.
     if(target.includes('<')) {
         el.innerHTML = target;
         el.style.opacity = 0;
@@ -375,6 +405,7 @@ function populate() {
         d.className = 'fs-item';
         d.innerText = `> ${item.name.toUpperCase()}`;
         d.onclick = () => {
+            if(!systemBooted) return;
             document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
             d.classList.add('active');
             
@@ -382,7 +413,6 @@ function populate() {
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
             
-            // Push image text to imaging panel
             const imgPanel = document.getElementById('imaging-output');
             decryptText(imgPanel, item.imgText);
 
@@ -405,6 +435,7 @@ function populate() {
 
 const cli = document.getElementById('cli-input');
 cli.onkeydown = (e) => {
+    if(!systemBooted) return;
     if(e.key === 'Enter') {
         const val = cli.value.toUpperCase().trim();
         if(val.startsWith('MEMO ')) {
@@ -447,19 +478,19 @@ const tCanvas = document.getElementById('teleCanvas');
 const tCtx = tCanvas.getContext('2d');
 let ripple = 0;
 
-tCanvas.onmousedown = () => { ripple = 80; playClick(); };
-tCanvas.ontouchstart = () => { ripple = 80; playClick(); };
+tCanvas.onmousedown = () => { if(systemBooted) { ripple = 80; playClick(); }};
+tCanvas.ontouchstart = () => { if(systemBooted) { ripple = 80; playClick(); }};
 
 function drawTelemetry(t) {
+    if(!systemBooted) return;
     tCanvas.width = tCanvas.offsetWidth; tCanvas.height = tCanvas.offsetHeight;
     tCtx.clearRect(0,0,tCanvas.width, tCanvas.height);
     tCtx.strokeStyle = '#d4af37'; tCtx.lineWidth = 1;
     tCtx.beginPath();
     
-    // Mouse velocity spikes amplitude
     const amp = 30 + (mouseVelocity * 0.8) + ripple;
     const noise = mouseVelocity * 0.2;
-    mouseVelocity *= 0.95; // Decay
+    mouseVelocity *= 0.95; 
     if(ripple > 0) ripple -= 2;
     
     for(let i=0; i<tCanvas.width; i+=2) {
@@ -473,6 +504,7 @@ function drawTelemetry(t) {
 const rCanvas = document.getElementById('radarCanvas');
 const rCtx = rCanvas.getContext('2d');
 function drawRadar(t) {
+    if(!systemBooted) return;
     rCanvas.width = 40; rCanvas.height = 40;
     rCtx.clearRect(0,0,40,40);
     rCtx.translate(20,20);
@@ -488,19 +520,19 @@ function drawRadar(t) {
 // Hardware Sync (Battery)
 if(navigator.getBattery) {
     navigator.getBattery().then(bat => {
-        const up = () => document.getElementById('integrity-val').innerText = (bat.level * 100).toFixed(0) + "%";
+        const up = () => { document.getElementById('integrity-val').innerText = (bat.level * 100).toFixed(0) + "%"; }
         bat.addEventListener('levelchange', up); up();
     });
 }
 
 populate(); 
-drawTelemetry(0);
-drawRadar(0);
 
 // Global Entropy & Burn-in
 let sessionHeat = 0;
 setInterval(() => {
     document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    if(!systemBooted) return;
+
     const entropy = Math.random()*100;
     document.getElementById('entropy-fill').style.width = entropy + "%";
     
