@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <title>THE BUREAU // NODE_7 // TERMINUS</title>
     <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <!-- IMPORT THREE.JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         :root {
             /* 1984 / BRAZIL / DARK ANALOG PALETTE */
@@ -132,9 +134,11 @@
         .fs-item.active .fs-item-desc { opacity: 0.9; }
         .fs-item.active .fs-action-btn { border-color: var(--accent); }
 
-        #svg-stage { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 2px solid var(--accent-dim); padding: 10px; overflow: hidden; position: relative; }
-        svg { width: 100%; height: 100%; filter: drop-shadow(0 0 8px rgba(197, 160, 89, 0.3)); }
+        #svg-stage { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 2px solid var(--accent-dim); padding: 1px; overflow: hidden; position: relative; }
         
+        /* 3D Canvas Styling */
+        #project-3d-canvas { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 10px rgba(197, 160, 89, 0.2)); }
+
         .project-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; mix-blend-mode: luminosity; display: none; filter: contrast(1.2) sepia(0.5); }
 
         /* Terminal Input Area */
@@ -248,7 +252,12 @@
                 </div>
                 <div id="svg-stage">
                     <img id="project-real-img" class="project-image" src="" alt="Project Image">
-                    <div id="project-svg-container" style="width: 100%; height: 100%;"></div>
+                    
+                    <!-- NEW 3D CANVAS INSTEAD OF SVG -->
+                    <canvas id="project-3d-canvas"></canvas>
+                    
+                    <!-- Container for Dossier SVG only -->
+                    <div id="project-svg-container" style="width: 100%; height: 100%; display:none; position: absolute; top:0; left:0; padding:10px;"></div>
                 </div>
                 <div style="padding:15px; flex: 1; display: flex; flex-direction: column; background: #050404;">
                     <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px; font-size: 12px; font-weight: bold;">--</h2>
@@ -303,7 +312,126 @@
     </div>
 
 <script>
-/* --- DATA & CONFIG WITH HIGHLY DETAILED SVGS --- */
+/* --- 3D ENGINE SETUP (FOR MANIFEST PREVIEW) --- */
+let previewScene, previewCamera, previewRenderer, previewMesh, previewWireframe;
+const previewUniforms = {
+    time: { value: 0 },
+    speed: { value: 1.0 },
+    intensity: { value: 0.4 },
+    glitchColor: { value: new THREE.Color(0xc5a059) } // Default Brass
+};
+
+function init3DViewer() {
+    const canvas = document.getElementById('project-3d-canvas');
+    const container = canvas.parentElement;
+    
+    previewRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    previewRenderer.setSize(container.clientWidth, container.clientHeight);
+    
+    previewScene = new THREE.Scene();
+    previewCamera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+    previewCamera.position.z = 4.5;
+
+    const vertexShader = `
+        varying vec2 vUv;
+        varying float vNoise;
+        uniform float time;
+        uniform float speed;
+        uniform float intensity;
+        
+        float hash(float n) { return fract(sin(n) * 1e4); }
+        float noise(vec3 x) {
+            const vec3 step = vec3(110.0, 241.0, 171.0);
+            vec3 i = floor(x);
+            vec3 f = fract(x);
+            float n = dot(i, step);
+            vec3 u = f * f * (3.0 - 2.0 * f);
+            return mix(mix(mix( hash(n + dot(step, vec3(0, 0, 0))), hash(n + dot(step, vec3(1, 0, 0))), u.x),
+                           mix( hash(n + dot(step, vec3(0, 1, 0))), hash(n + dot(step, vec3(1, 1, 0))), u.x), u.y),
+                       mix(mix( hash(n + dot(step, vec3(0, 0, 1))), hash(n + dot(step, vec3(1, 0, 1))), u.x),
+                           mix( hash(n + dot(step, vec3(0, 1, 1))), hash(n + dot(step, vec3(1, 1, 1))), u.x), u.y), u.z);
+        }
+        
+        void main() {
+            vUv = uv;
+            vNoise = noise(position * 2.0 + (time * speed));
+            vec3 pos = position + normal * (vNoise * intensity);
+            if(pos.y > 0.0) pos.y += pos.y * (sin(time)*0.2 + 0.2); 
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+    `;
+
+    const fragmentShader = `
+        varying float vNoise;
+        uniform float time;
+        uniform vec3 glitchColor;
+        
+        void main() {
+            vec3 c1 = vec3(0.9, 0.95, 0.95); // Bright white/ice
+            vec3 c2 = vec3(0.15, 0.15, 0.15); // Deep shadow
+            
+            float bands = sin(gl_FragCoord.y * 0.1 + time * 10.0);
+            vec3 col = mix(c2, c1, vNoise * 1.5);
+            
+            // Glitch lines using uniform color
+            if(bands > 0.95) col = mix(col, glitchColor, 0.7);
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+        uniforms: previewUniforms,
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        wireframe: false
+    });
+
+    // Default object (Icosahedron = the "white rock")
+    const geometry = new THREE.IcosahedronGeometry(1.2, 32); 
+    previewMesh = new THREE.Mesh(geometry, material);
+    previewScene.add(previewMesh);
+
+    // Add outer wireframe cage
+    previewWireframe = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1.5, 1),
+        new THREE.MeshBasicMaterial({color: 0xc5a059, wireframe: true, transparent: true, opacity: 0.15})
+    );
+    previewScene.add(previewWireframe);
+
+    function animate3D() {
+        requestAnimationFrame(animate3D);
+        previewUniforms.time.value += 0.01;
+        previewMesh.rotation.y += 0.002;
+        previewMesh.rotation.x += 0.001;
+        previewWireframe.rotation.z -= 0.003;
+        previewWireframe.rotation.y -= 0.001;
+        previewRenderer.render(previewScene, previewCamera);
+    }
+    animate3D();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        previewRenderer.setSize(cw, ch);
+        previewCamera.aspect = cw / ch;
+        previewCamera.updateProjectionMatrix();
+    });
+}
+
+function getGeometryForType(type) {
+    switch(type) {
+        case 'cube': return new THREE.BoxGeometry(1.4, 1.4, 1.4, 16, 16, 16);
+        case 'torus': return new THREE.TorusGeometry(0.8, 0.4, 32, 64);
+        case 'tetrahedron': return new THREE.TetrahedronGeometry(1.4, 12);
+        case 'smooth': return new THREE.SphereGeometry(1.2, 64, 64);
+        case 'rock': default: return new THREE.IcosahedronGeometry(1.2, 32);
+    }
+}
+
+
+/* --- DATA & CONFIG WITH 3D MODELS --- */
 const archiveData = [
   { 
     name: "The Apparatus", 
@@ -311,23 +439,7 @@ const archiveData = [
     desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
     url: "#",
     imgText: "> QUERYING CENTRAL DB...\n> CONNECTING...\n> [DATA STREAM INTERCEPTED]\n\n> <span style='color:var(--alert)'>ERR 404: NO VISUAL RECORD FOUND.</span>\n> <span style='color:var(--alert)'>THE APPARATUS HAS BEEN MOVED.</span>",
-    svg: `<svg viewBox="0 0 100 100">
-            <!-- Personalized Ring -->
-            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--accent-dim)" stroke-width="1.5" stroke-dasharray="4 2"/>
-            <text x="50" y="12" font-family="Space Mono" font-size="4" fill="var(--rust)" text-anchor="middle" letter-spacing="1">ARCHITECT: DEON WAL</text>
-            
-            <circle cx="50" cy="50" r="48" fill="none" stroke="var(--accent-dim)" stroke-width="1"/>
-            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 4"/>
-            <g><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/>
-                <circle cx="50" cy="50" r="32" fill="none" stroke="var(--rust)" stroke-width="1.5" stroke-dasharray="15 10 5 10"/>
-                <path d="M50 10 L50 20 M50 80 L50 90 M10 50 L20 50 M80 50 L90 50" stroke="var(--accent)" stroke-width="1.5"/>
-            </g>
-            <g><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="12s" repeatCount="indefinite"/>
-                <polygon points="50,25 70,65 30,65" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
-                <circle cx="50" cy="50" r="10" fill="none" stroke="var(--accent)" stroke-width="0.5"/>
-            </g>
-            <text x="50" y="52" font-family="Space Mono" font-size="6" fill="var(--accent)" text-anchor="middle" font-weight="bold">CS-137</text>
-          </svg>`,
+    model: { type: 'rock', speed: 1.5, intensity: 0.5, glitchColor: 0xc5a059, cageColor: 0xc5a059 }, // Brass rock
     imgUrl: "" 
   },
   { 
@@ -336,30 +448,7 @@ const archiveData = [
     desc: "SVC architecture. Hierarchical spatial mapping.", 
     url: "https://deon-wal.github.io/Substrate-Protocol/", 
     imgText: "> RETRIEVING BLUEPRINT DATA...\n> DECRYPTING SVC ARCHITECTURE...\n> MATCH FOUND.\n\n> <span style='color:var(--blue)'>STATUS: LINKED. READY FOR DEPLOYMENT.</span>",
-    svg: `<svg viewBox="0 0 100 100">
-            <!-- Personalized Tech Text -->
-            <text x="5" y="10" font-family="Space Mono" font-size="4" fill="var(--blue)">SYS.OP: DEON-WAL</text>
-            <text x="5" y="16" font-family="Space Mono" font-size="4" fill="var(--accent-dim)">FW: v.7.4.2</text>
-            
-            <g transform="translate(50, 60) scale(1, 0.5) rotate(45)">
-                <!-- Bottom Grid -->
-                <path d="M-40 -40 L40 -40 L40 40 L-40 40 Z" fill="none" stroke="var(--accent-dim)" stroke-width="1"/>
-                <path d="M-20 -40 L-20 40 M0 -40 L0 40 M20 -40 L20 40" stroke="var(--accent-dim)" stroke-width="0.5"/>
-                <path d="M-40 -20 L40 -20 M-40 0 L40 0 M-40 20 L40 20" stroke="var(--accent-dim)" stroke-width="0.5"/>
-                <!-- Floating Nodes -->
-                <g>
-                    <animate attributeName="transform" type="translate" values="0,0; 0,-30; 0,0" dur="4s" repeatCount="indefinite"/>
-                    <rect x="-25" y="-25" width="50" height="50" fill="rgba(197, 160, 89, 0.1)" stroke="var(--accent)" stroke-width="1.5"/>
-                    <circle cx="0" cy="0" r="5" fill="var(--blue)"/>
-                </g>
-                <g>
-                    <animate attributeName="transform" type="translate" values="0,0; 0,-60; 0,0" dur="6s" repeatCount="indefinite"/>
-                    <rect x="-10" y="-10" width="20" height="20" fill="none" stroke="var(--rust)" stroke-width="2"/>
-                </g>
-                <!-- Connecting Lines -->
-                <line x1="0" y1="0" x2="0" y2="-60" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 2"/>
-            </g>
-          </svg>` 
+    model: { type: 'cube', speed: 0.5, intensity: 0.2, glitchColor: 0x556b2f, cageColor: 0x556b2f }, // Slow green cube
   },
   { 
     name: "D.U.E. Archive", 
@@ -367,20 +456,7 @@ const archiveData = [
     desc: "Department of Unfinished Events. Chronological records vault.", 
     url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/", 
     imgText: "> PINGING D.U.E. MAINFRAME...\n> HANDSHAKE ACCEPTED.\n\n> <span style='color:var(--accent)'>REMOTE UPLINK ESTABLISHED.</span>\n> WAITING FOR USER INPUT...",
-    svg: `<svg viewBox="0 0 100 100">
-            <!-- Personalization -->
-            <text x="50" y="95" font-family="Space Mono" font-size="5" fill="var(--accent-dim)" text-anchor="middle">MAINTAINED BY D.WAL</text>
-
-            <g><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="30s" repeatCount="indefinite"/>
-                <circle cx="50" cy="50" r="45" fill="none" stroke="var(--blue)" stroke-width="3" stroke-dasharray="20 5 5 5"/>
-                <circle cx="50" cy="50" r="38" fill="none" stroke="var(--accent-dim)" stroke-width="1"/>
-            </g>
-            <g><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="20s" repeatCount="indefinite"/>
-                <circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="40 10 10 10"/>
-            </g>
-            <rect x="45" y="45" width="10" height="10" fill="var(--rust)"/>
-            <path d="M50 10 L50 20 M50 80 L50 90 M10 50 L20 50 M80 50 L90 50" stroke="var(--accent)" stroke-width="1"/>
-          </svg>` 
+    model: { type: 'torus', speed: 2.0, intensity: 0.3, glitchColor: 0x4a3b18, cageColor: 0x4a3b18 }, // Fast dark brass ring
   },
   { 
     name: "Anomaly Observatory", 
@@ -388,29 +464,7 @@ const archiveData = [
     desc: "Monitoring spatial irregularities across the Bureau network.", 
     url: "https://deon-wal.github.io/Anomaly-Observatory/", 
     imgText: "> ACCESSING LIVE FEED...\n> CALIBRATING SENSORS...\n\n> <span style='color:var(--alert)'>WARNING: PHASE SHIFT DETECTED IN SECTOR 4.</span>\n> RECOMMEND IMMEDIATE EVACUATION.",
-    svg: `<svg viewBox="0 0 100 100">
-            <!-- Personalization Overlays -->
-            <text x="5" y="95" font-family="Space Mono" font-size="4" fill="var(--accent)">D.WAL // SECTOR_CMD</text>
-
-            <circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent-dim)" stroke-width="1"/>
-            <circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent-dim)" stroke-width="0.5"/>
-            <circle cx="50" cy="50" r="15" fill="none" stroke="var(--accent-dim)" stroke-width="0.5"/>
-            <line x1="50" y1="5" x2="50" y2="95" stroke="var(--accent-dim)" stroke-width="0.5"/>
-            <line x1="5" y1="50" x2="95" y2="50" stroke="var(--accent-dim)" stroke-width="0.5"/>
-            
-            <g><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="4s" repeatCount="indefinite"/>
-                <path d="M50 50 L50 5 A45 45 0 0 1 85 20 Z" fill="rgba(197, 160, 89, 0.2)"/>
-                <line x1="50" y1="50" x2="50" y2="5" stroke="var(--accent)" stroke-width="2"/>
-            </g>
-            
-            <circle cx="70" cy="30" r="3" fill="var(--alert)">
-                <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
-            </circle>
-            <circle cx="30" cy="65" r="2" fill="var(--blue)">
-                <animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite"/>
-            </circle>
-            <text x="75" y="28" font-family="Space Mono" font-size="4" fill="var(--alert)">OBJ-99</text>
-          </svg>` 
+    model: { type: 'tetrahedron', speed: 3.5, intensity: 0.8, glitchColor: 0x8b3a2b, cageColor: 0x8b3a2b }, // Violent rust glitch
   },
   { 
     name: "Kernel Diagnostics", 
@@ -418,26 +472,7 @@ const archiveData = [
     desc: "Diagnostic sandbox for kernel verification.", 
     url: "https://deon-wal.github.io/Test/Test.html", 
     imgText: "> RUNNING DIAGNOSTICS...\n> CHECKING MEMORY ALLOCATION...\n> VERIFYING INTEGRITY...\n\n> <span style='color:var(--blue)'>ALL SYSTEMS NOMINAL.</span>",
-    svg: `<svg viewBox="0 0 100 100">
-            <!-- Details -->
-            <text x="50" y="10" font-family="Space Mono" font-size="5" fill="var(--accent-dim)" text-anchor="middle">KERNEL AUTH: DEON-WAL</text>
-
-            <rect x="15" y="15" width="70" height="70" fill="none" stroke="var(--accent-dim)" stroke-width="1"/>
-            <rect x="35" y="35" width="30" height="30" fill="rgba(197, 160, 89, 0.1)" stroke="var(--accent)" stroke-width="2"/>
-            
-            <!-- Circuit Lines -->
-            <path d="M35 50 H15 M65 50 H85 M50 35 V15 M50 65 V85" stroke="var(--accent)" stroke-width="1.5"/>
-            <path d="M35 40 H25 V25 H15 M65 40 H75 V25 H85 M35 60 H25 V75 H15 M65 60 H75 V75 H85" stroke="var(--blue)" stroke-width="1"/>
-            
-            <!-- Pulsing Data Nodes -->
-            <circle cx="25" cy="25" r="3" fill="var(--rust)">
-                <animate attributeName="r" values="3;5;3" dur="1s" repeatCount="indefinite"/>
-            </circle>
-            <circle cx="75" cy="75" r="3" fill="var(--rust)">
-                <animate attributeName="r" values="3;5;3" dur="1.2s" repeatCount="indefinite"/>
-            </circle>
-            <text x="50" y="52" font-family="Space Mono" font-size="6" fill="var(--accent)" text-anchor="middle">CPU</text>
-          </svg>` 
+    model: { type: 'smooth', speed: 0.2, intensity: 0.1, glitchColor: 0xd1c7b7, cageColor: 0xc5a059 }, // Calm white sphere
   }
 ];
 
@@ -446,6 +481,7 @@ let typeInterval = null;
 
 /* --- INTERFACE LOGIC & BOOT MEMORY --- */
 window.onload = () => {
+    init3DViewer();
     // Check if the user has booted the terminal before
     if (localStorage.getItem('bureau_booted') === 'true') {
         unlockSystem(true); // Fast bypass
@@ -493,6 +529,9 @@ function unlockSystem(fastBoot = false) {
     systemBooted = true;
     document.getElementById('boot-modal').classList.add('hidden');
     document.getElementById('os-panels').classList.add('booted');
+    
+    // Fix resize glitch for 3D canvas when flexbox becomes visible
+    window.dispatchEvent(new Event('resize'));
     
     if(!fastBoot) {
         document.body.classList.add('rumble');
@@ -606,15 +645,32 @@ function populate() {
             
             const realImg = document.getElementById('project-real-img');
             const svgContainer = document.getElementById('project-svg-container');
+            const canvas3d = document.getElementById('project-3d-canvas');
             
             if(item.imgUrl && item.imgUrl !== "") {
                 realImg.src = item.imgUrl;
                 realImg.style.display = "block";
                 svgContainer.style.display = "none";
+                canvas3d.style.display = "none";
             } else {
                 realImg.style.display = "none";
-                svgContainer.style.display = "block";
-                svgContainer.innerHTML = item.svg;
+                svgContainer.style.display = "none";
+                canvas3d.style.display = "block";
+                
+                // Update 3D Model Parameters based on project data
+                if(item.model && previewMesh) {
+                    previewMesh.geometry.dispose(); // clean old
+                    previewWireframe.geometry.dispose();
+                    
+                    const newGeo = getGeometryForType(item.model.type);
+                    previewMesh.geometry = newGeo;
+                    previewWireframe.geometry = getGeometryForType(item.model.type === 'smooth' ? 'rock' : item.model.type); // Give smooth a rock cage
+                    
+                    previewUniforms.speed.value = item.model.speed;
+                    previewUniforms.intensity.value = item.model.intensity;
+                    previewUniforms.glitchColor.value.setHex(item.model.glitchColor);
+                    previewWireframe.material.color.setHex(item.model.cageColor);
+                }
             }
             addLog(`MOUNTING: ${item.id}`);
         };
@@ -659,15 +715,16 @@ function populate() {
         
         document.getElementById('obj-title').innerText = ">> DOSSIER: SUBJECT_001";
         
-        const dossierText = "> NAME: DEON WAL\n> ROLE: UI/UX ARCHITECT\n> CLEARANCE: OMEGA\n> STATUS: ACTIVE\n\n> <span style='color:var(--accent)'>KNOWN PROTOCOLS (SKILLS):</span>\n> - FRONTEND ARCHITECTURE\n> - SYSTEM ENGINEERING\n> - SPATIAL DESIGN\n> - ANOMALY CONTAINMENT\n\n> <span style='color:var(--alert)'>WARNING: SUBJECT IS HIGHLY VOLATILE.</span>";
+        const dossierText = "> NAME: DEON WAL\n> ROLE: UI/UX ARCHITECT\n> CLEARANCE: OMEGA\n> STATUS: ACTIVE\n\n> <span style='color:var(--accent)'>KNOWN PROTOCOLS (SKILLS):</span>\n> - FRONTEND ARCHITECTURE\n> - SYSTEM ENGINEERING\n> - SPATIAL DESIGN\n> - 3D / WEBGL SYSTEMS\n\n> <span style='color:var(--alert)'>WARNING: SUBJECT IS HIGHLY VOLATILE.</span>";
         typeText(document.getElementById('obj-logs'), dossierText);
         
         const svgContainer = document.getElementById('project-svg-container');
         document.getElementById('project-real-img').style.display = "none";
+        document.getElementById('project-3d-canvas').style.display = "none";
         svgContainer.style.display = "block";
         
         // A Personalized Gritty ID Badge SVG
-        svgContainer.innerHTML = `<svg viewBox="0 0 100 100">
+        svgContainer.innerHTML = `<svg viewBox="0 0 100 100" style="width:100%; height:100%; filter: drop-shadow(0 0 8px rgba(139, 58, 43, 0.3));">
             <rect x="20" y="10" width="60" height="80" fill="rgba(139, 58, 43, 0.1)" stroke="var(--rust)" stroke-width="2"/>
             <rect x="30" y="20" width="40" height="35" fill="none" stroke="var(--accent-dim)" stroke-width="1" stroke-dasharray="2 2"/>
             <!-- Avatar Silhouette -->
