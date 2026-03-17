@@ -100,9 +100,12 @@
         #cli-input:focus { border-color: var(--accent); background: #0a0908; }
         #log-stream { height: 100px; font-size: 9px; color: var(--text); padding: 10px; overflow: hidden; font-family: 'Space Mono'; }
 
-        .img-container { padding: 15px; font-family: 'Space Mono'; font-size: 10px; overflow-y: auto; max-height: 220px; color: var(--text); line-height: 1.6; }
+        /* WIRETAP CONTAINER */
+        .img-container { padding: 15px; font-family: 'Space Mono'; font-size: 10px; overflow-y: auto; max-height: 220px; color: var(--text); line-height: 1.6; background: #030303; }
         .img-container strong { color: var(--accent); }
         .img-container .alert-text { color: var(--alert); }
+        .cursor-blink::after { content: '█'; animation: blink 1s step-end infinite; color: var(--accent); }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         /* HEAVIER CRT GRIME */
         .crt::after {
@@ -130,7 +133,7 @@
         @media (max-width: 800px) {
             .window { width: 90vw !important; left: 5vw !important; }
             #win-nav { top: 80px; }
-            #win-cctv { top: 380px; left: 5vw !important; }
+            #win-cctv { top: 380px; }
             #win-img { top: 620px; }
             #win-man { display: none; }
             #win-cli { top: 920px; bottom: 40px !important; }
@@ -157,7 +160,7 @@
                 <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-size: 10px; font-weight: bold;">00:00:00</div>
             </div>
 
-            <div class="window drag" id="win-nav" style="top:80px; left:20px; width:400px;">
+            <div class="window drag" id="win-nav" style="top:80px; left:20px; width:380px;">
                 <div class="window-header">REGISTRY_VOL_I <span>[DRAG]</span></div>
                 <div id="nav-list"></div>
                 <div style="padding:15px; border-top:1px solid var(--accent-dim); background:#0a0908;">
@@ -166,23 +169,23 @@
                 </div>
             </div>
 
-            <div class="window drag" id="win-cctv" style="top:80px; left:440px; width:calc(100% - 880px); min-width: 320px;">
+            <div class="window drag" id="win-cctv" style="top:80px; left:420px; width:calc(100% - 860px); min-width: 300px;">
                 <div class="window-header">SECURITY_FEED_04 <span>[DRAG]</span></div>
-                <canvas id="cctvCanvas" style="width: 100%; height: 180px; background: #000; border-bottom: 2px solid var(--accent-dim);"></canvas>
+                <canvas id="cctvCanvas" style="width: 100%; height: 160px; background: #000; border-bottom: 2px solid var(--accent-dim);"></canvas>
                 <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent-dim); background: #000; display: flex; justify-content: space-between;">
                     <span>STATUS: SIGNAL DEGRADED</span>
                     <span id="cctv-time">--:--</span>
                 </div>
             </div>
 
-            <div class="window drag" id="win-img" style="top:320px; left:440px; width:calc(100% - 880px); height: 260px;">
-                <div class="window-header">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
-                <div class="img-container" id="imaging-output">
+            <div class="window drag" id="win-img" style="top:295px; left:420px; width:calc(100% - 860px); height: 235px; min-width: 300px;">
+                <div class="window-header">WIRETAP_TRANSCRIPTS <span>[DRAG]</span></div>
+                <div class="img-container cursor-blink" id="imaging-output">
                     > SYSTEM BOOT REQUIRED.<br>> AWAITING PROTOCOL SELECTION...
                 </div>
             </div>
 
-            <div class="window drag" id="win-man" style="top:80px; right:20px; width:420px;">
+            <div class="window drag" id="win-man" style="top:80px; right:20px; width:400px;">
                 <div class="window-header">MANIFEST_ANALYSIS <span>[DRAG]</span></div>
                 <div id="svg-stage"></div>
                 <div style="padding:20px;">
@@ -219,60 +222,54 @@ const archiveData = [
   { 
     name: "The Apparatus", 
     id: "apparatus", 
-    freq: 55,
     desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
-    imgText: "> QUERYING VISUAL DATABASE...<br>> <span class='alert-text'>ERR: NO VISUAL RECORD FOUND.</span>",
+    imgText: "> QUERYING CENTRAL DATABASE...\n> CONNECTING...\n> [DATA STREAM INTERCEPTED]\n\n> <span class='alert-text'>ERR 404: NO VISUAL RECORD FOUND.</span>\n> <span class='alert-text'>THE APPARATUS HAS BEEN MOVED.</span>",
     svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--rust)" stroke-width="2" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle><circle cx="50" cy="50" r="25" fill="none" stroke="var(--blue)" stroke-width="1" stroke-dasharray="2 4"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></circle></svg>` 
   },
   { 
     name: "Substrate Protocol", 
     id: "substrate", 
-    freq: 110,
     desc: "SVC architecture. Hierarchical spatial mapping.", 
     url: "https://deon-wal.github.io/Substrate-Protocol/", 
-    imgText: "> RETRIEVING BLUEPRINT DATA...<br><br><strong>STATUS: LINKED</strong>",
+    imgText: "> RETRIEVING BLUEPRINT DATA...\n> DECRYPTING SVC ARCHITECTURE...\n> MATCH FOUND.\n\n> <strong>STATUS: LINKED. READY FOR DEPLOYMENT.</strong>",
     svg: `<svg viewBox="0 0 100 100"><g transform="translate(50, 75) scale(1, 0.45) rotate(45)"><rect x="-35" y="-35" width="70" height="70" fill="rgba(197, 160, 89, 0.05)" stroke="var(--accent)" stroke-width="1.5"/><rect x="-35" y="-65" width="70" height="70" fill="rgba(139, 58, 43, 0.1)" stroke="var(--rust)" stroke-width="1.5"><animate attributeName="y" values="-65;-80;-65" dur="3s" repeatCount="indefinite"/></rect></g></svg>` 
   },
   { 
     name: "D.U.E. Archive", 
     id: "due", 
-    freq: 44,
     desc: "Department of Unfinished Events. Chronological records vault.", 
     url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/", 
-    imgText: "> <span class='alert-text'>REMOTE UPLINK ESTABLISHED.</span>",
+    imgText: "> PINGING D.U.E. MAINFRAME...\n> HANDSHAKE ACCEPTED.\n\n> <span class='alert-text'>REMOTE UPLINK ESTABLISHED.</span>\n> WAITING FOR USER INPUT...",
     svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--blue)" stroke-width="1.5"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="1"><animate attributeName="stroke-dasharray" values="0,100;100,0" dur="2s" repeatCount="indefinite"/></path></svg>` 
   },
   { 
     name: "Anomaly Observatory", 
     id: "observatory", 
-    freq: 72,
     desc: "Monitoring spatial irregularities across the Bureau network.", 
     url: "https://deon-wal.github.io/Anomaly-Observatory/", 
-    imgText: "> ACCESSING LIVE FEED...<br>> <span class='alert-text'>WARNING: PHASE SHIFT DETECTED.</span>",
+    imgText: "> ACCESSING LIVE FEED...\n> CALIBRATING SENSORS...\n\n> <span class='alert-text'>WARNING: PHASE SHIFT DETECTED IN SECTOR 4.</span>\n> RECOMMEND IMMEDIATE EVACUATION.",
     svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1.5"/><circle cx="70" cy="30" r="4" fill="var(--rust)"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="translate" values="0,0; -40,40; 0,0" dur="4s" repeatCount="indefinite"/></circle></svg>` 
   },
   { 
     name: "Kernel Diagnostics", 
     id: "test_node", 
-    freq: 120,
     desc: "Diagnostic sandbox for kernel verification.", 
     url: "https://deon-wal.github.io/Test/Test.html", 
-    imgText: "> RUNNING DIAGNOSTICS...<br>> ALL SYSTEMS NOMINAL.",
+    imgText: "> RUNNING DIAGNOSTICS...\n> CHECKING MEMORY ALLOCATION...\n> VERIFYING INTEGRITY...\n\n> ALL SYSTEMS NOMINAL.",
     svg: `<svg viewBox="0 0 100 100"><path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--accent)" stroke-width="2"/><circle cx="50" cy="50" r="10" fill="var(--blue)" opacity="0.5"><animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite"/></circle></svg>` 
   },
   { 
     name: "Project Noah", 
     id: "noah", 
-    freq: 33,
     desc: "The cycle is complete. Sic Mundus Creatus Est.", 
     hidden: true, 
-    imgText: "> <span class='alert-text'>RESTRICTED PROTOCOL.</span>",
+    imgText: "> <span class='alert-text'>RESTRICTED PROTOCOL.</span>\n> <span class='alert-text'>YOU DO NOT HAVE CLEARANCE TO VIEW THIS RECORD.</span>\n> <span class='alert-text'>THEY ARE COMING.</span>",
     svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="rgba(139,58,43,0.2)" stroke="var(--rust)" stroke-width="2"><animateTransform attributeName="transform" type="rotate" from="0 50 60" to="360 50 60" dur="10s" repeatCount="indefinite"/></path></svg>` 
   }
 ];
 
-/* --- GLOBAL STATE (NO AUDIO) --- */
-let mouseVelocity = 0, lastMousePos = {x: 0, y: 0}, systemBooted = false, activeWin = null, offset = [0,0], sessionHeat = 0, ripple = 0;
+/* --- GLOBAL STATE (CLEANED) --- */
+let systemBooted = false, activeWin = null, offset = [0,0], sessionHeat = 0, typeInterval;
 
 /* --- DRAG LOGIC --- */
 const startDrag = (e, h) => {
@@ -333,6 +330,37 @@ const decryptText = (el, target) => {
     }, 20);
 };
 
+// NEW FEATURE: Dot-Matrix Typewriter Effect
+const typeText = (el, htmlString) => {
+    if(typeInterval) clearInterval(typeInterval);
+    el.innerHTML = '';
+    
+    // We parse the HTML into an array of characters or HTML tags
+    const parts = [];
+    let isTag = false;
+    let currentTag = "";
+    
+    for (let i = 0; i < htmlString.length; i++) {
+        const char = htmlString[i];
+        if (char === '<') { isTag = true; currentTag = char; }
+        else if (char === '>') { isTag = false; currentTag += char; parts.push(currentTag); currentTag = ""; }
+        else if (isTag) { currentTag += char; }
+        else if (char === '\n') { parts.push('<br>'); }
+        else { parts.push(char); }
+    }
+
+    let i = 0;
+    typeInterval = setInterval(() => {
+        if (i < parts.length) {
+            el.innerHTML += parts[i];
+            el.scrollTop = el.scrollHeight; // Auto-scroll
+            i++;
+        } else {
+            clearInterval(typeInterval);
+        }
+    }, 25); // Speed of typing
+};
+
 function populate() {
     const list = document.getElementById('nav-list');
     list.innerHTML = '';
@@ -344,10 +372,14 @@ function populate() {
             if(!systemBooted) return;
             document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
             d.classList.add('active');
+            
             decryptText(document.getElementById('obj-title'), item.name);
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
-            decryptText(document.getElementById('imaging-output'), item.imgText);
+            
+            // Trigger the new Typewriter effect instead of instant decryption
+            typeText(document.getElementById('imaging-output'), item.imgText);
+            
             const btn = document.getElementById('action-btn');
             if(item.url) {
                 btn.innerText = "LAUNCH_REMOTE_PROTOCOL";
@@ -445,12 +477,6 @@ if(navigator.getBattery) {
     });
 }
 
-document.addEventListener('mousemove', e => {
-    if(!systemBooted) return;
-    mouseVelocity = Math.min(100, Math.sqrt(Math.abs(e.clientX - lastMousePos.x)**2 + Math.abs(e.clientY - lastMousePos.y)**2));
-    lastMousePos = {x: e.clientX, y: e.clientY};
-});
-
 setInterval(() => {
     document.getElementById('clock').innerText = new Date().toLocaleTimeString();
     if(!systemBooted) return;
@@ -478,8 +504,11 @@ function startAnomalySystem() {
             setTimeout(() => document.body.classList.remove('rumble'), 800);
             const randomMsg = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
             addLog(randomMsg);
-            mouseVelocity += 150; 
-            ripple = 200;
+            
+            // Randomly intercept the wiretap when an anomaly happens
+            if(Math.random() > 0.5) {
+                typeText(document.getElementById('imaging-output'), "> <span class='alert-text'>INTERCEPT: SIGNAL DEGRADED</span>\n> <span class='alert-text'>DO NOT TRUST THE MANIFEST.</span>");
+            }
         }
     }, 5000); 
 }
