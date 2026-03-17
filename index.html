@@ -433,6 +433,61 @@ setInterval(() => {
 }, 1000);
 
 populate();
+    /* --- NEW FEATURE: AMBIENT ANOMALIES --- */
+// This runs in the background and occasionally glitches the system
+function startAnomalySystem() {
+    const creepyMessages = [
+        "<span class='alert-text'>WARN: UNKNOWN CONNECTION ON PORT 8042</span>",
+        "AUDIO_BUFFER_OVERFLOW // THEY ARE LISTENING",
+        "PROTOCOL_BREACH: NODE_7 IS COMPROMISED",
+        "<span style='color:#fff'>WHERE IS WINDEN?</span>",
+        "ERR: CHRONO-SYNC FAILED. TIME DRIFT DETECTED."
+    ];
+
+    setInterval(() => {
+        if (!systemBooted) return;
+        
+        // 15% chance every 5 seconds to trigger an anomaly
+        if (Math.random() < 0.15) {
+            // 1. Rumble the screen heavily
+            document.body.classList.add('rumble');
+            setTimeout(() => document.body.classList.remove('rumble'), 800);
+            
+            // 2. Add a cryptic log
+            const randomMsg = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
+            addLog(randomMsg);
+            
+            // 3. Play a low, unsettling audio pulse without overriding the main osc
+            if(audioCtx) {
+                const pulse = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                pulse.type = 'sawtooth';
+                pulse.frequency.setValueAtTime(30, audioCtx.currentTime); // Deep bass
+                pulse.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
+                
+                pulse.connect(gain);
+                gain.connect(audioCtx.destination);
+                pulse.start();
+                pulse.stop(audioCtx.currentTime + 1);
+            }
+            
+            // 4. Spike the radar and wave visually
+            mouseVelocity += 150; 
+            ripple = 200;
+        }
+    }, 5000); // Checks every 5 seconds
+}
+
+// Hook it into your existing unlock function!
+const originalUnlock = unlockSystem;
+unlockSystem = function() {
+    originalUnlock(); // Do everything your original function did
+    startAnomalySystem(); // Start our new creepy background loop
+    addLog("ANOMALY_MONITOR: ONLINE.");
+};
+/* --- END OF NEW FEATURE --- */
 </script>
 </body>
 </html>
