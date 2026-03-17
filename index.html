@@ -18,46 +18,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;900&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
-        body { 
-            background: var(--bg); color: var(--text); 
-            font-family: 'Inter', sans-serif; overflow: hidden; 
-            height: 100vh;
-        }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
 
-        /* --- CRT EFFECT & SCANLINES --- */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%),
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            background-size: 100% 4px, 4px 100%; z-index: 1000; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; z-index: 1000; pointer-events: none;
         }
 
-        /* --- STAGE 1: THE FLASHLIGHT LANDING --- */
         #view-landing {
             position: fixed; inset: 0; z-index: 100;
-            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                        rgba(212, 175, 55, 0.18) 0%, 
-                        rgba(0,0,0,1) 22%);
-            transition: opacity 1s ease;
-            display: flex; flex-direction: column; overflow-y: auto;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(212, 175, 55, 0.15) 0%, rgba(0,0,0,1) 25%);
+            transition: opacity 1s ease; display: flex; flex-direction: column;
         }
 
-        nav { padding: 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
-        .logo { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 8px; color: var(--accent); text-decoration: none; font-size: 1.5rem; }
-        
-        .directory-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1px; background: rgba(212, 175, 55, 0.1); width: 100%; max-width: 1200px; margin: 60px auto; border: 1px solid rgba(212, 175, 55, 0.1);
-        }
-        .dir-item { background: var(--bg); padding: 40px; transition: 0.4s; text-align: left; }
-        .dir-item h3 { font-weight: 300; letter-spacing: 2px; margin-bottom: 10px; color: #fff; text-transform: uppercase; }
-        .dir-link { font-family: 'Space Mono'; font-size: 10px; color: var(--accent); text-decoration: none; cursor: pointer; border: 1px solid var(--accent); padding: 5px 10px; }
-
-        /* --- STAGE 2: THE TERMINAL --- */
         #view-terminal { position: fixed; inset: 0; opacity: 0; pointer-events: none; z-index: 5; background: #050505; }
         .app-container { display: grid; grid-template-columns: 320px 1fr 420px; grid-template-rows: 60px 1fr 180px; height: 100vh; gap: 10px; padding: 10px; }
         
-        .panel { background: var(--panel); border: 1px solid var(--rust); display: flex; flex-direction: column; overflow: hidden; }
+        .panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; }
         .panel-header { padding: 10px; background: var(--rust); color: var(--accent); font-size: 10px; font-family: 'Space Mono'; font-weight: bold; display: flex; justify-content: space-between; }
 
         #nav-list { overflow-y: auto; flex: 1; }
@@ -66,15 +44,14 @@
         .nav-item.active { border-left: 4px solid var(--accent); background: rgba(212, 175, 55, 0.05); }
 
         #svg-stage { height: 260px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--rust); }
-        svg { width: 55%; height: auto; filter: drop-shadow(0 0 10px var(--accent-dim)); }
+        svg { width: 55%; height: auto; }
 
         #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
         #log-stream { font-size: 9px; color: var(--accent); padding: 10px; overflow: hidden; font-family: 'Space Mono'; line-height: 1.5; }
 
-        /* --- BREACH & GLITCH --- */
-        #static-overlay { position: fixed; inset: 0; background: #fff; z-index: 10000; opacity: 0; pointer-events: none; }
-        .emergency { animation: rumble 0.1s infinite; filter: invert(1) contrast(2); }
-        @keyframes rumble { 0% { transform: translate(0,0); } 25% { transform: translate(-3px, 3px); } 100% { transform: translate(0,0); } }
+        #static-overlay { position: fixed; inset: 0; background: #111; z-index: 10000; opacity: 0; pointer-events: none; }
+        .emergency { animation: rumble 0.1s infinite; filter: contrast(1.5) brightness(1.2); }
+        @keyframes rumble { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 100% { transform: translate(0,0); } }
     </style>
 </head>
 <body class="crt">
@@ -82,36 +59,30 @@
 <div id="static-overlay"></div>
 
 <section id="view-landing">
-    <nav>
-        <a href="#" class="logo">THE BUREAU</a>
-        <div style="font-family:'Space Mono'; font-size: 10px; letter-spacing: 2px;">SECURE_NODE_7 // ACTIVE</div>
+    <nav style="padding:40px;">
+        <a href="#" style="font-family:'Space Mono'; color:var(--accent); font-weight:700; letter-spacing:8px; text-decoration:none;">THE BUREAU</a>
     </nav>
-
-    <main style="text-align: center; padding: 10vh 20px;">
-        <h1 style="font-size: 8vw; font-weight: 900; letter-spacing: -5px; color: #fff;">EVERYTHING IS CONNECTED.</h1>
-        <div class="directory-grid" id="landing-grid"></div>
-        <button onclick="initiateBreach()" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:20px 50px; font-family:'Space Mono'; cursor:pointer; font-size:1.2rem; border-radius: 50px;">[ INITIALIZE BREACH ]</button>
+    <main style="text-align: center; margin: auto;">
+        <h1 style="font-size: 6vw; font-weight: 900; letter-spacing: -3px; color: #fff;">EVERYTHING IS CONNECTED.</h1>
+        <div id="landing-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 40px auto; opacity: 0.6;"></div>
+        <button onclick="initiateBreach()" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:15px 40px; font-family:'Space Mono'; cursor:pointer; margin-top:30px;">[ INITIALIZE BREACH ]</button>
     </main>
-
-    <footer style="text-align:center; opacity:0.3; font-size:10px; font-family:'Space Mono'; padding: 40px;">
-        CMD_AUTH: WINDEN_33 // EVERYTHING IS CONNECTED
-    </footer>
 </section>
 
 <section id="view-terminal">
     <div class="app-container">
         <header class="panel" style="grid-column: 1/span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
-            <div style="font-family:'Space Mono'; color:var(--accent); font-weight: bold;">STATION_TAS_7 // AUTH_LEVEL: 5</div>
-            <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-weight: bold;">00:00:00</div>
+            <div style="font-family:'Space Mono'; color:var(--accent); font-weight: bold;">STATION_TAS_7 // AUTH_LEVEL: MASTER</div>
+            <div id="clock" style="font-family:'Space Mono'; color:var(--accent);">00:00:00</div>
         </header>
 
         <aside class="panel">
-            <div class="panel-header">REGISTRY_VOL_I <span>33_CYC</span></div>
+            <div class="panel-header">REGISTRY_VOL_I</div>
             <div id="nav-list"></div>
         </aside>
 
         <main class="panel" style="background:#000;">
-            <div class="panel-header">VOID_OSCILLATION <span>LIVE_FEED</span></div>
+            <div class="panel-header">VOID_OSCILLATION // <span id="tele-meta">SYNC_55HZ</span></div>
             <canvas id="teleCanvas"></canvas>
         </main>
 
@@ -121,15 +92,14 @@
             <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
                 <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom: 10px;">--</h2>
                 <p id="obj-desc" style="font-size: 11px; line-height: 1.6; opacity: 0.8; height: 80px;"></p>
-                <button id="action-btn" style="margin-top:auto; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:12px; font-family:'Space Mono'; cursor:pointer;">INITIALIZE_SCAN</button>
+                <button id="action-btn" style="margin-top:auto; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:12px; font-family:'Space Mono'; cursor:pointer;">SCAN_ANOMALY</button>
             </div>
         </aside>
 
         <footer class="panel" style="grid-column: 1/span 3; display: grid; grid-template-columns: 1fr 450px; padding: 15px; background: #080807; gap: 20px;">
-            <div id="log-stream"></div>
+            <div id="log-stream" style="overflow: hidden;"></div>
             <div>
-                <div style="font-size:9px; opacity:0.4; margin-bottom:5px; font-family:'Space Mono';">CMD: MEMO [TXT], LOGS, CLEAR, PURGE, WINDEN_33</div>
-                <input type="text" id="cli-input" placeholder="ENTER AUTHORIZATION..." autocomplete="off">
+                <input type="text" id="cli-input" placeholder="MEMO, LOGS, CLEAR..." autocomplete="off">
             </div>
         </footer>
     </div>
@@ -137,62 +107,69 @@
 
 <script>
 /* ========================================
-   1. THE MASTER DATA (8 PROJECTS)
+   DATA ARCHIVE
    ======================================== */
 const archiveData = [
-  { id: "apparatus", name: "The Apparatus", desc: "Dual-chamber brass device utilizing Cesium-137. Key for localized transit.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></svg>` },
-  { id: "substrate", name: "Substrate Protocol", desc: "Recursive data architecture for visual telemetry. Deep-layer mapping.", url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="0.5"/><line x1="10" y1="10" x2="90" y2="90" stroke="var(--accent)" stroke-width="0.2"/></svg>` },
-  { id: "due", name: "D.U.E.", name_full: "Department of Unfinished Events", desc: "Central repository for chronologically displaced records.", url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
-  { id: "obs", name: "Anomaly Observatory", desc: "Live monitoring of seismic and solar collapse.", url: "Anomaly-Observatory/", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="5;25;5" dur="4s" repeatCount="indefinite"/></circle></svg>` },
-  { id: "higgs", name: "Higgs Field", desc: "Visible manifestation of the God Particle. Magnetic containment fluctuating.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="15" fill="var(--accent)"><animate attributeName="opacity" values="1;0.2;1" dur="1s" repeatCount="indefinite"/></circle></svg>` },
-  { id: "caves", name: "Passage 33", desc: "Geological survey of Winden Cave system. Inter-temporal tunnel located.", svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>` },
-  { id: "tablet", name: "Emerald Tablet", desc: "Ancient hermetic text. Found engraved on the bunker doors.", svg: `<svg viewBox="0 0 100 100"><rect x="25" y="25" width="50" height="50" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M25 25 L75 75 M75 25 L25 75" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
-  { id: "noah", name: "Project Noah", desc: "The cycle is complete. Sic Mundus Creatus Est.", hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="1.5"/></svg>` }
+  { name: "The Apparatus", id: "apparatus", desc: "Dual-chamber brass device utilizing Cesium-137. Key for transit.", freq: 55, amp: 40, type: 'sawtooth', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle></svg>` },
+  { name: "Substrate Protocol", id: "substrate", desc: "Recursive data architecture for visual telemetry.", freq: 110, amp: 80, type: 'sine', url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
+  { name: "D.U.E.", id: "due", desc: "Department of Unfinished Events. Chronological displaced records.", freq: 44, amp: 20, type: 'square', url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
+  { name: "Anomaly Observatory", id: "obs", desc: "Live monitoring of seismic/solar collapse.", freq: 88, amp: 100, type: 'triangle', url: "Anomaly-Observatory/", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="10;30;10" dur="4s" repeatCount="indefinite"/></circle></svg>` },
+  { name: "Project Noah", id: "noah", desc: "The cycle is complete. Sic Mundus.", freq: 33, amp: 150, type: 'sawtooth', hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="1.5"/></svg>` }
 ];
 
 /* ========================================
-   2. CORE SYSTEM ENGINE
+   REACTIVE ENGINES
    ======================================== */
-const flashlight = document.getElementById('view-landing');
+let audioCtx, mainOsc, mainGain;
+let currentFreq = 55;
+let currentAmp = 40;
+
+const decryptText = (element, target) => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#@%&*0123456789";
+    let iterations = 0;
+    const interval = setInterval(() => {
+        element.innerText = target.split("").map((char, index) => {
+            if(index < iterations) return target[index];
+            return chars[Math.floor(Math.random() * chars.length)];
+        }).join("");
+        if(iterations >= target.length) clearInterval(interval);
+        iterations += 1/3;
+    }, 30);
+};
+
+function startAudio(freq = 55, type = 'sine') {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(mainOsc) mainOsc.stop();
+    mainOsc = audioCtx.createOscillator();
+    mainGain = audioCtx.createGain();
+    mainOsc.type = type;
+    mainOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    mainGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400;
+    mainOsc.connect(mainGain); mainGain.connect(filter); filter.connect(audioCtx.destination);
+    mainOsc.start();
+}
+
 document.addEventListener('mousemove', e => {
-    flashlight.style.setProperty('--x', e.clientX + 'px');
-    flashlight.style.setProperty('--y', e.clientY + 'px');
+    document.getElementById('view-landing').style.setProperty('--x', e.clientX + 'px');
+    document.getElementById('view-landing').style.setProperty('--y', e.clientY + 'px');
 });
 
-// Audio & Breach
-let audioCtx;
-function startAudio() {
-    if(audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.type = 'sawtooth'; osc.frequency.value = 40;
-    g.gain.value = 0.05;
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start();
-}
-
 function initiateBreach() {
-    startAudio();
+    startAudio(archiveData[0].freq, archiveData[0].type);
     const ov = document.getElementById('static-overlay');
+    ov.style.opacity = '0.8';
     document.body.classList.add('emergency');
-    ov.style.opacity = '1';
-    let f = 0;
-    const g = setInterval(() => {
-        ov.style.background = f % 2 === 0 ? '#fff' : '#000';
-        if(f++ > 15) {
-            clearInterval(g);
-            ov.style.opacity = '0';
-            document.getElementById('view-landing').style.display = 'none';
-            document.getElementById('view-terminal').style.opacity = '1';
-            document.getElementById('view-terminal').style.pointerEvents = 'all';
-            document.body.classList.remove('emergency');
-            addLog("STATION_7 LINK ESTABLISHED.");
-        }
-    }, 50);
+    setTimeout(() => {
+        ov.style.opacity = '0';
+        document.getElementById('view-landing').style.display = 'none';
+        document.getElementById('view-terminal').style.opacity = '1';
+        document.getElementById('view-terminal').style.pointerEvents = 'all';
+        document.body.classList.remove('emergency');
+        addLog("SYSTEM_7_BOOT: COMPLETE.");
+    }, 800);
 }
 
-// UI Population
 function populate() {
     const list = document.getElementById('nav-list');
     const grid = document.getElementById('landing-grid');
@@ -200,8 +177,9 @@ function populate() {
 
     archiveData.filter(i => !i.hidden).forEach(item => {
         const card = document.createElement('div');
-        card.className = 'dir-item';
-        card.innerHTML = `<h3>${item.name}</h3><p>${item.desc}</p><a class="dir-link" onclick="initiateBreach()">ACCESS_FILE</a>`;
+        card.style.border = "1px solid rgba(212,175,55,0.2)";
+        card.style.padding = "15px";
+        card.innerHTML = `<div style="font-size:9px; color:var(--accent);">${item.id}</div><div style="font-size:12px;">${item.name}</div>`;
         grid.appendChild(card);
 
         const div = document.createElement('div');
@@ -210,61 +188,53 @@ function populate() {
         div.onclick = () => {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             div.classList.add('active');
-            document.getElementById('obj-title').innerText = item.name_full || item.name;
-            document.getElementById('obj-desc').innerText = item.desc;
+            
+            // Decrypt Effects
+            decryptText(document.getElementById('obj-title'), item.name);
+            decryptText(document.getElementById('obj-desc'), item.desc);
             document.getElementById('svg-stage').innerHTML = item.svg;
-            const btn = document.getElementById('action-btn');
-            if(item.url) { btn.innerText = "LAUNCH_PROTOCOL"; btn.onclick = () => window.open(item.url, '_blank'); }
-            else { btn.innerText = "INITIALIZE_SCAN"; btn.onclick = deepScan; }
-            addLog(`MOUNTING: ${item.id}`);
+            
+            // Sync Telemetry & Audio
+            currentFreq = item.freq;
+            currentAmp = item.amp;
+            document.getElementById('tele-meta').innerText = `SYNC_${item.freq}HZ`;
+            startAudio(item.freq, item.type);
+            addLog(`MOUNTING_${item.id}... [OK]`);
         };
         list.appendChild(div);
     });
 }
 
-function addLog(msg) {
-    const s = document.getElementById('log-stream');
-    const d = document.createElement('div');
-    d.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
-    s.prepend(d);
-}
-
-function deepScan() {
-    document.body.style.filter = "brightness(3) invert(1)";
-    addLog("PERFORMING_DEEP_VOID_SCAN...");
-    setTimeout(() => document.body.style.filter = "none", 150);
-}
-
-// Persistent Memos & CLI
 const cli = document.getElementById('cli-input');
 cli.onkeydown = (e) => {
     if(e.key === 'Enter') {
-        const val = cli.value.trim();
-        const [cmd, ...args] = val.split(' ');
-        const uCmd = cmd.toUpperCase();
-
-        if(uCmd === 'MEMO') {
-            const m = JSON.parse(localStorage.getItem('memos') || '[]');
-            m.push({t: new Date().toLocaleTimeString(), c: args.join(' ')});
-            localStorage.setItem('memos', JSON.stringify(m));
+        const val = cli.value.toUpperCase().trim();
+        if(val.startsWith('MEMO ')) {
+            const m = JSON.parse(localStorage.getItem('b_m') || '[]');
+            m.push({t: new Date().toLocaleTimeString(), c: val.substring(5)});
+            localStorage.setItem('b_m', JSON.stringify(m));
             addLog("MEMO_SAVED.");
-        } else if(uCmd === 'LOGS') {
-            const m = JSON.parse(localStorage.getItem('memos') || '[]');
+        } else if(val === 'LOGS') {
+            const m = JSON.parse(localStorage.getItem('b_m') || '[]');
             m.forEach(i => addLog(`MEMO: ${i.c}`));
-        } else if(uCmd === 'WINDEN_33') {
-            addLog("PROJECT_NOAH_UNLOCKED.");
-            archiveData[7].hidden = false; populate();
-        } else if(uCmd === 'PURGE') {
-            document.body.classList.add('emergency');
-            setTimeout(() => document.body.classList.remove('emergency'), 500);
-        } else if(uCmd === 'CLEAR') {
+        } else if(val === 'WINDEN_33') {
+            addLog("AUTH_SUCCESS: NOAH_UNLOCKED.");
+            archiveData[4].hidden = false; populate();
+        } else if(val === 'CLEAR') {
             document.getElementById('log-stream').innerHTML = '';
         }
         cli.value = '';
     }
 };
 
-// Canvas
+function addLog(m) {
+    const s = document.getElementById('log-stream');
+    const d = document.createElement('div');
+    d.style.color = "var(--accent)";
+    d.innerText = `[${new Date().toLocaleTimeString()}] > ${m}`;
+    s.prepend(d);
+}
+
 const canvas = document.getElementById('teleCanvas');
 const ctx = canvas.getContext('2d');
 function draw(t) {
@@ -273,7 +243,8 @@ function draw(t) {
     ctx.strokeStyle = '#d4af37';
     ctx.beginPath();
     for(let i=0; i<canvas.width; i+=2) {
-        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * 50 + (Math.random() * 5);
+        // Wave reacts to currentFreq and currentAmp
+        const y = canvas.height/2 + Math.sin(i * (currentFreq / 2000) + t * 0.002) * currentAmp + (Math.random() * 5);
         ctx.lineTo(i,y);
     }
     ctx.stroke();
