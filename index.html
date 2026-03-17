@@ -2,1063 +2,347 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>THE BUREAU // SIC MUNDUS // COMMAND CONSOLE</title>
+<title>THE BUREAU // SIC MUNDUS // ARCHIVE_STATION_7</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-/* ============================================================
-   1. CORE THEME ENGINE (DYNAMIC VARIABLES)
-   ============================================================ */
+/* ========================================
+   1. SYSTEM VARS & ROOT
+   ========================================
+*/
 :root {
-  /* Default Theme: 1953 (Amber/Rust CRT) */
   --accent: #d4af37;
-  --accent-glow: rgba(212, 175, 55, 0.4);
-  --bg-core: #0a0908;
-  --panel-bg: rgba(18, 16, 14, 0.85);
-  --panel-border: #3d2b1f;
-  --text-main: #b5ac9a;
-  --text-muted: #6b6456;
-  --alert: #ff453a;
-  --font-mono: 'Space Mono', monospace;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --crt-curve: inset 0 0 60px rgba(0,0,0,0.9);
+  --accent-dim: #5c4a1e;
+  --bg: #0a0a09;
+  --panel: #11100e;
+  --rust: #3d2b1f;
+  --alert: #8b0000;
+  --crt-glow: 0 0 15px rgba(212, 175, 55, 0.2);
+  --text: #9a9483;
 }
 
-/* Theme Variant: 1986 (Neon/VCR) */
-body[data-era="1986"] {
-  --accent: #00f3ff;
-  --accent-glow: rgba(0, 243, 255, 0.4);
-  --bg-core: #050508;
-  --panel-bg: rgba(10, 15, 25, 0.85);
-  --panel-border: #1a2b4c;
-  --text-main: #a3c2ff;
-  --text-muted: #4a6b9c;
-  --alert: #ff0055;
-  --crt-curve: inset 0 0 80px rgba(0,20,40,0.9);
-}
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
 
-/* Theme Variant: 2019 (Sterile/LCD) */
-body[data-era="2019"] {
-  --accent: #ffffff;
-  --accent-glow: rgba(255, 255, 255, 0.3);
-  --bg-core: #0f1115;
-  --panel-bg: rgba(20, 24, 30, 0.85);
-  --panel-border: #333d4d;
-  --text-main: #e2e8f0;
-  --text-muted: #64748b;
-  --alert: #ef4444;
-  --crt-curve: inset 0 0 30px rgba(0,0,0,0.5);
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
-
-/* ============================================================
-   2. RESET, GLOBAL STYLES & SCROLLBARS
-   ============================================================ */
-* { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
-  cursor: crosshair; 
-}
-
+/* ========================================
+   2. GLOBAL ATMOSPHERE
+   ========================================
+*/
+* { box-sizing: border-box; cursor: crosshair; }
 body { 
-  background-color: var(--bg-core); 
-  color: var(--text-main); 
-  font-family: var(--font-sans); 
-  height: 100vh; 
-  overflow: hidden;
-  transition: background-color 0.8s ease;
+  margin: 0; background: var(--bg); color: var(--text); 
+  font-family: 'Space Mono', monospace; overflow: hidden;
+  height: 100vh; text-transform: uppercase; font-size: 10px;
 }
 
-::-webkit-scrollbar { 
-  width: 6px; 
-  height: 6px;
-}
-
-::-webkit-scrollbar-track { 
-  background: rgba(0,0,0,0.2); 
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb { 
-  background: var(--panel-border); 
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover { 
-  background: var(--accent); 
-}
-
-/* ============================================================
-   3. ATMOSPHERIC OVERLAYS
-   ============================================================ */
-#ambient-noise {
-  position: fixed; 
-  inset: 0; 
-  pointer-events: none; 
-  z-index: 0;
+#grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9000;
   background: url('https://grainy-gradients.vercel.app/noise.svg');
-  opacity: 0.12; 
-  mix-blend-mode: overlay;
+  opacity: 0.15; filter: contrast(200%) brightness(120%);
 }
 
-.scanline {
-  position: fixed; 
-  inset: 0; 
-  pointer-events: none; 
-  z-index: 1;
-  background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 51%);
-  background-size: 100% 4px;
+/* CRT SCANLINE RECURSION */
+body::after {
+  content: " "; display: block; position: absolute; inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+  z-index: 8000; pointer-events: none; background-size: 100% 4px, 4px 100%;
 }
 
-#vignette-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  box-shadow: var(--crt-curve);
-  transition: box-shadow 0.8s ease;
+/* ========================================
+   3. BOOT SEQUENCE & LOADING
+   ========================================
+*/
+#boot-wrap {
+  position: fixed; inset: 0; background: #000; z-index: 9999;
+  padding: 60px; color: var(--accent); display: flex; flex-direction: column;
 }
+.boot-line { margin-bottom: 8px; font-size: 12px; height: 1.2em; overflow: hidden; visibility: hidden; }
 
-/* ============================================================
-   4. BOOT SEQUENCE
-   ============================================================ */
-#boot-screen {
-  position: fixed;
-  inset: 0;
-  background-color: #000;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  padding: 60px;
-  font-family: var(--font-mono);
-  color: var(--accent);
-  transition: opacity 1s ease;
-}
-
-.boot-line {
-  font-size: 12px;
-  line-height: 1.6;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: all 0.2s ease;
-}
-
-/* ============================================================
-   5. APP LAYOUT GRID
-   ============================================================ */
-#app-grid {
-  position: relative; 
-  z-index: 10; 
+/* ========================================
+   4. LAYOUT GRID (THE TRI-ERA SYSTEM)
+   ========================================
+*/
+.app-container {
   display: grid;
-  grid-template-columns: 360px 1fr 420px;
-  grid-template-rows: 90px 1fr 220px;
-  gap: 25px; 
-  padding: 25px; 
-  height: 100vh;
-  opacity: 0;
-  transform: scale(1.02);
-  transition: opacity 2s ease, transform 2s ease;
+  grid-template-columns: 350px 1fr 450px;
+  grid-template-rows: 70px 1fr 200px;
+  height: 100vh; gap: 20px; padding: 20px;
+  opacity: 0; transition: opacity 2s ease;
 }
 
-.glass-panel {
-  background: var(--panel-bg); 
-  backdrop-filter: blur(12px); 
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--panel-border); 
-  border-radius: 8px;
-  display: flex; 
-  flex-direction: column; 
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.2);
-  transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
-}
+header { grid-column: 1 / span 3; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--rust); background: var(--panel); padding: 0 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+.panel { background: var(--panel); border: 1px solid var(--rust); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.8); }
+.panel-header { padding: 10px 15px; background: var(--rust); color: var(--accent); font-weight: 700; font-size: 10px; letter-spacing: 3px; display: flex; justify-content: space-between; }
 
-.panel-head {
-  padding: 15px 25px; 
-  border-bottom: 1px solid var(--panel-border);
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center;
-  font-family: var(--font-mono); 
-  font-size: 11px; 
-  font-weight: 700;
-  text-transform: uppercase; 
-  color: var(--accent); 
-  letter-spacing: 2px;
-  background: rgba(0,0,0,0.4); 
-  transition: color 0.5s ease;
-}
-
-/* ============================================================
-   6. HEADER & THE TEMPORAL SLIDER
-   ============================================================ */
-header { 
-  grid-column: 1 / span 3; 
-  flex-direction: row !important; 
-  align-items: center; 
-  padding: 0 40px; 
-  justify-content: space-between; 
-}
-
-.bureau-title { 
-  font-family: var(--font-mono); 
-  font-size: 1.8rem; 
-  font-weight: 700; 
-  color: var(--accent); 
-  letter-spacing: 6px; 
-  transition: color 0.5s ease;
-}
-
-.slider-container { 
-  display: flex; 
-  align-items: center; 
-  gap: 20px; 
-  background: rgba(0,0,0,0.6); 
-  padding: 12px 25px; 
-  border-radius: 40px; 
-  border: 1px solid var(--panel-border); 
-}
-
-.slider-label { 
-  font-family: var(--font-mono); 
-  font-size: 12px; 
-  font-weight: 700; 
-  color: var(--text-muted); 
-  transition: color 0.3s, text-shadow 0.3s; 
-}
-
-.slider-label.active { 
-  color: var(--accent); 
-  text-shadow: 0 0 12px var(--accent-glow); 
-}
-
-input[type=range] {
-  -webkit-appearance: none; 
-  width: 180px; 
-  background: transparent;
-}
-
-input[type=range]:focus { 
-  outline: none; 
-}
-
-input[type=range]::-webkit-slider-runnable-track {
-  width: 100%; 
-  height: 4px; 
-  background: var(--panel-border); 
-  border-radius: 2px;
-  transition: background 0.5s ease;
-}
-
-input[type=range]::-webkit-slider-thumb {
-  height: 18px; 
-  width: 18px; 
-  border-radius: 50%; 
-  background: var(--accent);
-  cursor: pointer; 
-  -webkit-appearance: none; 
-  margin-top: -7px;
-  box-shadow: 0 0 12px var(--accent-glow); 
-  transition: background 0.5s ease, box-shadow 0.5s ease;
-}
-
-/* ============================================================
-   7. NAVIGATION DIRECTORY (LEFT PANEL)
-   ============================================================ */
-.nav-scroll { 
-  flex: 1; 
-  overflow-y: auto; 
-  padding: 10px 0; 
-}
-
+/* ========================================
+   5. NAVIGATION & DIRECTORY
+   ========================================
+*/
+.nav-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; }
 .nav-item {
-  padding: 18px 25px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 6px;
-  border-left: 4px solid transparent; 
-  cursor: pointer; 
-  transition: all 0.2s ease;
-  position: relative;
+  padding: 18px 25px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  transition: 0.3s; cursor: pointer; position: relative;
 }
+.nav-item:hover { background: rgba(212, 175, 55, 0.08); }
+.nav-item.active { background: rgba(212, 175, 55, 0.15); border-left: 5px solid var(--accent); color: #fff; }
+.nav-tag { font-size: 8px; opacity: 0.4; display: block; margin-top: 4px; }
 
-.nav-item:hover { 
-  background: rgba(255,255,255,0.03); 
-  padding-left: 30px;
-}
+/* ========================================
+   6. VISUAL TELEMETRY (CENTER)
+   ========================================
+*/
+.main-viewport { grid-column: 2; background: #030302; border: 3px solid #1a1917; position: relative; }
+canvas { width: 100%; height: 100%; filter: sepia(0.4) contrast(1.2) brightness(0.9); }
+#scanline-v { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: rgba(212,175,55,0.1); animation: scan 8s linear infinite; pointer-events: none; }
+@keyframes scan { from { top: 0; } to { top: 100%; } }
 
-.nav-item.active { 
-  background: rgba(255,255,255,0.06); 
-  border-left-color: var(--accent); 
-}
+/* ========================================
+   7. SCHEMATIC ENGINE (RIGHT)
+   ========================================
+*/
+.schematic-viewer { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; background: radial-gradient(circle, #1a1917 0%, #0a0a09 100%); }
+svg { width: 95%; height: auto; max-height: 350px; filter: drop-shadow(var(--crt-glow)); }
 
-.nav-title { 
-  font-weight: 600; 
-  font-size: 14px; 
-  color: var(--text-main); 
-  letter-spacing: 1px;
-}
-
-.nav-meta { 
-  font-family: var(--font-mono); 
-  font-size: 10px; 
-  color: var(--text-muted); 
-  text-transform: uppercase; 
-}
-
-.nav-item.active .nav-title { 
-  color: var(--accent); 
-}
-
-/* ============================================================
-   8. VISUAL TELEMETRY & SIGNAL CANVAS (CENTER)
-   ============================================================ */
-.monitor { 
-  grid-column: 2; 
-  position: relative; 
-  background: #020202; 
-  border: 2px solid var(--panel-border); 
-}
-
-canvas { 
-  width: 100%; 
-  height: 100%; 
-  opacity: 0.8;
-}
-
-.live-indicator { 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  font-family: var(--font-mono); 
-  font-size: 11px; 
-  color: var(--accent); 
-  position: absolute; 
-  top: 20px; 
-  left: 20px; 
-  z-index: 10; 
-  letter-spacing: 2px;
-}
-
-.dot { 
-  width: 8px; 
-  height: 8px; 
-  background: var(--alert); 
-  border-radius: 50%; 
-  box-shadow: 0 0 10px var(--alert); 
-  animation: blink 1.5s infinite; 
-}
-
-@keyframes blink { 
-  0%, 100% { opacity: 1; } 
-  50% { opacity: 0.2; } 
-}
-
-.hud-overlay {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--accent);
-  text-align: right;
-  opacity: 0.6;
-}
-
-/* ============================================================
-   9. SCHEMATIC VIEWER & DATA (RIGHT PANEL)
-   ============================================================ */
-.svg-stage { 
-  flex: 1; 
-  display: flex; 
-  justify-content: center; 
-  align-items: center; 
-  padding: 40px; 
-  background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%); 
-}
-
-svg { 
-  width: 90%; 
-  height: auto; 
-  max-height: 280px; 
-  filter: drop-shadow(0 0 15px var(--accent-glow)); 
-  transition: all 0.5s ease; 
-}
-
-.data-readout { 
-  padding: 30px; 
-  border-top: 1px solid var(--panel-border); 
-  background: rgba(0,0,0,0.5); 
-  height: 220px;
-  display: flex;
-  flex-direction: column;
-}
-
-.data-title { 
-  font-family: var(--font-mono); 
-  font-size: 18px; 
-  color: var(--accent); 
-  margin-bottom: 12px; 
-  text-transform: uppercase; 
-  letter-spacing: 2px; 
-}
-
-.data-desc { 
-  font-size: 13px; 
-  line-height: 1.7; 
-  color: var(--text-main); 
-  flex: 1;
-}
-
-.action-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-top: 15px;
-}
-
-.btn {
-  background: transparent;
-  border: 1px solid var(--panel-border);
-  color: var(--text-main);
-  padding: 10px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  transition: all 0.3s ease;
-}
-
-.btn:hover {
-  background: var(--accent);
-  color: var(--bg-core);
-  border-color: var(--accent);
-  box-shadow: 0 0 15px var(--accent-glow);
-}
-
-/* ============================================================
-   10. COMMAND LINE INTERFACE & LOG (FOOTER)
-   ============================================================ */
+/* ========================================
+   8. COMMAND CENTER (FOOTER)
+   ========================================
+*/
 .terminal-footer { 
-  grid-column: 1 / span 3; 
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 30px;
-  padding: 0;
+  grid-column: 1 / span 3; background: #080807; 
+  padding: 20px; border: 1px solid var(--rust); 
+  display: grid; grid-template-columns: 1fr 350px 250px; gap: 30px;
 }
+#log-stream { overflow-y: hidden; line-height: 1.8; color: var(--accent); font-size: 9px; }
+.cli-input-wrap { border-left: 1px solid var(--rust); padding-left: 20px; display: flex; flex-direction: column; }
+#cli-input { background: transparent; border: 1px solid var(--accent-dim); color: var(--accent); padding: 10px; font-family: inherit; margin-top: 10px; outline: none; }
 
-.log-stream {
-  padding: 20px 25px; 
-  font-family: var(--font-mono); 
-  font-size: 11px; 
-  color: var(--text-muted); 
-  overflow-y: hidden; 
-  display: flex; 
-  flex-direction: column-reverse; 
-  gap: 6px; 
-}
+/* ========================================
+   9. INTERACTIVE ELEMENTS & HUD
+   ========================================
+*/
+#hud-cursor { position: fixed; pointer-events: none; z-index: 9500; font-size: 8px; color: var(--accent); white-space: nowrap; }
+.status-led { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.led-red { background: var(--alert); box-shadow: 0 0 5px var(--alert); animation: blink 1s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-.log-entry { 
-  opacity: 0; 
-  animation: fadeUp 0.3s forwards; 
-}
+.btn-action { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; font-family: inherit; font-size: 9px; cursor: pointer; transition: 0.3s; }
+.btn-action:hover { background: var(--accent); color: var(--bg); font-weight: bold; }
 
-.log-entry.highlight { 
-  color: var(--accent); 
-}
-
-.log-entry.error {
-  color: var(--alert);
-}
-
-@keyframes fadeUp { 
-  from { opacity: 0; transform: translateY(8px); } 
-  to { opacity: 1; transform: translateY(0); } 
-}
-
-.cli-container {
-  border-left: 1px solid var(--panel-border);
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background: rgba(0,0,0,0.3);
-}
-
-.cli-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-#cli-input {
-  background: rgba(0,0,0,0.5);
-  border: 1px solid var(--panel-border);
-  color: var(--accent);
-  padding: 15px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  width: 100%;
-  transition: all 0.3s ease;
-}
-
-#cli-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 10px var(--accent-glow);
-}
+/* ========================================
+   10. SCROLLBARS & UTILS
+   ========================================
+*/
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--rust); border-radius: 2px; }
+.glitch { animation: glitch-text 0.2s infinite; }
+@keyframes glitch-text { 0% { transform: translate(0); } 20% { transform: translate(-1px, 1px); } 40% { transform: translate(-1px, -1px); } 60% { transform: translate(1px, 1px); } 80% { transform: translate(1px, -1px); } 100% { transform: translate(0); } }
 
 </style>
 </head>
-<body data-era="1953">
+<body>
 
-<div id="ambient-noise"></div>
-<div class="scanline"></div>
-<div id="vignette-overlay"></div>
+<div id="grain"></div>
+<div id="boot-wrap"></div>
+<div id="hud-cursor">X:000 Y:000 // BIOMETRIC_SCAN: ACTIVE</div>
 
-<div id="boot-screen">
-  <div id="boot-logs"></div>
-</div>
-
-<div id="app-grid">
-  
-  <header class="glass-panel">
-    <div class="bureau-title">THE BUREAU</div>
-    
-    <div class="slider-container">
-      <span class="slider-label active" id="lbl-1953">1953</span>
-      <input type="range" min="0" max="2" value="0" id="era-slider">
-      <span class="slider-label" id="lbl-1986">1986</span>
-      <span class="slider-label" id="lbl-2019">2019</span>
-    </div>
-
-    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); display: flex; gap: 30px; align-items: center;">
-      <div style="text-align: right;">
-        <div style="font-size: 9px; opacity: 0.6; margin-bottom: 4px;">LOCAL_SYNC</div>
-        <div id="sync-status" style="color: var(--accent);">STABLE</div>
+<div class="app-container" id="main-ui">
+  <header>
+    <div style="display: flex; align-items: center;">
+      <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent); letter-spacing: 4px;">THE BUREAU</div>
+      <div style="margin-left: 40px; border-left: 1px solid var(--rust); padding-left: 20px;">
+        <span style="opacity:0.4">NODE:</span> <span style="color:var(--accent)">STATION_TAS_7</span>
       </div>
-      <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent); letter-spacing: 2px;" id="clock">00:00:00</div>
+    </div>
+    <div style="display: flex; gap: 15px;">
+      <div style="font-size: 9px; text-align: right;">
+        VOID_INTEGRITY: <span id="integrity-val" style="color:var(--accent)">100%</span><br>
+        SIGNAL_DRIFT: <span id="drift-val" style="color:var(--alert)">0.003ms</span>
+      </div>
+      <div id="clock" style="font-size: 1.4rem; color: var(--accent); font-weight: bold; width: 120px;">00:00:00</div>
     </div>
   </header>
 
-  <aside class="glass-panel">
-    <div class="panel-head">
-      <span>INDEX</span>
-      <span>VOL.33</span>
+  <aside class="panel">
+    <div class="panel-header"><span>REGISTRY_VOL_I</span><span>SEC_LVL: 5</span></div>
+    <div class="nav-scroll" id="nav-list"></div>
+    <div style="padding: 20px; border-top: 1px solid var(--rust); background: rgba(0,0,0,0.2);">
+      <div style="margin-bottom: 8px;">ENTROPY_INDEX</div>
+      <div style="height: 4px; background: var(--rust);"><div id="entropy-bar" style="height: 100%; background: var(--accent); width: 33%;"></div></div>
+      <div style="font-size: 8px; margin-top: 8px; opacity: 0.5;">> RECURSION_DETECTED // CYCLE_33</div>
     </div>
-    <div class="nav-scroll" id="nav-list">
-      </div>
   </aside>
 
-  <main class="glass-panel monitor">
-    <div class="live-indicator">
-      <div class="dot"></div> 
-      VOID_RESONANCE_TRACKER
+  <main class="panel main-viewport">
+    <div class="panel-header">
+      <span><span class="status-led led-red"></span>LIVE_VOID_OSCILLATION</span>
+      <span>SYNC_STABLE</span>
     </div>
-    <div class="hud-overlay" id="hud-stats">
-      FLUX: 0.003Hz<br>
-      AMP: 44.1V<br>
-      RAD: 0.02μSv/h
-    </div>
-    <canvas id="telemetryCanvas"></canvas>
+    <div id="scanline-v"></div>
+    <canvas id="teleCanvas"></canvas>
   </main>
 
-  <aside class="glass-panel">
-    <div class="panel-head">
-      <span>SCHEMATIC</span>
-      <span id="obj-id-tag">ID_000</span>
-    </div>
-    <div class="svg-stage" id="svg-stage">
-      </div>
-    <div class="data-readout">
-      <div class="data-title" id="obj-title">--</div>
-      <div class="data-desc" id="obj-desc"></div>
-      <div class="action-buttons">
-        <button class="btn" onclick="executeCommand('DECRYPT')">DECRYPT</button>
-        <button class="btn" onclick="executeCommand('OVERRIDE')" style="border-color: var(--alert); color: var(--alert);">OVERRIDE</button>
+  <aside class="panel">
+    <div class="panel-header">OBJECT_MANIFEST</div>
+    <div class="schematic-viewer" id="svg-stage"></div>
+    <div style="padding: 25px; border-top: 1px solid var(--rust); background: #0c0b0a;">
+      <h2 id="obj-title" style="margin: 0 0 12px 0; color: var(--accent); font-size: 1.2rem;">--</h2>
+      <p id="obj-desc" style="font-size: 10px; line-height: 1.8; opacity: 0.7; min-height: 80px;"></p>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+        <button class="btn-action" onclick="triggerAlert()">INIT_SCAN</button>
+        <button class="btn-action" style="border-color:var(--alert); color:var(--alert);">PURGE</button>
       </div>
     </div>
   </aside>
 
-  <footer class="glass-panel terminal-footer">
-    <div class="log-stream" id="log-stream">
-      </div>
-    <div class="cli-container">
-      <div class="cli-label">BUREAU_OS // COMMAND_LINE</div>
-      <input type="text" id="cli-input" placeholder="Enter command (e.g. HELP, SCAN)..." autocomplete="off" spellcheck="false">
+  <footer class="terminal-footer">
+    <div id="log-stream"></div>
+    <div class="cli-input-wrap">
+      <div style="font-size: 8px; opacity: 0.5;">BUREAU_CLI_V1.0.4</div>
+      <input type="text" id="cli-input" placeholder="ENTER COMMAND (HELP, SCAN, CLEAR)..." autocomplete="off">
+    </div>
+    <div style="border-left: 1px solid var(--rust); padding-left: 20px; font-size: 8px;">
+      <div style="margin-bottom: 10px;">TEMPORAL_FOCUS:</div>
+      <div style="color:var(--accent)">>> 1953_CYC [ACTIVE]</div>
+      <div style="color:var(--text); opacity:0.3">>> 1986_CYC [LOCKED]</div>
+      <div style="color:var(--text); opacity:0.3">>> 2019_CYC [LOCKED]</div>
     </div>
   </footer>
-
 </div>
 
 <script>
-/* ============================================================
-   1. DATA ARCHIVE (EXPANDED TO 8 ITEMS)
-   ============================================================ */
-const archive = [
-  { 
-    id: "apparatus", 
-    name: "The Apparatus", 
-    class: "Class-A Core", 
-    desc: "Clockwork displacement engine. Requires Cesium-137. Do not engage without calculating the lunar periapsis. Hand-machined by H.G. Tannhaus in 1953.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 5">
-              <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="10s" repeatCount="indefinite"/>
-            </circle>
-            <rect x="40" y="40" width="20" height="20" fill="none" stroke="var(--accent)" stroke-width="1">
-              <animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="5s" repeatCount="indefinite"/>
-            </rect>
-            <path d="M50 0 V100 M0 50 H100" stroke="var(--panel-border)" stroke-width="0.5"/>
-          </svg>` 
-  },
-  { 
-    id: "particle", 
-    name: "God Particle", 
-    class: "Anomaly", 
-    desc: "Stable Higgs-field manifestation. Exists simultaneously across 1953, 1986, and 2019. Containment fields are fluctuating at 33Hz.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="15" fill="var(--accent)">
-              <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
-              <animate attributeName="r" values="12;16;12" dur="2s" repeatCount="indefinite"/>
-            </circle>
-            ${Array.from({length:16}).map((_,i)=>`
-              <line x1="50" y1="50" x2="${50+Math.cos(i)*35}" y2="${50+Math.sin(i)*35}" stroke="var(--accent)" stroke-width="0.5" opacity="0.5">
-                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="${10 + i}s" repeatCount="indefinite"/>
-              </line>
-            `).join('')}
-          </svg>` 
-  },
-  { 
-    id: "caves", 
-    name: "Winden Caves", 
-    class: "Geography", 
-    desc: "Tri-nodal tunnel system. The iron doors must remain closed to preserve the cycle's integrity. Radiation levels spike near the center.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <path d="M20 80 Q50 20 80 80" fill="none" stroke="var(--accent)" stroke-width="2"/>
-            <path d="M35 80 Q50 50 65 80" fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.5"/>
-            <circle cx="50" cy="20" r="3" fill="var(--alert)">
-              <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
-            </circle>
-            <line x1="10" y1="80" x2="90" y2="80" stroke="var(--panel-border)" stroke-width="1"/>
-          </svg>` 
-  },
-  { 
-    id: "triquetra", 
-    name: "The Knot", 
-    class: "Philosophy", 
-    desc: "A symbol representing the closed time loop. Past, Present, and Future are inextricably tied together. Sic Mundus Creatus Est.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <path d="M50 20 C65 20 75 35 75 50 C75 65 65 80 50 80 C35 80 25 65 25 50 C25 35 35 20 50 20" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/>
-            <circle cx="50" cy="35" r="15" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <circle cx="37" cy="57" r="15" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <circle cx="63" cy="57" r="15" fill="none" stroke="var(--accent)" stroke-width="1"/>
-          </svg>` 
-  },
-  { 
-    id: "chair", 
-    name: "The Chair", 
-    class: "Prototype", 
-    desc: "Early displacement prototype located in the bunker. Energy amplification destroys the subject's ocular nerves. Morally compromised.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <rect x="35" y="40" width="30" height="10" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <line x1="35" y1="50" x2="35" y2="80" stroke="var(--accent)" stroke-width="1"/>
-            <line x1="65" y1="50" x2="65" y2="80" stroke="var(--accent)" stroke-width="1"/>
-            <path d="M35 40 Q50 20 65 40" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <circle cx="50" cy="25" r="8" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <line x1="10" y1="35" x2="90" y2="35" stroke="var(--alert)" stroke-width="0.5"/>
-          </svg>` 
-  },
-  { 
-    id: "cesium", 
-    name: "Cesium-137", 
-    class: "Isotope", 
-    desc: "Radioactive waste recovered from the power plant. The catalyst that allows the apparatus to open the bridge.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <polygon points="50,15 85,35 85,75 50,95 15,75 15,35" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <polygon points="50,30 70,42 70,66 50,78 30,66 30,42" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"/>
-            <circle cx="50" cy="54" r="5" fill="var(--accent)">
-               <animate attributeName="r" values="4;7;4" dur="0.5s" repeatCount="indefinite"/>
-            </circle>
-          </svg>` 
-  },
-  { 
-    id: "diary", 
-    name: "The Notebook", 
-    class: "Document", 
-    desc: "Leather-bound journal detailing the events of the loop. Several pages have been torn out. The handwriting matches the Unknown.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <rect x="30" y="20" width="40" height="60" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
-            <line x1="35" y1="35" x2="65" y2="35" stroke="var(--accent)" stroke-width="0.5"/>
-            <line x1="35" y1="45" x2="65" y2="45" stroke="var(--accent)" stroke-width="0.5"/>
-            <line x1="35" y1="55" x2="55" y2="55" stroke="var(--accent)" stroke-width="0.5"/>
-            <path d="M70 20 C80 40 80 60 70 80" fill="none" stroke="var(--accent)" stroke-width="0.5"/>
-          </svg>` 
-  },
-  { 
-    id: "blueprint", 
-    name: "Door Schematic", 
-    class: "Engineering", 
-    desc: "Blueprint for the heavy iron doors placed inside the cave passage. Designed to withstand extreme electromagnetic shifts.", 
-    svg: `<svg viewBox="0 0 100 100">
-            <rect x="25" y="15" width="50" height="70" fill="none" stroke="var(--accent)" stroke-width="1"/>
-            <line x1="25" y1="15" x2="75" y2="85" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
-            <line x1="75" y1="15" x2="25" y2="85" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
-            <circle cx="65" cy="50" r="4" fill="var(--accent)"/>
-            <rect x="15" y="10" width="70" height="80" fill="none" stroke="var(--panel-border)" stroke-width="1" stroke-dasharray="4 4"/>
-          </svg>` 
-  }
+/* ========================================
+   11. DATA ARCHIVE (8 DEEP PROJECTS)
+   ========================================
+*/
+const archiveData = [
+  { id: "app-01", name: "The Apparatus", desc: "A dual-chamber brass device utilizing Cesium-137. Designed for localized non-linear transit. Status: Critical.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><g transform-origin="50 50"><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></g><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect><path d="M50 5 V95 M5 50 H95" stroke="var(--rust)" stroke-width="0.2"/></svg>` },
+  { id: "god-p", name: "Higgs Field", desc: "Visible manifestation of the God Particle. Magnetic containment is fluctuating. Do not approach without lead shielding.", svg: `<svg viewBox="0 0 100 100"><defs><filter id="f1"><feGaussianBlur stdDeviation="3"/></filter></defs><circle cx="50" cy="50" r="12" fill="var(--accent)" filter="url(#f1)"><animate attributeName="r" values="10;15;10" dur="1.5s" repeatCount="indefinite"/></circle>${Array.from({length:24}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*45}" y2="${50+Math.sin(i)*45}" stroke="var(--accent)" stroke-width="0.1" opacity="0.4"><animate attributeName="opacity" values="0.1;0.5;0.1" dur="${1+Math.random()}s" repeatCount="indefinite"/></line>`).join('')}</svg>` },
+  { id: "caves", name: "Passage 33", desc: "Geological survey of the Winden Cave system. Inter-temporal tunnel located at coordinates 51.12N, 10.4E.", svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--accent)" stroke-width="1.5"/><path d="M25 90 Q50 40 75 90" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.4"/><line x1="50" y1="10" x2="50" y2="90" stroke="var(--rust)" stroke-width="0.2" stroke-dasharray="2 2"/></svg>` },
+  { id: "tablet", name: "Emerald Tablet", desc: "Ancient hermetic text. 'Sic Mundus Creatus Est'. Found engraved on the bunker doors.", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="0.5"/><path d="M30 30 L70 70 M70 30 L30 70" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="5" fill="var(--accent)"/></svg>` },
+  { id: "radio", name: "Radio Device", desc: "Modified 1950s receiver tuned to sub-harmonic frequencies. Intercepting signals from 1986.", svg: `<svg viewBox="0 0 100 100"><rect x="15" y="30" width="70" height="40" rx="5" fill="none" stroke="var(--accent)" stroke-width="1"/><circle cx="30" cy="50" r="8" fill="none" stroke="var(--accent)" stroke-width="0.5"/><line x1="50" y1="40" x2="75" y2="40" stroke="var(--accent)" stroke-width="0.5"/><line x1="50" y1="50" x2="75" y2="50" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
+  { id: "chair", name: "The Chair", desc: "Experimental prototype for temporal displacement. Early trials resulted in consistent ocular damage. Failed.", svg: `<svg viewBox="0 0 100 100"><path d="M40 80 V40 H60 V80 M30 80 H70" fill="none" stroke="var(--accent)" stroke-width="1"/><circle cx="50" cy="30" r="5" fill="none" stroke="var(--accent)" stroke-width="0.5"/><path d="M20 50 H80" stroke="var(--alert)" stroke-width="0.2"/></svg>` },
+  { id: "helge", name: "The Shack", desc: "Woodland structure used for assembly of components. Significant temporal residue detected.", svg: `<svg viewBox="0 0 100 100"><path d="M20 80 V50 L50 20 L80 50 V80 Z" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="42" y="60" width="16" height="20" fill="none" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
+  { id: "diary", name: "Claudia's Log", desc: "Comprehensive notes on the 33-year cycle. Every detail matches. The cycle is repeating.", svg: `<svg viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><line x1="30" y1="35" x2="70" y2="35" stroke="var(--accent)" stroke-width="0.3"/><line x1="30" y1="45" x2="70" y2="45" stroke="var(--accent)" stroke-width="0.3"/><line x1="30" y1="55" x2="60" y2="55" stroke="var(--accent)" stroke-width="0.3"/></svg>` }
 ];
 
-/* ============================================================
-   2. AUDIO ENGINE (WEB AUDIO API)
-   ============================================================ */
-let audioCtx;
-
-function initAudio() {
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  
-  // Ambient Hum
-  const hum = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  hum.type = 'sine';
-  hum.frequency.setValueAtTime(45, audioCtx.currentTime); // Low freq hum
-  gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-  hum.connect(gain);
-  gain.connect(audioCtx.destination);
-  hum.start();
-}
-
-function playKeystroke() {
-  if (!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(800 + Math.random()*200, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.05);
-}
-
-function playAlert() {
-  if (!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
-  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.3);
-}
-
-document.body.addEventListener('click', initAudio, { once: true });
-
-/* ============================================================
-   3. BOOT SEQUENCE
-   ============================================================ */
-const bootScreen = document.getElementById('boot-screen');
-const bootLogs = document.getElementById('boot-logs');
-const appGrid = document.getElementById('app-grid');
-
-const startupSequence = [
-  "INITIALIZING BUREAU MAINFRAME...",
-  "CHECKING VACUUM TUBE ARRAYS [OK]",
-  "MOUNTING MAGNETIC TAPE DRIVES...",
-  "SYNCING TO TEMPORAL NODE 1953...",
-  "DECRYPTING LEVEL 5 CLEARANCE FILES...",
-  "ESTABLISHING SECURE CONNECTION...",
-  "WELCOME, OPERATOR."
+/* ========================================
+   12. CORE ENGINE (JS)
+   ========================================
+*/
+const bootLines = [
+  "BUREAU_OS_V99_LOAD", "CHECKING_VACUUM_TUBES...", "MOUNTING_LOCAL_STORAGE...", 
+  "DECRYPTING_O5_FILES...", "SYNCING_TEMPORAL_CLK...", "SCANNING_BIOMETRICS...", 
+  "CONNECTED_TO_STATION_7", "STATUS: STABLE", "WELCOME, OPERATOR."
 ];
 
-function runBootSequence() {
-  let delay = 0;
-  
-  startupSequence.forEach((text, index) => {
-    setTimeout(() => {
-      const line = document.createElement('div');
-      line.className = 'boot-line';
-      line.innerText = `> ${text}`;
-      bootLogs.appendChild(line);
-      
-      // Trigger animation
-      setTimeout(() => {
-        line.style.opacity = '1';
-        line.style.transform = 'translateY(0)';
-        if(audioCtx) playKeystroke();
-      }, 50);
+// BOOT SEQUENCE
+const bootContainer = document.getElementById('boot-wrap');
+bootLines.forEach((t, i) => {
+  const l = document.createElement('div');
+  l.className = 'boot-line';
+  l.innerText = `> ${t}`;
+  bootContainer.appendChild(l);
+  setTimeout(() => l.style.visibility = 'visible', i * 350);
+});
 
-    }, delay);
-    
-    delay += 400 + Math.random() * 300;
-  });
+setTimeout(() => {
+  bootContainer.style.opacity = '0';
+  document.getElementById('main-ui').style.opacity = '1';
+  setTimeout(() => bootContainer.remove(), 2000);
+}, 3800);
 
-  // Fade out boot screen and show app
-  setTimeout(() => {
-    bootScreen.style.opacity = '0';
-    appGrid.style.opacity = '1';
-    appGrid.style.transform = 'scale(1)';
-    
-    setTimeout(() => {
-      bootScreen.remove();
-      addLog("SYSTEM BOOT COMPLETE. AWAITING INPUT.", true);
-    }, 1000);
-    
-  }, delay + 500);
-}
-
-/* ============================================================
-   4. UI LOGIC & TYPEWRITER EFFECT
-   ============================================================ */
+// NAVIGATION LOGIC
 const navList = document.getElementById('nav-list');
-const logStream = document.getElementById('log-stream');
-let typeTimeout;
-
-function addLog(msg, highlight = false, error = false) {
-  const div = document.createElement('div');
-  
-  let className = 'log-entry';
-  if(highlight) className += ' highlight';
-  if(error) className += ' error';
-  
-  div.className = className;
-  div.innerText = `> [${new Date().toLocaleTimeString()}] ${msg}`;
-  
-  logStream.prepend(div);
-  
-  if(logStream.children.length > 12) {
-    logStream.lastChild.remove();
-  }
-}
-
-function typeWriter(text, elementId, speed = 15) {
-  const el = document.getElementById(elementId);
-  el.innerHTML = '';
-  let i = 0;
-  clearTimeout(typeTimeout);
-  
-  function type() {
-    if (i < text.length) {
-      el.innerHTML += text.charAt(i);
-      i++;
-      if(i % 3 === 0 && audioCtx) playKeystroke(); // Play sound every 3 chars
-      typeTimeout = setTimeout(type, speed);
-    }
-  }
-  type();
-}
+const stage = document.getElementById('svg-stage');
 
 function selectProject(p) {
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`nav-${p.id}`).classList.add('active');
-  
-  document.getElementById('svg-stage').innerHTML = p.svg;
   document.getElementById('obj-title').innerText = p.name;
-  document.getElementById('obj-id-tag').innerText = `ID_${p.id.substring(0,3).toUpperCase()}`;
-  
-  typeWriter(p.desc, 'obj-desc');
-  
-  addLog(`ACCESSED RECORD: ${p.id.toUpperCase()}`);
+  document.getElementById('obj-desc').innerText = p.desc;
+  stage.innerHTML = p.svg;
+  addLog(`ACCESSING: ${p.name.toUpperCase()} ... [OK]`);
 }
 
-// Populate Navigation
-archive.forEach(p => {
-  const div = document.createElement('div');
-  div.className = 'nav-item';
-  div.id = `nav-${p.id}`;
-  div.innerHTML = `
-    <span class="nav-title">${p.name}</span>
-    <span class="nav-meta">${p.class}</span>
-  `;
-  div.onclick = () => {
-    if(audioCtx) playKeystroke();
-    selectProject(p);
-  };
-  navList.appendChild(div);
+archiveData.forEach(p => {
+  const d = document.createElement('div');
+  d.id = `nav-${p.id}`;
+  d.className = 'nav-item';
+  d.innerHTML = `<div>${p.name}</div><span class="nav-tag">REF_${p.id.toUpperCase()}</span>`;
+  d.onclick = () => selectProject(p);
+  navList.appendChild(d);
 });
 
-/* ============================================================
-   5. THE ERA SLIDER (THEME ENGINE)
-   ============================================================ */
-const slider = document.getElementById('era-slider');
-const eras = ["1953", "1986", "2019"];
-
-slider.addEventListener('input', (e) => {
-  const val = e.target.value;
-  const currentEra = eras[val];
-  
-  document.body.setAttribute('data-era', currentEra);
-  
-  document.querySelectorAll('.slider-label').forEach(el => el.classList.remove('active'));
-  document.getElementById(`lbl-${currentEra}`).classList.add('active');
-  
-  playAlert();
-  addLog(`TEMPORAL SHIFT INITIATED: SYNCING PROTOCOLS TO ${currentEra}...`, true);
-  
-  // Update HUD text based on era
-  const syncStatus = document.getElementById('sync-status');
-  if(currentEra === "1953") syncStatus.innerText = "STABLE";
-  if(currentEra === "1986") syncStatus.innerText = "FLUCTUATING";
-  if(currentEra === "2019") syncStatus.innerText = "CRITICAL";
-});
-
-/* ============================================================
-   6. CANVAS TELEMETRY & RADAR
-   ============================================================ */
-const canvas = document.getElementById('telemetryCanvas');
+// TELEMETRY CANVAS ENGINE
+const canvas = document.getElementById('teleCanvas');
 const ctx = canvas.getContext('2d');
+function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+window.onresize = resize; resize();
 
-function resizeCanvas() { 
-  canvas.width = canvas.offsetWidth; 
-  canvas.height = canvas.offsetHeight; 
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-function drawCanvas(time) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function draw(t) {
+  ctx.fillStyle = 'rgba(10, 10, 9, 0.2)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  const computedStyle = getComputedStyle(document.body);
-  const accentColor = computedStyle.getPropertyValue('--accent').trim();
-  const alertColor = computedStyle.getPropertyValue('--alert').trim();
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.05)';
+  for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
   
-  const complexity = parseInt(slider.value) + 1; // 1, 2, or 3 based on era
-  
-  // 1. Draw Background Grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 1;
-  for(let i=0; i<canvas.width; i+=40) { 
-    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); 
-  }
-  for(let i=0; i<canvas.height; i+=40) { 
-    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); 
-  }
-
-  // 2. Draw Waveform (Amplitude changes with era)
   ctx.beginPath();
-  ctx.strokeStyle = accentColor;
-  ctx.lineWidth = 2;
-  
-  for(let x = 0; x < canvas.width; x += 4) {
-    const baseSine = Math.sin(x*0.02 + time*0.002);
-    const complexSine = Math.cos(x*0.05 + time*0.005);
-    const y = canvas.height/2 + (baseSine * 20 * complexity) + (complexSine * 10 * complexity);
+  ctx.strokeStyle = 'var(--accent)';
+  ctx.lineWidth = 1;
+  for(let x=0; x<canvas.width; x+=5) {
+    const y = canvas.height/2 + Math.sin(x*0.01 + t*0.001) * 40 + Math.random() * 5;
     ctx.lineTo(x, y);
   }
   ctx.stroke();
-
-  // 3. Draw Radar Sweep Line
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
-  const radius = Math.min(cx, cy) - 20;
-  
-  ctx.beginPath();
-  ctx.strokeStyle = `rgba(255,255,255,0.1)`;
-  ctx.lineWidth = 1;
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.stroke();
-  
-  const sweepAngle = (time * 0.001) % (Math.PI * 2);
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(sweepAngle) * radius, cy + Math.sin(sweepAngle) * radius);
-  ctx.strokeStyle = alertColor;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Update HUD Data randomly
-  if(Math.random() > 0.95) {
-    const flux = (0.003 + Math.random()*0.002).toFixed(4);
-    const amp = (40 + Math.random()*10 * complexity).toFixed(1);
-    const rad = (0.02 * complexity + Math.random()*0.01).toFixed(3);
-    document.getElementById('hud-stats').innerHTML = `FLUX: ${flux}Hz<br>AMP: ${amp}V<br>RAD: ${rad}μSv/h`;
-  }
-
-  requestAnimationFrame(drawCanvas);
+  requestAnimationFrame(draw);
 }
+draw(0);
 
-/* ============================================================
-   7. COMMAND LINE INTERFACE (CLI)
-   ============================================================ */
+// TERMINAL LOGIC
+const logStream = document.getElementById('log-stream');
 const cliInput = document.getElementById('cli-input');
 
-function executeCommand(cmd) {
-  addLog(`EXECUTING: ${cmd.toUpperCase()}`, true);
-  
-  if(cmd === 'OVERRIDE') {
-    playAlert();
-    document.body.style.filter = "invert(1) hue-rotate(180deg)";
-    setTimeout(() => {
-      document.body.style.filter = "none";
-    }, 200);
-    addLog("SECURITY OVERRIDE FAILED. O5 CLEARANCE REQUIRED.", false, true);
-  } else if (cmd === 'DECRYPT') {
-    addLog("DECRYPTING PACKETS... [OK]");
-  }
+function addLog(msg) {
+  const l = document.createElement('div');
+  l.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  logStream.prepend(l);
+  if(logStream.childNodes.length > 8) logStream.lastChild.remove();
 }
 
-cliInput.addEventListener('keydown', (e) => {
+cliInput.onkeydown = (e) => {
   if(e.key === 'Enter') {
-    const val = cliInput.value.trim().toUpperCase();
-    if(val === '') return;
-    
-    playKeystroke();
-    addLog(`USER_INPUT: ${val}`);
-    
-    switch(val) {
-      case 'HELP':
-        addLog("AVAILABLE COMMANDS: SCAN, OVERRIDE, CLEAR, REBOOT, STATUS");
-        break;
-      case 'CLEAR':
-        logStream.innerHTML = '';
-        break;
-      case 'REBOOT':
-        addLog("INITIATING SYSTEM REBOOT...", true);
-        setTimeout(() => window.location.reload(), 1000);
-        break;
-      case 'SCAN':
-        addLog("SCANNING LOCAL AREA FOR ANOMALIES...");
-        setTimeout(() => addLog("RESULT: 1 TEMPORAL ANOMALY DETECTED.", false, true), 1500);
-        break;
-      case 'STATUS':
-        addLog(`CURRENT ERA: ${eras[slider.value]} | INTEGRITY: NOMINAL`);
-        break;
-      case 'OVERRIDE':
-        executeCommand('OVERRIDE');
-        break;
-      default:
-        addLog(`COMMAND NOT RECOGNIZED: '${val}'`, false, true);
-    }
-    
+    const val = cliInput.value.toLowerCase();
+    addLog(`USER_CMD: ${val.toUpperCase()}`);
+    if(val === 'help') addLog("VALID: SCAN, PURGE, STATUS, CLEAR, HELP");
+    else if(val === 'scan') triggerAlert();
+    else if(val === 'clear') logStream.innerHTML = '';
+    else addLog("ERR: INVALID_COMMAND");
     cliInput.value = '';
   }
-});
-
-/* ============================================================
-   8. CLOCK & INITIALIZATION
-   ============================================================ */
-setInterval(() => {
-  document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-}, 1000);
-
-// Start
-window.onload = () => {
-  runBootSequence();
-  selectProject(archive[0]);
-  requestAnimationFrame(drawCanvas);
 };
 
+// HUD & MISC
+window.onmousemove = (e) => {
+  const hud = document.getElementById('hud-cursor');
+  hud.style.left = (e.clientX + 15) + 'px';
+  hud.style.top = (e.clientY + 15) + 'px';
+  hud.innerText = `LNX:${e.clientX} LNY:${e.clientY} // BIO_SIG: RECOGNIZED`;
+};
+
+setInterval(() => {
+  document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+  document.getElementById('integrity-val').innerText = (98 + Math.random()*2).toFixed(2) + "%";
+  document.getElementById('entropy-bar').style.width = (Math.random()*100) + "%";
+}, 1000);
+
+function triggerAlert() {
+  addLog("CRITICAL: PERFORMING DEEP VOID SCAN...");
+  document.body.style.filter = "brightness(2) contrast(3)";
+  setTimeout(() => document.body.style.filter = "none", 100);
+}
+
+selectProject(archiveData[0]);
 </script>
 </body>
 </html>
