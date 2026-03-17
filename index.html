@@ -15,7 +15,7 @@
             --blue: #0096ff;
             --text: #c4beaf;
             --burn: 0;
-            --system-opacity: 0.15; /* Starts powered down */
+            --system-opacity: 0.15;
         }
 
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
@@ -27,16 +27,12 @@
             height: 100vh; touch-action: none;
         }
 
-        /* --- THE OS INTERFACE --- */
-        #os-workspace { 
-            position: relative; width: 100vw; height: 100vh; background: #050505; 
-        }
+        #os-workspace { position: relative; width: 100vw; height: 100vh; background: #050505; }
 
-        /* Container that holds all OS panels so they can be dimmed together */
         #os-panels {
             width: 100%; height: 100%;
             opacity: var(--system-opacity);
-            pointer-events: none; /* Disabled until boot */
+            pointer-events: none;
             transition: opacity 2s ease, filter 2s ease;
             filter: grayscale(1) blur(2px);
         }
@@ -61,7 +57,6 @@
         }
         .window-header:active { cursor: grabbing; }
 
-        /* --- CENTRAL BOOT MODAL --- */
         #boot-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 20000; text-align: center; width: 450px;
@@ -71,7 +66,6 @@
         }
         #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.9); pointer-events: none; }
 
-        /* --- COMPONENTS --- */
         #nav-list { overflow-y: auto; flex: 1; max-height: 250px; }
         .fs-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 10px; }
         .fs-item:hover { background: rgba(212,175,55,0.1); padding-left: 20px; transition: 0.2s; }
@@ -90,7 +84,6 @@
         .img-container strong { color: var(--accent); }
         .img-container .alert-text { color: var(--alert); }
 
-        /* --- CRT & GLITCH --- */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
@@ -104,7 +97,6 @@
         .btn-breach { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.3s; font-weight: bold; width: 100%; }
         .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
 
-        /* Responsive */
         @media (max-width: 800px) {
             .window { width: 90vw !important; left: 5vw !important; }
             #win-nav { top: 80px; }
@@ -118,7 +110,6 @@
 <body class="crt">
 
     <div id="os-workspace">
-        
         <div id="boot-modal">
             <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:10px; font-size: 1.2rem;">THE BUREAU</div>
             <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 30px; color:#fff; letter-spacing: -1px;">EVERYTHING IS CONNECTED.</h1>
@@ -157,8 +148,7 @@
             <div class="window drag" id="win-img" style="top:320px; left:350px; width:calc(100% - 800px); height: 260px;">
                 <div class="window-header">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
                 <div class="img-container" id="imaging-output">
-                    > SYSTEM BOOT REQUIRED.<br>
-                    > AWAITING PROTOCOL SELECTION...
+                    > SYSTEM BOOT REQUIRED.<br>> AWAITING PROTOCOL SELECTION...
                 </div>
             </div>
 
@@ -181,87 +171,65 @@
     </div>
 
 <script>
-/* ========================================
-   1. MASTER ARCHIVE DATA (SVC INTEGRATED)
-   ======================================== */
+/* --- DATA & CONFIG --- */
 const archiveData = [
   { 
     name: "The Apparatus", 
     id: "apparatus", 
-    freq: 55, 
-    type: 'sawtooth',
+    freq: 55, type: 'sawtooth',
     desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
-    imgText: "> QUERYING VISUAL DATABASE...<br>> <span class='alert-text'>ERR: NO VISUAL RECORD FOUND FOR CESIUM TRANSIT DEVICE.</span><br>> PHYSICAL PROXIMITY WARNING: RADIOACTIVITY DETECTED.",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.2"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` 
+    imgText: "> QUERYING VISUAL DATABASE...<br>> <span class='alert-text'>ERR: NO VISUAL RECORD FOUND.</span>",
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.2"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></svg>` 
   },
   { 
-    name: "Substrate Protocol (SVC)", 
+    name: "Substrate Protocol", 
     id: "substrate", 
-    freq: 110, 
-    type: 'sine',
-    desc: "Scalable Video Coding (SVC) architecture. Hierarchical spatial, temporal, and fidelity mapping.", 
-    url: "Substrate-Protocol/", 
-    imgText: "> RETRIEVING BLUEPRINT DATA...<br><br>The Substrate Protocol relies on a robust foundational layer, supplemented by semi-transparent enhancement layers for spatial and temporal scaling. <br><br><strong></strong><br><br>Visualizing the mathematical dependency of enhancement layers on the primary base layer payload.",
-    svg: `<svg viewBox="0 0 100 100">
-        <g transform="translate(50, 75) scale(1, 0.45) rotate(45)">
-            <rect x="-35" y="-35" width="70" height="70" fill="rgba(0, 150, 255, 0.15)" stroke="var(--blue)" stroke-width="1.5"/>
-            <line x1="-35" y1="-35" x2="-35" y2="-95" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"><animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite"/></line>
-            <line x1="35" y1="35" x2="35" y2="-25" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"/>
-            <line x1="-35" y1="35" x2="-35" y2="-25" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"/>
-            <line x1="35" y1="-35" x2="35" y2="-95" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"><animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/></line>
-            <rect x="-35" y="-65" width="70" height="70" fill="rgba(212, 175, 55, 0.15)" stroke="var(--accent)" stroke-width="1"/>
-            <path d="M -15 -65 L -15 -25 M 15 -65 L 15 -25 M -35 -45 L 35 -45 M -35 -15 L 35 -15" stroke="var(--accent)" stroke-width="0.3" opacity="0.5"/>
-            <rect x="-35" y="-95" width="70" height="70" fill="rgba(255, 0, 0, 0.15)" stroke="var(--alert)" stroke-width="1.5"/>
-            <circle cx="0" cy="-60" r="5" fill="var(--alert)"><animate attributeName="r" values="3;6;3" dur="1s" repeatCount="indefinite"/></circle>
-        </g>
-    </svg>` 
+    freq: 110, type: 'sine',
+    desc: "SVC architecture. Hierarchical spatial mapping.", 
+    url: "https://deon-wal.github.io/Substrate-Protocol/", 
+    imgText: "> RETRIEVING BLUEPRINT DATA...<br><br><strong>STATUS: LINKED</strong>",
+    svg: `<svg viewBox="0 0 100 100"><g transform="translate(50, 75) scale(1, 0.45) rotate(45)"><rect x="-35" y="-35" width="70" height="70" fill="rgba(0, 150, 255, 0.15)" stroke="var(--blue)" stroke-width="1.5"/><rect x="-35" y="-65" width="70" height="70" fill="rgba(212, 175, 55, 0.15)" stroke="var(--accent)" stroke-width="1"/></g></svg>` 
   },
   { 
-    name: "Temporal Frame Scaling", 
-    id: "temporal", 
-    freq: 88, 
-    type: 'triangle',
-    desc: "Analysis of frame density and temporal interpolation within the Void anomaly.", 
-    imgText: "> ANALYZING TEMPORAL DISPLACEMENT...<br><br><strong></strong><br><br>Notice the hierarchical frame density. Lower levels represent the base temporal flow (15fps), while higher levels represent predicted/enhanced temporal states (60+fps) bridging the timeline gaps.",
-    svg: `<svg viewBox="0 0 100 100">
-        <path d="M 10 50 Q 30 10 50 50 T 90 50" fill="none" stroke="var(--accent)" stroke-width="2"/>
-        <path d="M 10 50 Q 30 30 50 50 T 90 50" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="4 2"/>
-        <circle cx="50" cy="50" r="4" fill="var(--alert)"/>
-        <circle cx="90" cy="50" r="4" fill="var(--accent)"/>
-        <circle cx="10" cy="50" r="4" fill="var(--accent)"/>
-        <circle cx="30" cy="25" r="2" fill="var(--accent)"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/></circle>
-        <circle cx="70" cy="75" r="2" fill="var(--accent)"><animate attributeName="opacity" values="0;1;0" dur="1s" repeatCount="indefinite"/></circle>
-    </svg>` 
-  },
-  { 
-    name: "D.U.E.", 
+    name: "D.U.E. Archive", 
     id: "due", 
-    freq: 44, 
-    type: 'square',
-    desc: "Department of Unfinished Events. Displaced chronological records vault.", 
-    url: "Department-Of-Unfinished-Events-DUE", 
-    imgText: "> VAULT SECURED.<br>> ENCRYPTION LEVEL: MAXIMUM.<br>> <span class='alert-text'>NO ADDITIONAL IMAGING AVAILABLE FOR THIS NODE.</span>",
+    freq: 44, type: 'square',
+    desc: "Department of Unfinished Events. Chronological records vault.", 
+    url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/", 
+    imgText: "> <span class='alert-text'>REMOTE UPLINK ESTABLISHED.</span>",
     svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>` 
+  },
+  { 
+    name: "Anomaly Observatory", 
+    id: "observatory", 
+    freq: 72, type: 'sine',
+    desc: "Monitoring spatial irregularities across the Bureau network.", 
+    url: "https://deon-wal.github.io/Anomaly-Observatory/", 
+    imgText: "> ACCESSING LIVE FEED...<br>> <span class='alert-text'>WARNING: PHASE SHIFT DETECTED.</span>",
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1"/><circle cx="70" cy="30" r="3" fill="var(--alert)"><animate attributeName="opacity" values="1;0;1" dur="1.5s" repeatCount="indefinite"/></circle></svg>` 
+  },
+  { 
+    name: "Kernel Diagnostics", 
+    id: "test_node", 
+    freq: 120, type: 'square',
+    desc: "Diagnostic sandbox for kernel verification.", 
+    url: "https://deon-wal.github.io/Test/Test.html", 
+    imgText: "> RUNNING DIAGNOSTICS...<br>> ALL SYSTEMS NOMINAL.",
+    svg: `<svg viewBox="0 0 100 100"><path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--accent)" stroke-width="1"/></svg>` 
   },
   { 
     name: "Project Noah", 
     id: "noah", 
-    freq: 33, 
-    type: 'sawtooth',
+    freq: 33, type: 'sawtooth',
     desc: "The cycle is complete. Sic Mundus Creatus Est.", 
     hidden: true, 
-    imgText: "> <span class='alert-text'>RESTRICTED PROTOCOL.</span><br>> THE BEGINNING IS THE END. THE END IS THE BEGINNING.",
-    svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="2"/><circle cx="50" cy="55" r="8" fill="var(--alert)"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/></circle></svg>` 
+    imgText: "> <span class='alert-text'>RESTRICTED PROTOCOL.</span>",
+    svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="2"/></svg>` 
   }
 ];
 
-/* ========================================
-   2. BINAURAL AUDIO & MOUSE VELOCITY
-   ======================================== */
-let audioCtx, mainOsc, panner;
-let mouseVelocity = 0;
-let lastMousePos = {x: 0, y: 0};
-let systemBooted = false;
+/* --- AUDIO & GLOBAL STATE --- */
+let audioCtx, mainOsc, panner, mouseVelocity = 0, lastMousePos = {x: 0, y: 0}, systemBooted = false, activeWin = null, offset = [0,0], sessionHeat = 0, ripple = 0;
 
 const startAudio = (f, type='sine') => {
     if(!audioCtx) {
@@ -272,71 +240,18 @@ const startAudio = (f, type='sine') => {
     if(mainOsc) mainOsc.stop();
     mainOsc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    mainOsc.type = type;
-    mainOsc.frequency.value = f;
-    g.gain.value = 0.03;
-    mainOsc.connect(g); g.connect(panner);
-    mainOsc.start();
+    mainOsc.type = type; mainOsc.frequency.value = f; g.gain.value = 0.03;
+    mainOsc.connect(g); g.connect(panner); mainOsc.start();
 };
 
 const playClick = () => {
     if(!audioCtx) return;
     const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
     o.frequency.value = 300; g.gain.value = 0.05;
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + 0.05);
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.05);
 };
 
-/* ========================================
-   3. SYSTEM LOGIC & TOUCH/DRAG
-   ======================================== */
-function handleInputMove(clientX, clientY) {
-    if(!systemBooted) return;
-    
-    if(panner) {
-        const panVal = (clientX / window.innerWidth) * 2 - 1;
-        panner.pan.setValueAtTime(panVal, audioCtx.currentTime);
-    }
-
-    const mX = Math.abs(clientX - lastMousePos.x);
-    const mY = Math.abs(clientY - lastMousePos.y);
-    mouseVelocity = Math.min(100, Math.sqrt(mX**2 + mY**2));
-    
-    lastMousePos.x = clientX;
-    lastMousePos.y = clientY;
-
-    const drift = (mX + mY) / 10;
-    document.getElementById('drift-val').innerText = drift.toFixed(2) + "ms";
-}
-
-document.addEventListener('mousemove', e => handleInputMove(e.clientX, e.clientY));
-document.addEventListener('touchmove', e => {
-    if(e.touches.length > 0) handleInputMove(e.touches[0].clientX, e.touches[0].clientY);
-}, {passive: true});
-
-function unlockSystem() {
-    systemBooted = true;
-    startAudio(55, 'sawtooth');
-    
-    // Hide Modal, Show Panels
-    document.getElementById('boot-modal').classList.add('hidden');
-    document.getElementById('os-panels').classList.add('booted');
-    
-    document.body.classList.add('rumble'); 
-    setTimeout(()=>document.body.classList.remove('rumble'), 300);
-
-    addLog("SYSTEM_BOOT: OK.");
-    addLog("MOUNTING_KERNEL...");
-    addLog("SVC_DECODER_INITIALIZED.");
-    
-    // Start drawings
-    drawTelemetry(0);
-    drawRadar(0);
-}
-
-// Universal Drag Logic (Mouse + Touch)
-let activeWin = null, offset = [0,0];
-
+/* --- DRAG LOGIC --- */
 const startDrag = (e, h) => {
     if(!systemBooted || !h.parentElement.classList.contains('drag')) return;
     activeWin = h.parentElement;
@@ -349,7 +264,7 @@ const startDrag = (e, h) => {
 
 const doDrag = (e) => {
     if(activeWin) {
-        e.preventDefault();
+        if(e.cancelable) e.preventDefault();
         const cX = e.touches ? e.touches[0].clientX : e.clientX;
         const cY = e.touches ? e.touches[0].clientY : e.clientY;
         activeWin.style.left = (cX - offset[0]) + 'px';
@@ -357,9 +272,7 @@ const doDrag = (e) => {
     }
 };
 
-const endDrag = () => {
-    if(activeWin) { activeWin.style.zIndex = 10; activeWin = null; }
-};
+const endDrag = () => { if(activeWin) { activeWin.style.zIndex = 10; activeWin = null; } };
 
 document.querySelectorAll('.window-header').forEach(h => {
     h.addEventListener('mousedown', (e) => startDrag(e, h));
@@ -371,22 +284,22 @@ document.addEventListener('touchmove', doDrag, {passive: false});
 document.addEventListener('mouseup', endDrag);
 document.addEventListener('touchend', endDrag);
 
-// Decryption Effect
+/* --- INTERFACE LOGIC --- */
+function unlockSystem() {
+    systemBooted = true;
+    startAudio(55, 'sawtooth');
+    document.getElementById('boot-modal').classList.add('hidden');
+    document.getElementById('os-panels').classList.add('booted');
+    document.body.classList.add('rumble');
+    setTimeout(()=>document.body.classList.remove('rumble'), 300);
+    addLog("SYSTEM_BOOT: OK.");
+    drawTelemetry(0); drawRadar(0);
+}
+
 const decryptText = (el, target) => {
     const chars = "!<>-_\\/[]{}—=+*^?#________";
     let iterations = 0;
-    
-    if(target.includes('<')) {
-        el.innerHTML = target;
-        el.style.opacity = 0;
-        let op = 0;
-        const fade = setInterval(() => {
-            op += 0.1; el.style.opacity = op;
-            if(op >= 1) clearInterval(fade);
-        }, 30);
-        return;
-    }
-
+    if(target.includes('<')) { el.innerHTML = target; return; }
     const interval = setInterval(() => {
         el.innerHTML = target.split("").map((letter, index) => {
             if(index < iterations) return target[index];
@@ -408,17 +321,12 @@ function populate() {
             if(!systemBooted) return;
             document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
             d.classList.add('active');
-            
             decryptText(document.getElementById('obj-title'), item.name);
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
-            
-            const imgPanel = document.getElementById('imaging-output');
-            decryptText(imgPanel, item.imgText);
-
+            decryptText(document.getElementById('imaging-output'), item.imgText);
             startAudio(item.freq, item.type);
             document.getElementById('tele-meta').innerText = `${item.freq}HZ`;
-            
             const btn = document.getElementById('action-btn');
             if(item.url) {
                 btn.innerText = "LAUNCH_REMOTE_PROTOCOL";
@@ -433,6 +341,7 @@ function populate() {
     });
 }
 
+/* --- TERMINAL & SYSTEM --- */
 const cli = document.getElementById('cli-input');
 cli.onkeydown = (e) => {
     if(!systemBooted) return;
@@ -452,14 +361,13 @@ cli.onkeydown = (e) => {
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'INCIDENT_REPORT.txt'; a.click();
             addLog("REPORT_GENERATED.");
         } else if(val === 'WINDEN_33') {
-            archiveData[4].hidden = false; populate();
+            archiveData[5].hidden = false; populate();
             addLog("AUTH_GRANTED: PROJECT_NOAH_VISIBLE.");
             document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),400);
         } else if(val === 'CLEAR') {
             document.getElementById('log-stream').innerHTML = '';
         }
-        cli.value = '';
-        playClick();
+        cli.value = ''; playClick();
     }
 };
 
@@ -471,34 +379,23 @@ function addLog(m) {
     if(s.children.length > 8) s.lastChild.remove();
 }
 
-/* ========================================
-   4. CANVASES (TELEMETRY & RADAR)
-   ======================================== */
+/* --- CANVAS & HARDWARE --- */
 const tCanvas = document.getElementById('teleCanvas');
 const tCtx = tCanvas.getContext('2d');
-let ripple = 0;
-
 tCanvas.onmousedown = () => { if(systemBooted) { ripple = 80; playClick(); }};
-tCanvas.ontouchstart = () => { if(systemBooted) { ripple = 80; playClick(); }};
 
 function drawTelemetry(t) {
     if(!systemBooted) return;
     tCanvas.width = tCanvas.offsetWidth; tCanvas.height = tCanvas.offsetHeight;
     tCtx.clearRect(0,0,tCanvas.width, tCanvas.height);
-    tCtx.strokeStyle = '#d4af37'; tCtx.lineWidth = 1;
-    tCtx.beginPath();
-    
+    tCtx.strokeStyle = '#d4af37'; tCtx.lineWidth = 1; tCtx.beginPath();
     const amp = 30 + (mouseVelocity * 0.8) + ripple;
-    const noise = mouseVelocity * 0.2;
-    mouseVelocity *= 0.95; 
     if(ripple > 0) ripple -= 2;
-    
     for(let i=0; i<tCanvas.width; i+=2) {
-        const y = tCanvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * amp + (Math.random() * noise - noise/2);
+        const y = tCanvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * amp;
         tCtx.lineTo(i,y);
     }
-    tCtx.stroke();
-    requestAnimationFrame(drawTelemetry);
+    tCtx.stroke(); requestAnimationFrame(drawTelemetry);
 }
 
 const rCanvas = document.getElementById('radarCanvas');
@@ -506,18 +403,12 @@ const rCtx = rCanvas.getContext('2d');
 function drawRadar(t) {
     if(!systemBooted) return;
     rCanvas.width = 40; rCanvas.height = 40;
-    rCtx.clearRect(0,0,40,40);
-    rCtx.translate(20,20);
-    rCtx.rotate(t * 0.003);
-    rCtx.fillStyle = 'rgba(212, 175, 55, 0.4)';
-    rCtx.beginPath();
-    rCtx.moveTo(0,0);
-    rCtx.arc(0,0, 18, 0, Math.PI/4);
-    rCtx.fill();
+    rCtx.clearRect(0,0,40,40); rCtx.translate(20,20); rCtx.rotate(t * 0.003);
+    rCtx.fillStyle = 'rgba(212, 175, 55, 0.4)'; rCtx.beginPath();
+    rCtx.moveTo(0,0); rCtx.arc(0,0, 18, 0, Math.PI/4); rCtx.fill();
     requestAnimationFrame(drawRadar);
 }
 
-// Hardware Sync (Battery)
 if(navigator.getBattery) {
     navigator.getBattery().then(bat => {
         const up = () => { document.getElementById('integrity-val').innerText = (bat.level * 100).toFixed(0) + "%"; }
@@ -525,25 +416,23 @@ if(navigator.getBattery) {
     });
 }
 
-populate(); 
+document.addEventListener('mousemove', e => {
+    if(!systemBooted) return;
+    if(panner) panner.pan.setValueAtTime((e.clientX / window.innerWidth) * 2 - 1, audioCtx.currentTime);
+    mouseVelocity = Math.min(100, Math.sqrt(Math.abs(e.clientX - lastMousePos.x)**2 + Math.abs(e.clientY - lastMousePos.y)**2));
+    lastMousePos = {x: e.clientX, y: e.clientY};
+    document.getElementById('drift-val').innerText = (mouseVelocity/10).toFixed(2) + "ms";
+});
 
-// Global Entropy & Burn-in
-let sessionHeat = 0;
 setInterval(() => {
     document.getElementById('clock').innerText = new Date().toLocaleTimeString();
     if(!systemBooted) return;
-
-    const entropy = Math.random()*100;
-    document.getElementById('entropy-fill').style.width = entropy + "%";
-    
+    document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
     sessionHeat = Math.min(sessionHeat + 0.1, 100);
     document.documentElement.style.setProperty('--burn', sessionHeat / 200);
-    
-    if(entropy > 95 && Math.random() > 0.5) {
-        document.body.classList.add('rumble');
-        setTimeout(() => document.body.classList.remove('rumble'), 150);
-    }
 }, 1000);
+
+populate();
 </script>
 </body>
 </html>
