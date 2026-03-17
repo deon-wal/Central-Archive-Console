@@ -6,14 +6,15 @@
     <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" />
     <style>
         :root {
-            --accent: #d4af37;
-            --accent-dim: #5c4a1e;
-            --bg: #000000;
-            --panel: #0d0d0c;
-            --rust: #2a1f16;
-            --alert: #ff0000;
-            --blue: #0096ff;
-            --text: #c4beaf;
+            /* VIBRANT CYBERPUNK PALETTE */
+            --accent: #00f0ff; /* Neon Cyan */
+            --accent-dim: #005566;
+            --bg: #050508;
+            --panel: #0a0a14;
+            --rust: #ff0055; /* Hot Pink/Magenta */
+            --alert: #ffcc00; /* Warning Yellow */
+            --blue: #7000ff; /* Deep Purple */
+            --text: #e0f0ff;
             --burn: 0;
             --system-opacity: 0.15;
         }
@@ -27,7 +28,7 @@
             height: 100vh; touch-action: none;
         }
 
-        #os-workspace { position: relative; width: 100vw; height: 100vh; background: #050505; }
+        #os-workspace { position: relative; width: 100vw; height: 100vh; background: #020204; }
 
         #os-panels {
             width: 100%; height: 100%;
@@ -44,58 +45,79 @@
         }
 
         .window {
-            position: absolute; background: var(--panel); border: 1px solid var(--rust);
+            position: absolute; background: var(--panel); border: 1px solid var(--accent-dim);
             display: flex; flex-direction: column; min-width: 300px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); transition: filter 0.3s; z-index: 10;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 15px rgba(0, 240, 255, 0.1); transition: filter 0.3s; z-index: 10;
         }
 
         .window-header {
-            padding: 10px; background: var(--rust); color: var(--accent);
-            font-family: 'Space Mono'; font-size: 10px; font-weight: bold;
+            padding: 10px; background: rgba(0, 240, 255, 0.1); color: var(--accent);
+            font-family: 'Space Mono'; font-size: 10px; font-weight: bold; text-transform: uppercase;
             cursor: grab; display: flex; justify-content: space-between; user-select: none;
-            border-bottom: 1px solid var(--accent-dim); touch-action: none;
+            border-bottom: 1px solid var(--accent); touch-action: none;
+            box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
         }
         .window-header:active { cursor: grabbing; }
 
         #boot-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 20000; text-align: center; width: 450px;
-            background: rgba(13, 13, 12, 0.95); border: 1px solid var(--accent);
-            padding: 40px; box-shadow: 0 0 50px rgba(212, 175, 55, 0.1);
+            background: rgba(10, 10, 20, 0.95); border: 1px solid var(--accent);
+            padding: 40px; box-shadow: 0 0 50px rgba(0, 240, 255, 0.3);
             transition: opacity 0.5s, transform 0.5s;
         }
         #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.9); pointer-events: none; }
 
-        #nav-list { overflow-y: auto; flex: 1; max-height: 250px; }
-        .fs-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 10px; }
-        .fs-item:hover { background: rgba(212,175,55,0.1); padding-left: 20px; transition: 0.2s; }
-        .fs-item.active { border-left: 3px solid var(--accent); background: rgba(212, 175, 55, 0.05); color: #fff; }
+        /* SPREAD OUT GRID FOR LINKS */
+        #nav-list { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            padding: 15px; overflow-y: auto; flex: 1; max-height: 250px; 
+        }
+        .fs-item { 
+            padding: 15px 10px; border: 1px solid var(--accent-dim); 
+            background: rgba(0, 240, 255, 0.03); cursor: pointer; 
+            font-family: 'Space Mono'; font-size: 9px; text-align: center;
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .fs-item:hover { 
+            background: rgba(0, 240, 255, 0.15); 
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .fs-item.active { 
+            border: 1px solid var(--rust); 
+            background: rgba(255, 0, 85, 0.15); 
+            color: #fff; 
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); 
+        }
 
-        #svg-stage { height: 250px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--rust); padding: 10px; }
-        svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px var(--accent-dim)); }
+        #svg-stage { height: 250px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--accent-dim); padding: 10px; overflow: hidden; }
+        svg { width: 100%; height: 100%; filter: drop-shadow(0 0 12px var(--accent)); }
 
         #teleCanvas { width: 100%; height: 180px; background: #000; }
-        #radarCanvas { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--accent-dim); }
+        #radarCanvas { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--accent); box-shadow: 0 0 10px var(--accent-dim); }
 
         #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
-        #log-stream { height: 100px; font-size: 9px; color: var(--accent); padding: 10px; overflow: hidden; font-family: 'Space Mono'; }
+        #cli-input:focus { border-color: var(--accent); box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1); }
+        #log-stream { height: 100px; font-size: 9px; color: var(--text); padding: 10px; overflow: hidden; font-family: 'Space Mono'; }
 
         .img-container { padding: 15px; font-family: 'Space Mono'; font-size: 10px; overflow-y: auto; max-height: 220px; color: var(--text); line-height: 1.6; }
         .img-container strong { color: var(--accent); }
-        .img-container .alert-text { color: var(--alert); }
+        .img-container .alert-text { color: var(--alert); text-shadow: 0 0 5px var(--alert); }
 
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px; z-index: 5000; pointer-events: none; opacity: 0.5;
-            filter: sepia(var(--burn));
+            background-size: 100% 4px; z-index: 5000; pointer-events: none; opacity: 0.3;
+            filter: sepia(var(--burn)) hue-rotate(180deg);
         }
 
-        .rumble { animation: rumble 0.1s infinite; filter: contrast(1.5) sepia(0.5); }
+        .rumble { animation: rumble 0.1s infinite; filter: contrast(1.5) saturate(2); }
         @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-3px, 3px); } 100% { transform: translate(0,0); } }
 
-        .btn-breach { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.3s; font-weight: bold; width: 100%; }
-        .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
+        .btn-breach { background: rgba(0, 240, 255, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.3s; font-weight: bold; width: 100%; letter-spacing: 2px; }
+        .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 25px var(--accent); }
 
         @media (max-width: 800px) {
             .window { width: 90vw !important; left: 5vw !important; }
@@ -112,41 +134,41 @@
     <div id="os-workspace">
         <div id="boot-modal">
             <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:10px; font-size: 1.2rem;">THE BUREAU</div>
-            <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 30px; color:#fff; letter-spacing: -1px;">EVERYTHING IS CONNECTED.</h1>
+            <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 30px; color:#fff; letter-spacing: -1px; text-shadow: 0 0 15px var(--accent);">EVERYTHING IS CONNECTED.</h1>
             <div style="font-family:'Space Mono'; font-size: 9px; opacity: 0.5; margin-bottom: 30px;">SYSTEM OFFLINE. AWAITING MANUAL OVERRIDE.</div>
             <button class="btn-breach" onclick="unlockSystem()">[ POWER ON NODE_7 ]</button>
         </div>
 
         <div id="os-panels">
             <div class="window" style="top:20px; left:20px; width:calc(100% - 40px); z-index:1; flex-direction: row; justify-content: space-between; align-items: center; padding-right: 20px;">
-                <div class="window-header" style="cursor:default; border:none; width: 300px; background: transparent;">
+                <div class="window-header" style="cursor:default; border:none; width: 300px; background: transparent; box-shadow: none;">
                     <div>NODE_7_SYSTEM_INTEGRITY</div>
                     <div>BAT_SYNC: <span id="integrity-val">--%</span></div>
                 </div>
                 <canvas id="radarCanvas"></canvas>
-                <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-size: 10px; font-weight: bold;">00:00:00</div>
+                <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-size: 10px; font-weight: bold; text-shadow: 0 0 5px var(--accent);">00:00:00</div>
             </div>
 
-            <div class="window drag" id="win-nav" style="top:80px; left:20px; width:320px;">
-                <div class="window-header">REGISTRY_VOL_I <span>[DRAG]</span></div>
+            <div class="window drag" id="win-nav" style="top:80px; left:20px; width:400px;">
+                <div class="window-header" style="background: rgba(255,0,85,0.1); border-color: var(--rust); color: var(--rust);">REGISTRY_VOL_I <span>[DRAG]</span></div>
                 <div id="nav-list"></div>
-                <div style="padding:15px; border-top:1px solid var(--rust); background:#080807;">
+                <div style="padding:15px; border-top:1px solid var(--accent-dim); background:#050508;">
                     <div style="font-size:8px; color:var(--accent);">CORE_ENTROPY / HEAT</div>
-                    <div style="height:2px; background:#111; margin-top:5px;"><div id="entropy-fill" style="height:100%; background:var(--accent); width:0%; transition: width 0.5s;"></div></div>
+                    <div style="height:2px; background:#111; margin-top:5px;"><div id="entropy-fill" style="height:100%; background:var(--rust); width:0%; transition: width 0.5s; box-shadow: 0 0 5px var(--rust);"></div></div>
                 </div>
             </div>
 
-            <div class="window drag" id="win-tele" style="top:80px; left:350px; width:calc(100% - 800px);">
+            <div class="window drag" id="win-tele" style="top:80px; left:440px; width:calc(100% - 880px);">
                 <div class="window-header">VOID_OSCILLATION // SYNC <span id="tele-meta">--</span> <span>[DRAG]</span></div>
                 <canvas id="teleCanvas"></canvas>
-                <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent-dim); background: #000; display: flex; justify-content: space-between;">
+                <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent); background: #000; display: flex; justify-content: space-between;">
                     <span>MOUSE_VELOCITY_OVERRIDE_ACTIVE</span>
                     <span id="drift-val">0.00ms</span>
                 </div>
             </div>
 
-            <div class="window drag" id="win-img" style="top:320px; left:350px; width:calc(100% - 800px); height: 260px;">
-                <div class="window-header">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
+            <div class="window drag" id="win-img" style="top:320px; left:440px; width:calc(100% - 880px); height: 260px;">
+                <div class="window-header" style="background: rgba(112,0,255,0.1); border-color: var(--blue); color: #b080ff;">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
                 <div class="img-container" id="imaging-output">
                     > SYSTEM BOOT REQUIRED.<br>> AWAITING PROTOCOL SELECTION...
                 </div>
@@ -156,7 +178,7 @@
                 <div class="window-header">MANIFEST_ANALYSIS <span>[DRAG]</span></div>
                 <div id="svg-stage"></div>
                 <div style="padding:20px;">
-                    <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px;">--</h2>
+                    <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px; text-shadow: 0 0 8px var(--accent-dim);">--</h2>
                     <p id="obj-desc" style="font-size:11px; line-height:1.6; height:60px; opacity:0.8;"></p>
                     <button class="btn-breach" style="padding:10px; font-size:10px;" id="action-btn">INIT_SCAN</button>
                 </div>
@@ -165,7 +187,7 @@
             <div class="window drag" id="win-cli" style="bottom:20px; left:20px; width:calc(100% - 40px);">
                 <div class="window-header">BUREAU_TERMINAL_V9 // ROOT <span>[DRAG]</span></div>
                 <div id="log-stream"></div>
-                <input type="text" id="cli-input" placeholder="CMD: MEMO [TEXT], LOGS, EXPORT, WINDEN_33..." autocomplete="off">
+                <input type="text" id="cli-input" placeholder="CMD: HELP, SCAN, MEMO [TEXT], OVERRIDE..." autocomplete="off">
             </div>
         </div>
     </div>
@@ -176,80 +198,60 @@ const archiveData = [
   { 
     name: "The Apparatus", 
     id: "apparatus", 
-    freq: 55, type: 'sawtooth',
+    freq: 55,
     desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
     imgText: "> QUERYING VISUAL DATABASE...<br>> <span class='alert-text'>ERR: NO VISUAL RECORD FOUND.</span>",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.2"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--rust)" stroke-width="2" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle><circle cx="50" cy="50" r="25" fill="none" stroke="var(--blue)" stroke-width="1" stroke-dasharray="2 4"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></circle></svg>` 
   },
   { 
     name: "Substrate Protocol", 
     id: "substrate", 
-    freq: 110, type: 'sine',
+    freq: 110,
     desc: "SVC architecture. Hierarchical spatial mapping.", 
     url: "https://deon-wal.github.io/Substrate-Protocol/", 
     imgText: "> RETRIEVING BLUEPRINT DATA...<br><br><strong>STATUS: LINKED</strong>",
-    svg: `<svg viewBox="0 0 100 100"><g transform="translate(50, 75) scale(1, 0.45) rotate(45)"><rect x="-35" y="-35" width="70" height="70" fill="rgba(0, 150, 255, 0.15)" stroke="var(--blue)" stroke-width="1.5"/><rect x="-35" y="-65" width="70" height="70" fill="rgba(212, 175, 55, 0.15)" stroke="var(--accent)" stroke-width="1"/></g></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><g transform="translate(50, 75) scale(1, 0.45) rotate(45)"><rect x="-35" y="-35" width="70" height="70" fill="rgba(0, 240, 255, 0.1)" stroke="var(--accent)" stroke-width="1.5"/><rect x="-35" y="-65" width="70" height="70" fill="rgba(255, 0, 85, 0.1)" stroke="var(--rust)" stroke-width="1.5"><animate attributeName="y" values="-65;-80;-65" dur="3s" repeatCount="indefinite"/></rect></g></svg>` 
   },
   { 
     name: "D.U.E. Archive", 
     id: "due", 
-    freq: 44, type: 'square',
+    freq: 44,
     desc: "Department of Unfinished Events. Chronological records vault.", 
     url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/", 
     imgText: "> <span class='alert-text'>REMOTE UPLINK ESTABLISHED.</span>",
-    svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--blue)" stroke-width="1.5"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="1"><animate attributeName="stroke-dasharray" values="0,100;100,0" dur="2s" repeatCount="indefinite"/></path></svg>` 
   },
   { 
     name: "Anomaly Observatory", 
     id: "observatory", 
-    freq: 72, type: 'sine',
+    freq: 72,
     desc: "Monitoring spatial irregularities across the Bureau network.", 
     url: "https://deon-wal.github.io/Anomaly-Observatory/", 
     imgText: "> ACCESSING LIVE FEED...<br>> <span class='alert-text'>WARNING: PHASE SHIFT DETECTED.</span>",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1"/><circle cx="70" cy="30" r="3" fill="var(--alert)"><animate attributeName="opacity" values="1;0;1" dur="1.5s" repeatCount="indefinite"/></circle></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1.5"/><circle cx="70" cy="30" r="4" fill="var(--rust)"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="translate" values="0,0; -40,40; 0,0" dur="4s" repeatCount="indefinite"/></circle></svg>` 
   },
   { 
     name: "Kernel Diagnostics", 
     id: "test_node", 
-    freq: 120, type: 'square',
+    freq: 120,
     desc: "Diagnostic sandbox for kernel verification.", 
     url: "https://deon-wal.github.io/Test/Test.html", 
     imgText: "> RUNNING DIAGNOSTICS...<br>> ALL SYSTEMS NOMINAL.",
-    svg: `<svg viewBox="0 0 100 100"><path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--accent)" stroke-width="1"/></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--accent)" stroke-width="2"/><circle cx="50" cy="50" r="10" fill="var(--blue)" opacity="0.5"><animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite"/></circle></svg>` 
   },
   { 
     name: "Project Noah", 
     id: "noah", 
-    freq: 33, type: 'sawtooth',
+    freq: 33,
     desc: "The cycle is complete. Sic Mundus Creatus Est.", 
     hidden: true, 
     imgText: "> <span class='alert-text'>RESTRICTED PROTOCOL.</span>",
-    svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="2"/></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="rgba(255,0,85,0.2)" stroke="var(--rust)" stroke-width="2"><animateTransform attributeName="transform" type="rotate" from="0 50 60" to="360 50 60" dur="10s" repeatCount="indefinite"/></path></svg>` 
   }
 ];
 
-/* --- AUDIO & GLOBAL STATE --- */
-let audioCtx, mainOsc, panner, mouseVelocity = 0, lastMousePos = {x: 0, y: 0}, systemBooted = false, activeWin = null, offset = [0,0], sessionHeat = 0, ripple = 0;
-
-const startAudio = (f, type='sine') => {
-    if(!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        panner = audioCtx.createStereoPanner();
-        panner.connect(audioCtx.destination);
-    }
-    if(mainOsc) mainOsc.stop();
-    mainOsc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    mainOsc.type = type; mainOsc.frequency.value = f; g.gain.value = 0.03;
-    mainOsc.connect(g); g.connect(panner); mainOsc.start();
-};
-
-const playClick = () => {
-    if(!audioCtx) return;
-    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-    o.frequency.value = 300; g.gain.value = 0.05;
-    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.05);
-};
+/* --- GLOBAL STATE (NO AUDIO) --- */
+let mouseVelocity = 0, lastMousePos = {x: 0, y: 0}, systemBooted = false, activeWin = null, offset = [0,0], sessionHeat = 0, ripple = 0;
 
 /* --- DRAG LOGIC --- */
 const startDrag = (e, h) => {
@@ -259,7 +261,6 @@ const startDrag = (e, h) => {
     const cX = e.touches ? e.touches[0].clientX : e.clientX;
     const cY = e.touches ? e.touches[0].clientY : e.clientY;
     offset = [cX - activeWin.offsetLeft, cY - activeWin.offsetTop];
-    playClick();
 };
 
 const doDrag = (e) => {
@@ -287,13 +288,13 @@ document.addEventListener('touchend', endDrag);
 /* --- INTERFACE LOGIC --- */
 function unlockSystem() {
     systemBooted = true;
-    startAudio(55, 'sawtooth');
     document.getElementById('boot-modal').classList.add('hidden');
     document.getElementById('os-panels').classList.add('booted');
     document.body.classList.add('rumble');
     setTimeout(()=>document.body.classList.remove('rumble'), 300);
     addLog("SYSTEM_BOOT: OK.");
     drawTelemetry(0); drawRadar(0);
+    startAnomalySystem();
 }
 
 const decryptText = (el, target) => {
@@ -316,7 +317,7 @@ function populate() {
     archiveData.filter(i => !i.hidden).forEach(item => {
         const d = document.createElement('div');
         d.className = 'fs-item';
-        d.innerText = `> ${item.name.toUpperCase()}`;
+        d.innerText = `[ ${item.name} ]`;
         d.onclick = () => {
             if(!systemBooted) return;
             document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
@@ -325,7 +326,6 @@ function populate() {
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
             decryptText(document.getElementById('imaging-output'), item.imgText);
-            startAudio(item.freq, item.type);
             document.getElementById('tele-meta').innerText = `${item.freq}HZ`;
             const btn = document.getElementById('action-btn');
             if(item.url) {
@@ -333,7 +333,7 @@ function populate() {
                 btn.onclick = () => window.open(item.url, '_blank');
             } else {
                 btn.innerText = "INITIALIZE_SCAN";
-                btn.onclick = () => { document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),200); playClick(); };
+                btn.onclick = () => { document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),200); };
             }
             addLog(`MOUNTING: ${item.id}`);
         };
@@ -347,7 +347,10 @@ cli.onkeydown = (e) => {
     if(!systemBooted) return;
     if(e.key === 'Enter') {
         const val = cli.value.toUpperCase().trim();
-        if(val.startsWith('MEMO ')) {
+        
+        if(val === 'HELP') {
+            addLog("CMDS: HELP, MEMO [TEXT], LOGS, EXPORT, CLEAR, SCAN, OVERRIDE");
+        } else if(val.startsWith('MEMO ')) {
             const m = JSON.parse(localStorage.getItem('b_m') || '[]');
             m.push({t: new Date().toLocaleTimeString(), c: val.substring(5)});
             localStorage.setItem('b_m', JSON.stringify(m));
@@ -366,15 +369,38 @@ cli.onkeydown = (e) => {
             document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),400);
         } else if(val === 'CLEAR') {
             document.getElementById('log-stream').innerHTML = '';
+        } else if(val === 'SCAN') {
+            addLog("INITIATING DEEP NETWORK SCAN...");
+            let scanCount = 0;
+            const scanInt = setInterval(() => {
+                addLog(`PING: 192.168.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)} - TIMEOUT`);
+                scanCount++;
+                if(scanCount > 5) {
+                    clearInterval(scanInt);
+                    addLog("<span class='alert-text'>1 UNKNOWN DEVICE FOUND ON LOCAL SUBNET. PROCEED WITH CAUTION.</span>");
+                }
+            }, 800);
+        } else if(val === 'OVERRIDE') {
+            addLog("<span class='alert-text'>CRITICAL: OVERRIDE SEQUENCE INITIATED. CORE MELTDOWN IMMINENT.</span>");
+            document.documentElement.style.setProperty('--burn', '0.8'); 
+            document.body.classList.add('rumble');
+            setTimeout(() => {
+                document.documentElement.style.setProperty('--burn', sessionHeat / 200); 
+                document.body.classList.remove('rumble');
+                addLog("OVERRIDE FAILED. INSUFFICIENT CLEARANCE.");
+            }, 3000);
+        } else if(val !== '') {
+            addLog(`ERR: UNKNOWN COMMAND '${val}'. TYPE 'HELP'.`);
         }
-        cli.value = ''; playClick();
+        
+        cli.value = '';
     }
 };
 
 function addLog(m) {
     const s = document.getElementById('log-stream');
     const d = document.createElement('div');
-    d.innerText = `[${new Date().toLocaleTimeString()}] > ${m}`;
+    d.innerHTML = `<span style="color:var(--accent-dim)">[${new Date().toLocaleTimeString()}]</span> > ${m}`;
     s.prepend(d);
     if(s.children.length > 8) s.lastChild.remove();
 }
@@ -382,13 +408,13 @@ function addLog(m) {
 /* --- CANVAS & HARDWARE --- */
 const tCanvas = document.getElementById('teleCanvas');
 const tCtx = tCanvas.getContext('2d');
-tCanvas.onmousedown = () => { if(systemBooted) { ripple = 80; playClick(); }};
+tCanvas.onmousedown = () => { if(systemBooted) ripple = 80; };
 
 function drawTelemetry(t) {
     if(!systemBooted) return;
     tCanvas.width = tCanvas.offsetWidth; tCanvas.height = tCanvas.offsetHeight;
     tCtx.clearRect(0,0,tCanvas.width, tCanvas.height);
-    tCtx.strokeStyle = '#d4af37'; tCtx.lineWidth = 1; tCtx.beginPath();
+    tCtx.strokeStyle = '#00f0ff'; tCtx.lineWidth = 2; tCtx.beginPath();
     const amp = 30 + (mouseVelocity * 0.8) + ripple;
     if(ripple > 0) ripple -= 2;
     for(let i=0; i<tCanvas.width; i+=2) {
@@ -404,7 +430,7 @@ function drawRadar(t) {
     if(!systemBooted) return;
     rCanvas.width = 40; rCanvas.height = 40;
     rCtx.clearRect(0,0,40,40); rCtx.translate(20,20); rCtx.rotate(t * 0.003);
-    rCtx.fillStyle = 'rgba(212, 175, 55, 0.4)'; rCtx.beginPath();
+    rCtx.fillStyle = 'rgba(0, 240, 255, 0.4)'; rCtx.beginPath();
     rCtx.moveTo(0,0); rCtx.arc(0,0, 18, 0, Math.PI/4); rCtx.fill();
     requestAnimationFrame(drawRadar);
 }
@@ -418,7 +444,6 @@ if(navigator.getBattery) {
 
 document.addEventListener('mousemove', e => {
     if(!systemBooted) return;
-    if(panner) panner.pan.setValueAtTime((e.clientX / window.innerWidth) * 2 - 1, audioCtx.currentTime);
     mouseVelocity = Math.min(100, Math.sqrt(Math.abs(e.clientX - lastMousePos.x)**2 + Math.abs(e.clientY - lastMousePos.y)**2));
     lastMousePos = {x: e.clientX, y: e.clientY};
     document.getElementById('drift-val').innerText = (mouseVelocity/10).toFixed(2) + "ms";
@@ -433,61 +458,29 @@ setInterval(() => {
 }, 1000);
 
 populate();
-    /* --- NEW FEATURE: AMBIENT ANOMALIES --- */
-// This runs in the background and occasionally glitches the system
+
+/* --- AMBIENT ANOMALIES (SILENT) --- */
 function startAnomalySystem() {
     const creepyMessages = [
         "<span class='alert-text'>WARN: UNKNOWN CONNECTION ON PORT 8042</span>",
-        "AUDIO_BUFFER_OVERFLOW // THEY ARE LISTENING",
+        "DATA_BUFFER_OVERFLOW // THEY ARE WATCHING",
         "PROTOCOL_BREACH: NODE_7 IS COMPROMISED",
-        "<span style='color:#fff'>WHERE IS WINDEN?</span>",
+        "<span style='color:#ff0055'>WHERE IS WINDEN?</span>",
         "ERR: CHRONO-SYNC FAILED. TIME DRIFT DETECTED."
     ];
 
     setInterval(() => {
         if (!systemBooted) return;
-        
-        // 15% chance every 5 seconds to trigger an anomaly
         if (Math.random() < 0.15) {
-            // 1. Rumble the screen heavily
             document.body.classList.add('rumble');
             setTimeout(() => document.body.classList.remove('rumble'), 800);
-            
-            // 2. Add a cryptic log
             const randomMsg = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
             addLog(randomMsg);
-            
-            // 3. Play a low, unsettling audio pulse without overriding the main osc
-            if(audioCtx) {
-                const pulse = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                pulse.type = 'sawtooth';
-                pulse.frequency.setValueAtTime(30, audioCtx.currentTime); // Deep bass
-                pulse.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 1);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1);
-                
-                pulse.connect(gain);
-                gain.connect(audioCtx.destination);
-                pulse.start();
-                pulse.stop(audioCtx.currentTime + 1);
-            }
-            
-            // 4. Spike the radar and wave visually
             mouseVelocity += 150; 
             ripple = 200;
         }
-    }, 5000); // Checks every 5 seconds
+    }, 5000); 
 }
-
-// Hook it into your existing unlock function!
-const originalUnlock = unlockSystem;
-unlockSystem = function() {
-    originalUnlock(); // Do everything your original function did
-    startAnomalySystem(); // Start our new creepy background loop
-    addLog("ANOMALY_MONITOR: ONLINE.");
-};
-/* --- END OF NEW FEATURE --- */
 </script>
 </body>
 </html>
