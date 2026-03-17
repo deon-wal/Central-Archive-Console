@@ -1,139 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>THE BUREAU // NODE_7</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-/* ========================================
-   1. CORE VARS & KINETICS
-   ======================================== */
-:root {
-  --accent: #d4af37;
-  --accent-dim: #5c4a1e;
-  --bg: #050505;
-  --panel: #11100e;
-  --rust: #3d2b1f;
-  --alert: #ff0000;
-  --text: #c4beaf;
-}
+    <meta charset="utf-8" />
+    <title>THE BUREAU // NODE_7 // RESTORED</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        :root {
+            --accent: #d4af37;
+            --accent-dim: #5c4a1e;
+            --bg: #050505;
+            --panel: #11100e;
+            --rust: #3d2b1f;
+            --alert: #ff0000;
+            --text: #c4beaf;
+            --subtext: #888888;
+        }
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;900&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { 
-    background: var(--bg); color: var(--text); 
-    font-family: 'Space Mono', monospace; overflow: hidden; 
-    height: 100vh; cursor: crosshair;
-}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Inter', sans-serif; overflow-x: hidden; 
+            height: 100vh; cursor: crosshair;
+        }
 
-/* --- THE KINETIC SHAKE --- */
-@keyframes rumble {
-    0% { transform: translate(0,0); }
-    10% { transform: translate(-2px, -2px); }
-    20% { transform: translate(2px, 2px); }
-    30% { transform: translate(-2px, 2px); }
-    100% { transform: translate(0,0); }
-}
-.rumble { animation: rumble 0.2s cubic-bezier(.36,.07,.19,.97) both; }
+        /* --- CRT FX --- */
+        .crt::after {
+            content: " "; display: block; position: absolute; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; z-index: 100; pointer-events: none;
+        }
 
-/* ========================================
-   2. VIEW STATES
-   ======================================== */
-#view-landing, #view-terminal { position: fixed; inset: 0; transition: opacity 1s ease; }
-#view-terminal { opacity: 0; pointer-events: none; z-index: 2; }
-.hidden { display: none !important; }
+        #static-overlay {
+            position: fixed; inset: 0; z-index: 10000; pointer-events: none;
+            background: #fff; opacity: 0;
+        }
 
-/* --- LANDING STYLES --- */
-.landing-content {
-    height: 100vh; display: flex; flex-direction: column; 
-    justify-content: center; align-items: center; text-align: center;
-    font-family: 'Inter', sans-serif;
-}
-.landing-content h1 { font-size: 8vw; font-weight: 900; letter-spacing: -5px; }
-.btn-access {
-    margin-top: 40px; padding: 20px 60px; background: transparent;
-    border: 1px solid var(--accent); color: var(--accent);
-    font-family: 'Space Mono'; cursor: pointer; transition: 0.3s;
-}
-.btn-access:hover { background: var(--accent); color: #000; box-shadow: 0 0 50px rgba(212,175,55,0.3); }
+        /* --- LANDING STYLES --- */
+        #view-landing { position: relative; z-index: 1; transition: opacity 1s ease; background: var(--bg); min-height: 100vh; }
+        nav { padding: 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
+        .logo { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 5px; color: var(--accent); text-decoration: none; }
+        .nav-links a { color: var(--subtext); text-decoration: none; margin-left: 30px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
+        .nav-links a.highlight { border: 1px solid var(--accent); padding: 8px 15px; border-radius: 20px; color: var(--accent); }
 
-/* --- STATIC OVERLAY (THE BREACH) --- */
-#static-overlay {
-    position: fixed; inset: 0; z-index: 10000; pointer-events: none;
-    background: #fff; opacity: 0;
-}
+        .directory-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1px; background: rgba(212, 175, 55, 0.1); width: 100%; max-width: 1200px; margin: 40px auto; border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+        .dir-item { background: var(--bg); padding: 40px; transition: 0.4s; }
+        .dir-link { font-family: 'Space Mono'; font-size: 10px; color: var(--accent); text-decoration: none; }
 
-/* ========================================
-   3. TERMINAL ARCHITECTURE (REFINED)
-   ======================================== */
-.app-container {
-  display: grid;
-  grid-template-columns: 320px 1fr 380px;
-  grid-template-rows: 60px 1fr 180px;
-  height: 100vh; gap: 10px; padding: 10px;
-}
-.panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; }
-.panel-header { padding: 8px 15px; background: var(--rust); color: var(--accent); font-size: 10px; font-weight: bold; }
-canvas { width: 100%; height: 100%; filter: sepia(0.5) contrast(1.2); }
-#cli-input { width: 100%; background: transparent; border: 1px solid var(--accent-dim); color: var(--accent); padding: 10px; font-family: inherit; outline: none; }
-.nav-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-size: 11px; }
-.nav-item:hover { background: rgba(212,175,55,0.1); }
-.nav-item.active { border-left: 4px solid var(--accent); background: rgba(212,175,55,0.05); }
+        /* --- TERMINAL STYLES --- */
+        #view-terminal { position: fixed; inset: 0; opacity: 0; pointer-events: none; z-index: 2; background: var(--bg); }
+        .app-container { display: grid; grid-template-columns: 320px 1fr 420px; grid-template-rows: 60px 1fr 180px; height: 100vh; gap: 10px; padding: 10px; }
+        .panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+        .panel-header { padding: 8px 15px; background: var(--rust); color: var(--accent); font-size: 10px; font-weight: bold; font-family: 'Space Mono'; }
+        
+        .nav-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 11px; }
+        .nav-item.active { border-left: 4px solid var(--accent); background: rgba(212, 175, 55, 0.05); }
 
-/* --- CRT FX --- */
-.crt::after {
-    content: " "; display: block; position: absolute; inset: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-    background-size: 100% 4px; z-index: 10; pointer-events: none;
-}
-</style>
+        #svg-stage { height: 250px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1917 0%, #0a0a09 100%); border-bottom: 1px solid var(--rust); }
+        svg { width: 60%; height: auto; filter: drop-shadow(0 0 10px var(--accent-dim)); }
+
+        #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 12px; font-family: 'Space Mono'; outline: none; }
+
+        @keyframes rumble { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 100% { transform: translate(0,0); } }
+        .rumble { animation: rumble 0.15s infinite; }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body class="crt">
 
 <div id="static-overlay"></div>
 
 <section id="view-landing">
-    <div class="landing-content">
-        <h1 id="landing-title">THE BUREAU</h1>
-        <p style="color:var(--accent); letter-spacing: 5px;">STATION_7 // PUBLIC_GATEWAY</p>
-        <button class="btn-access" onclick="initiateBreach()">INITIALIZE NODE ACCESS</button>
-        <div style="position:fixed; bottom:20px; font-size:9px; opacity:0.3;">
-            REF_KEY: <span style="color:var(--accent)">WINDEN_33</span>
+    <nav>
+        <a href="#" class="logo">THE BUREAU</a>
+        <div class="nav-links">
+            <a href="#">Initiatives</a>
+            <a href="#">Personnel</a>
+            <a href="#" onclick="initiateBreach()" class="highlight">Node Access</a>
         </div>
-    </div>
+    </nav>
+    <main style="padding: 10vh 20px; text-align: center;">
+        <h1 style="font-size: 7vw; font-weight: 900; letter-spacing: -5px;">EVERYTHING IS CONNECTED.</h1>
+        <div class="directory-grid">
+            <div class="dir-item"><h3>Operational History</h3><p>Timeline of Bureau activity from 1921–2026.</p><a href="#" class="dir-link">ARCHIVE_ACCESS</a></div>
+            <div class="dir-item"><h3>The Apparatus</h3><p>Documentation on localized non-linear transit.</p><a href="#" class="dir-link">RESTRICTED_SPECS</a></div>
+        </div>
+    </main>
+    <footer style="text-align:center; opacity:0.3; font-size:10px; font-family:'Space Mono';">REF_KEY: <span style="color:var(--accent)">WINDEN_33</span></footer>
 </section>
 
 <section id="view-terminal">
     <div class="app-container">
         <header class="panel" style="grid-column: 1/span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
-            <div style="color:var(--accent); font-weight: bold; letter-spacing: 3px;">INTERNAL_ARCHIVE_7</div>
-            <div id="clock">00:00:00</div>
+            <div style="color:var(--accent); font-weight: bold; letter-spacing: 3px; font-family: 'Space Mono';">INTERNAL_ARCHIVE_7</div>
+            <div id="clock" style="font-family: 'Space Mono'; color:var(--accent);">00:00:00</div>
         </header>
 
         <aside class="panel">
-            <div class="panel-header">OBJECT_REGISTRY</div>
+            <div class="panel-header">REGISTRY_VOL_I</div>
             <div id="nav-list" style="overflow-y:auto"></div>
         </aside>
 
         <main class="panel" style="background:#000;">
-            <div class="panel-header">VOID_SCANNER_ACTIVE</div>
+            <div class="panel-header">VOID_SCANNER // SYNC_ACTIVE</div>
             <canvas id="teleCanvas"></canvas>
         </main>
 
         <aside class="panel">
-            <div class="panel-header">MANIFEST_DATA</div>
+            <div class="panel-header">OBJECT_MANIFEST</div>
+            <div id="svg-stage"></div>
             <div id="manifest-content" style="padding:20px;">
-                <h2 id="obj-title" style="color:var(--accent); margin-bottom:10px;">--</h2>
-                <p id="obj-desc" style="font-size:11px; line-height:1.6;"></p>
+                <h2 id="obj-title" style="color:var(--accent); margin-bottom:10px; font-family:'Space Mono'; text-transform:uppercase; font-size: 1.2rem;">--</h2>
+                <p id="obj-desc" style="font-size:11px; line-height:1.6; font-family:'Inter'; opacity: 0.8;"></p>
+                <button onclick="deepScan()" style="margin-top:20px; width:100%;" class="dir-link">INITIALIZE_DEEP_SCAN</button>
             </div>
         </aside>
 
-        <footer class="panel" style="grid-column: 1/span 3; display:grid; grid-template-columns: 1fr 400px; padding:15px; gap:20px;">
-            <div id="log-stream" style="font-size:9px; color:var(--accent); overflow:hidden;"></div>
+        <footer class="panel" style="grid-column: 1/span 3; display:grid; grid-template-columns: 1fr 450px; padding:15px; gap:20px; background:#080807;">
+            <div id="log-stream" style="font-size:9px; color:var(--accent); overflow:hidden; font-family:'Space Mono'; opacity:0.7;"></div>
             <div>
-                <div style="font-size:9px; opacity:0.5; margin-bottom:5px;">COMMAND_INPUT</div>
-                <input type="text" id="cli-input" placeholder="ENTER AUTH CODE OR CMD..." autocomplete="off">
+                <input type="text" id="cli-input" placeholder="ENTER AUTH CODE..." autocomplete="off">
             </div>
         </footer>
     </div>
@@ -141,134 +131,123 @@ canvas { width: 100%; height: 100%; filter: sepia(0.5) contrast(1.2); }
 
 <script>
 /* ========================================
-   4. AUDIO ENGINE (GENERATIVE)
+   DATA ARCHIVE (SVGs RESTORED)
+   ======================================== */
+const archiveData = [
+  { id: "app-01", name: "The Apparatus", desc: "A dual-chamber brass device utilizing Cesium-137. Designed for localized transit.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><g transform-origin="50 50"><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></g><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` },
+  { id: "god-p", name: "Higgs Field", desc: "Visible manifestation of the God Particle. Magnetic containment is fluctuating.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="12" fill="var(--accent)"><animate attributeName="r" values="10;15;10" dur="1.5s" repeatCount="indefinite"/></circle>${Array.from({length:12}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*40}" y2="${50+Math.sin(i)*40}" stroke="var(--accent)" stroke-width="0.2" opacity="0.4"/>`).join('')}</svg>` },
+  { id: "caves", name: "Passage 33", desc: "Geological survey of Winden Cave system. Inter-temporal tunnel located.", svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--accent)" stroke-width="1.5"/><path d="M25 90 Q50 40 75 90" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.4"/></svg>` },
+  { id: "tablet", name: "Emerald Tablet", desc: "Ancient hermetic text. 'Sic Mundus Creatus Est'. FOUND: 1921.", svg: `<svg viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M30 30 L70 70 M70 30 L30 70" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
+  { id: "noah", name: "Project Noah", desc: "The cycle is complete. The beginning is the end.", hidden: true, svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--alert)" stroke-width="2" stroke-dasharray="5 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="5s" repeatCount="indefinite"/></circle><path d="M50 20 L50 80 M20 50 L80 50" stroke="var(--alert)" stroke-width="1"/></svg>` }
+];
+
+/* ========================================
+   CORE ENGINE
    ======================================== */
 let audioCtx;
 function startAudio() {
+    if(audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // Low Brown Noise Hum
-    const bufferSize = 4096;
-    const brownNoise = (() => {
-        let lastOut = 0.0;
-        const node = audioCtx.createScriptProcessor(bufferSize, 1, 1);
-        node.onaudioprocess = (e) => {
-            const output = e.outputBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                const white = Math.random() * 2 - 1;
-                output[i] = (lastOut + (0.02 * white)) / 1.02;
-                lastOut = output[i];
-                output[i] *= 3.5; // volume
-            }
-        };
-        return node;
-    })();
-
-    const lowFilter = audioCtx.createBiquadFilter();
-    lowFilter.type = 'lowpass';
-    lowFilter.frequency.value = 400;
-
-    brownNoise.connect(lowFilter);
-    lowFilter.connect(audioCtx.destination);
+    const node = audioCtx.createScriptProcessor(4096, 1, 1);
+    let lastOut = 0.0;
+    node.onaudioprocess = (e) => {
+        const output = e.outputBuffer.getChannelData(0);
+        for (let i = 0; i < 4096; i++) {
+            const white = Math.random() * 2 - 1;
+            output[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = output[i];
+            output[i] *= 0.1; 
+        }
+    };
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass'; filter.frequency.value = 300;
+    node.connect(filter); filter.connect(audioCtx.destination);
 }
-
-/* ========================================
-   5. DATA & LOGIC
-   ======================================== */
-const data = [
-    { id: "01", name: "The Device", desc: "Brass transit apparatus. Requires Cesium injection." },
-    { id: "02", name: "The Map", desc: "Detailed layout of the cave system. 1953/1986/2019 intersection." },
-    { id: "SECRET", name: "Project Noah", desc: "The cycle is complete. Sic Mundus Creatus Est.", hidden: true }
-];
 
 function initiateBreach() {
     startAudio();
     const overlay = document.getElementById('static-overlay');
     document.body.classList.add('rumble');
-    
-    // The "Glitch" Sequence
     overlay.style.opacity = '1';
-    let flashes = 0;
-    const interval = setInterval(() => {
-        overlay.style.background = flashes % 2 === 0 ? '#fff' : '#000';
-        flashes++;
-        if(flashes > 10) {
-            clearInterval(interval);
+    let f = 0;
+    const g = setInterval(() => {
+        overlay.style.background = f % 2 === 0 ? '#fff' : '#000';
+        if(f++ > 10) {
+            clearInterval(g);
             overlay.style.opacity = '0';
             document.getElementById('view-landing').classList.add('hidden');
             document.getElementById('view-terminal').style.opacity = '1';
             document.getElementById('view-terminal').style.pointerEvents = 'all';
             document.body.classList.remove('rumble');
-            addLog("CONNECTION ESTABLISHED... NODE_7 ONLINE");
+            addLog("STATION_7 LINK ESTABLISHED.");
         }
-    }, 50);
+    }, 60);
 }
 
-// Terminal Logic
-const navList = document.getElementById('nav-list');
 function buildNav() {
-    navList.innerHTML = '';
-    data.filter(i => !i.hidden).forEach(item => {
+    const list = document.getElementById('nav-list');
+    list.innerHTML = '';
+    archiveData.filter(i => !i.hidden).forEach(item => {
         const div = document.createElement('div');
         div.className = 'nav-item';
-        div.innerText = item.name;
+        div.innerText = item.name.toUpperCase();
         div.onclick = () => {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            div.classList.add('active');
             document.getElementById('obj-title').innerText = item.name;
             document.getElementById('obj-desc').innerText = item.desc;
-            addLog(`ACCESSING: ${item.name}`);
+            document.getElementById('svg-stage').innerHTML = item.svg;
+            addLog(`ACCESSING: ${item.id}`);
         };
-        navList.appendChild(div);
+        list.appendChild(div);
     });
 }
 buildNav();
 
+function deepScan() {
+    document.body.style.filter = "brightness(3) contrast(2) invert(1)";
+    addLog("PERFORMING_DEEP_VOID_SCAN...");
+    setTimeout(() => document.body.style.filter = "none", 150);
+}
+
 const cli = document.getElementById('cli-input');
 cli.onkeydown = (e) => {
     if(e.key === 'Enter') {
-        const val = cli.value.toUpperCase();
-        addLog(`CMD: ${val}`);
+        const val = cli.value.toUpperCase().trim();
+        addLog(`USER_INPUT: ${val}`);
         if(val === 'WINDEN_33') {
-            addLog("!!! ACCESS GRANTED: SECRET_ARCHIVE_UNLOCKED");
-            data[2].hidden = false;
-            buildNav();
+            addLog("AUTH_SUCCESS: PROJECT_NOAH_RESTORED.");
+            archiveData[4].hidden = false; buildNav();
             document.body.classList.add('rumble');
             setTimeout(() => document.body.classList.remove('rumble'), 500);
-        } else if (val === 'PURGE') {
-            document.body.style.filter = "invert(1)";
-            setTimeout(() => document.body.style.filter = "none", 200);
         }
         cli.value = '';
     }
 };
 
 function addLog(msg) {
-    const log = document.getElementById('log-stream');
-    const d = document.createElement('div');
-    d.innerText = `> ${msg}`;
-    log.prepend(d);
+    const stream = document.getElementById('log-stream');
+    const l = document.createElement('div');
+    l.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
+    stream.prepend(l);
 }
 
-// Canvas Visualizer
 const canvas = document.getElementById('teleCanvas');
 const ctx = canvas.getContext('2d');
 function draw(t) {
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    ctx.clearRect(0,0,canvas.width, canvas.height);
-    ctx.strokeStyle = '#d4af37';
+    canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1;
     ctx.beginPath();
     for(let i=0; i<canvas.width; i+=2) {
-        const y = canvas.height/2 + Math.sin(i*0.01 + t*0.002) * 50 + (Math.random()*10);
-        ctx.lineTo(i,y);
+        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * 50 + (Math.random() * 5);
+        ctx.lineTo(i, y);
     }
     ctx.stroke();
     requestAnimationFrame(draw);
 }
 draw(0);
-
-setInterval(() => {
-    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-}, 1000);
+setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 </script>
 </body>
 </html>
