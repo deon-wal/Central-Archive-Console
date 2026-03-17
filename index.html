@@ -465,7 +465,492 @@ function startAnomalySystem() {
         "<span class='alert-text'>WARN: UNKNOWN CONNECTION ON PORT 8042</span>",
         "DATA_BUFFER_OVERFLOW // THEY ARE WATCHING",
         "PROTOCOL_BREACH: NODE_7 IS COMPROMISED",
+        "<span style='color:#ff0055'>WHERE IS WINDEN?</span>",<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>THE BUREAU // NODE_7 // TERMINUS</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <style>
+        :root {
+            /* VIBRANT CYBERPUNK PALETTE */
+            --accent: #00f0ff; /* Neon Cyan */
+            --accent-dim: #005566;
+            --bg: #050508;
+            --panel: #0a0a14;
+            --rust: #ff0055; /* Hot Pink/Magenta */
+            --alert: #ffcc00; /* Warning Yellow */
+            --blue: #7000ff; /* Deep Purple */
+            --text: #e0f0ff;
+            --burn: 0;
+            --system-opacity: 0.15;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Inter', sans-serif; overflow: hidden; 
+            height: 100vh; touch-action: none;
+        }
+
+        #os-workspace { position: relative; width: 100vw; height: 100vh; background: #020204; }
+
+        #os-panels {
+            width: 100%; height: 100%;
+            opacity: var(--system-opacity);
+            pointer-events: none;
+            transition: opacity 2s ease, filter 2s ease;
+            filter: grayscale(1) blur(2px);
+        }
+
+        #os-panels.booted {
+            opacity: 1;
+            pointer-events: all;
+            filter: grayscale(0) blur(0px);
+        }
+
+        .window {
+            position: absolute; background: var(--panel); border: 1px solid var(--accent-dim);
+            display: flex; flex-direction: column; min-width: 300px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 15px rgba(0, 240, 255, 0.1); transition: filter 0.3s; z-index: 10;
+        }
+
+        .window-header {
+            padding: 10px; background: rgba(0, 240, 255, 0.1); color: var(--accent);
+            font-family: 'Space Mono'; font-size: 10px; font-weight: bold; text-transform: uppercase;
+            cursor: grab; display: flex; justify-content: space-between; user-select: none;
+            border-bottom: 1px solid var(--accent); touch-action: none;
+            box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+        .window-header:active { cursor: grabbing; }
+
+        #boot-modal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 20000; text-align: center; width: 450px;
+            background: rgba(10, 10, 20, 0.95); border: 1px solid var(--accent);
+            padding: 40px; box-shadow: 0 0 50px rgba(0, 240, 255, 0.3);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.9); pointer-events: none; }
+
+        /* SPREAD OUT GRID FOR LINKS */
+        #nav-list { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            padding: 15px; overflow-y: auto; flex: 1; max-height: 250px; 
+        }
+        .fs-item { 
+            padding: 15px 10px; border: 1px solid var(--accent-dim); 
+            background: rgba(0, 240, 255, 0.03); cursor: pointer; 
+            font-family: 'Space Mono'; font-size: 9px; text-align: center;
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .fs-item:hover { 
+            background: rgba(0, 240, 255, 0.15); 
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .fs-item.active { 
+            border: 1px solid var(--rust); 
+            background: rgba(255, 0, 85, 0.15); 
+            color: #fff; 
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.4); 
+        }
+
+        #svg-stage { height: 250px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--accent-dim); padding: 10px; overflow: hidden; }
+        svg { width: 100%; height: 100%; filter: drop-shadow(0 0 12px var(--accent)); }
+
+        #teleCanvas { width: 100%; height: 180px; background: #000; }
+        #radarCanvas { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--accent); box-shadow: 0 0 10px var(--accent-dim); }
+
+        #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
+        #cli-input:focus { border-color: var(--accent); box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1); }
+        #log-stream { height: 100px; font-size: 9px; color: var(--text); padding: 10px; overflow: hidden; font-family: 'Space Mono'; }
+
+        .img-container { padding: 15px; font-family: 'Space Mono'; font-size: 10px; overflow-y: auto; max-height: 220px; color: var(--text); line-height: 1.6; }
+        .img-container strong { color: var(--accent); }
+        .img-container .alert-text { color: var(--alert); text-shadow: 0 0 5px var(--alert); }
+
+        .crt::after {
+            content: " "; display: block; position: absolute; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; z-index: 5000; pointer-events: none; opacity: 0.3;
+            filter: sepia(var(--burn)) hue-rotate(180deg);
+        }
+
+        .rumble { animation: rumble 0.1s infinite; filter: contrast(1.5) saturate(2); }
+        @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-3px, 3px); } 100% { transform: translate(0,0); } }
+
+        .btn-breach { background: rgba(0, 240, 255, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.3s; font-weight: bold; width: 100%; letter-spacing: 2px; }
+        .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 25px var(--accent); }
+
+        @media (max-width: 800px) {
+            .window { width: 90vw !important; left: 5vw !important; }
+            #win-nav { top: 80px; }
+            #win-tele { top: 380px; }
+            #win-img { top: 620px; }
+            #win-man { display: none; }
+            #win-cli { top: 920px; bottom: auto !important; }
+        }
+    </style>
+</head>
+<body class="crt">
+
+    <div id="os-workspace">
+        <div id="boot-modal">
+            <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:10px; font-size: 1.2rem;">THE BUREAU</div>
+            <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 30px; color:#fff; letter-spacing: -1px; text-shadow: 0 0 15px var(--accent);">EVERYTHING IS CONNECTED.</h1>
+            <div style="font-family:'Space Mono'; font-size: 9px; opacity: 0.5; margin-bottom: 30px;">SYSTEM OFFLINE. AWAITING MANUAL OVERRIDE.</div>
+            <button class="btn-breach" onclick="unlockSystem()">[ POWER ON NODE_7 ]</button>
+        </div>
+
+        <div id="os-panels">
+            <div class="window" style="top:20px; left:20px; width:calc(100% - 40px); z-index:1; flex-direction: row; justify-content: space-between; align-items: center; padding-right: 20px;">
+                <div class="window-header" style="cursor:default; border:none; width: 300px; background: transparent; box-shadow: none;">
+                    <div>NODE_7_SYSTEM_INTEGRITY</div>
+                    <div>BAT_SYNC: <span id="integrity-val">--%</span></div>
+                </div>
+                <canvas id="radarCanvas"></canvas>
+                <div id="clock" style="font-family:'Space Mono'; color:var(--accent); font-size: 10px; font-weight: bold; text-shadow: 0 0 5px var(--accent);">00:00:00</div>
+            </div>
+
+            <div class="window drag" id="win-nav" style="top:80px; left:20px; width:400px;">
+                <div class="window-header" style="background: rgba(255,0,85,0.1); border-color: var(--rust); color: var(--rust);">REGISTRY_VOL_I <span>[DRAG]</span></div>
+                <div id="nav-list"></div>
+                <div style="padding:15px; border-top:1px solid var(--accent-dim); background:#050508;">
+                    <div style="font-size:8px; color:var(--accent);">CORE_ENTROPY / HEAT</div>
+                    <div style="height:2px; background:#111; margin-top:5px;"><div id="entropy-fill" style="height:100%; background:var(--rust); width:0%; transition: width 0.5s; box-shadow: 0 0 5px var(--rust);"></div></div>
+                </div>
+            </div>
+
+            <div class="window drag" id="win-tele" style="top:80px; left:440px; width:calc(100% - 880px);">
+                <div class="window-header">VOID_OSCILLATION // SYNC <span id="tele-meta">--</span> <span>[DRAG]</span></div>
+                <canvas id="teleCanvas"></canvas>
+                <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent); background: #000; display: flex; justify-content: space-between;">
+                    <span>MOUSE_VELOCITY_OVERRIDE_ACTIVE</span>
+                    <span id="drift-val">0.00ms</span>
+                </div>
+            </div>
+
+            <div class="window drag" id="win-img" style="top:320px; left:440px; width:calc(100% - 880px); height: 260px;">
+                <div class="window-header" style="background: rgba(112,0,255,0.1); border-color: var(--blue); color: #b080ff;">ANOMALY_IMAGING_DATABASE <span>[DRAG]</span></div>
+                <div class="img-container" id="imaging-output">
+                    > SYSTEM BOOT REQUIRED.<br>> AWAITING PROTOCOL SELECTION...
+                </div>
+            </div>
+
+            <div class="window drag" id="win-man" style="top:80px; right:20px; width:420px;">
+                <div class="window-header">MANIFEST_ANALYSIS <span>[DRAG]</span></div>
+                <div id="svg-stage"></div>
+                <div style="padding:20px;">
+                    <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px; text-shadow: 0 0 8px var(--accent-dim);">--</h2>
+                    <p id="obj-desc" style="font-size:11px; line-height:1.6; height:60px; opacity:0.8;"></p>
+                    <button class="btn-breach" style="padding:10px; font-size:10px;" id="action-btn">INIT_SCAN</button>
+                </div>
+            </div>
+
+            <div class="window drag" id="win-cli" style="bottom:20px; left:20px; width:calc(100% - 40px);">
+                <div class="window-header">BUREAU_TERMINAL_V9 // ROOT <span>[DRAG]</span></div>
+                <div id="log-stream"></div>
+                <input type="text" id="cli-input" placeholder="CMD: HELP, SCAN, MEMO [TEXT], OVERRIDE..." autocomplete="off">
+            </div>
+        </div>
+    </div>
+
+<script>
+/* --- DATA & CONFIG --- */
+const archiveData = [
+  { 
+    name: "The Apparatus", 
+    id: "apparatus", 
+    freq: 55,
+    desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
+    imgText: "> QUERYING VISUAL DATABASE...<br>> <span class='alert-text'>ERR: NO VISUAL RECORD FOUND.</span>",
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--rust)" stroke-width="2" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle><circle cx="50" cy="50" r="25" fill="none" stroke="var(--blue)" stroke-width="1" stroke-dasharray="2 4"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></circle></svg>` 
+  },
+  { 
+    name: "Substrate Protocol", 
+    id: "substrate", 
+    freq: 110,
+    desc: "SVC architecture. Hierarchical spatial mapping.", 
+    url: "https://deon-wal.github.io/Substrate-Protocol/", 
+    imgText: "> RETRIEVING BLUEPRINT DATA...<br><br><strong>STATUS: LINKED</strong>",
+    svg: `<svg viewBox="0 0 100 100"><g transform="translate(50, 75) scale(1, 0.45) rotate(45)"><rect x="-35" y="-35" width="70" height="70" fill="rgba(0, 240, 255, 0.1)" stroke="var(--accent)" stroke-width="1.5"/><rect x="-35" y="-65" width="70" height="70" fill="rgba(255, 0, 85, 0.1)" stroke="var(--rust)" stroke-width="1.5"><animate attributeName="y" values="-65;-80;-65" dur="3s" repeatCount="indefinite"/></rect></g></svg>` 
+  },
+  { 
+    name: "D.U.E. Archive", 
+    id: "due", 
+    freq: 44,
+    desc: "Department of Unfinished Events. Chronological records vault.", 
+    url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/", 
+    imgText: "> <span class='alert-text'>REMOTE UPLINK ESTABLISHED.</span>",
+    svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--blue)" stroke-width="1.5"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="1"><animate attributeName="stroke-dasharray" values="0,100;100,0" dur="2s" repeatCount="indefinite"/></path></svg>` 
+  },
+  { 
+    name: "Anomaly Observatory", 
+    id: "observatory", 
+    freq: 72,
+    desc: "Monitoring spatial irregularities across the Bureau network.", 
+    url: "https://deon-wal.github.io/Anomaly-Observatory/", 
+    imgText: "> ACCESSING LIVE FEED...<br>> <span class='alert-text'>WARNING: PHASE SHIFT DETECTED.</span>",
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1.5"/><circle cx="70" cy="30" r="4" fill="var(--rust)"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="translate" values="0,0; -40,40; 0,0" dur="4s" repeatCount="indefinite"/></circle></svg>` 
+  },
+  { 
+    name: "Kernel Diagnostics", 
+    id: "test_node", 
+    freq: 120,
+    desc: "Diagnostic sandbox for kernel verification.", 
+    url: "https://deon-wal.github.io/Test/Test.html", 
+    imgText: "> RUNNING DIAGNOSTICS...<br>> ALL SYSTEMS NOMINAL.",
+    svg: `<svg viewBox="0 0 100 100"><path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--accent)" stroke-width="2"/><circle cx="50" cy="50" r="10" fill="var(--blue)" opacity="0.5"><animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite"/></circle></svg>` 
+  },
+  { 
+    name: "Project Noah", 
+    id: "noah", 
+    freq: 33,
+    desc: "The cycle is complete. Sic Mundus Creatus Est.", 
+    hidden: true, 
+    imgText: "> <span class='alert-text'>RESTRICTED PROTOCOL.</span>",
+    svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="rgba(255,0,85,0.2)" stroke="var(--rust)" stroke-width="2"><animateTransform attributeName="transform" type="rotate" from="0 50 60" to="360 50 60" dur="10s" repeatCount="indefinite"/></path></svg>` 
+  }
+];
+
+/* --- GLOBAL STATE (NO AUDIO) --- */
+let mouseVelocity = 0, lastMousePos = {x: 0, y: 0}, systemBooted = false, activeWin = null, offset = [0,0], sessionHeat = 0, ripple = 0;
+
+/* --- DRAG LOGIC --- */
+const startDrag = (e, h) => {
+    if(!systemBooted || !h.parentElement.classList.contains('drag')) return;
+    activeWin = h.parentElement;
+    activeWin.style.zIndex = 100;
+    const cX = e.touches ? e.touches[0].clientX : e.clientX;
+    const cY = e.touches ? e.touches[0].clientY : e.clientY;
+    offset = [cX - activeWin.offsetLeft, cY - activeWin.offsetTop];
+};
+
+const doDrag = (e) => {
+    if(activeWin) {
+        if(e.cancelable) e.preventDefault();
+        const cX = e.touches ? e.touches[0].clientX : e.clientX;
+        const cY = e.touches ? e.touches[0].clientY : e.clientY;
+        activeWin.style.left = (cX - offset[0]) + 'px';
+        activeWin.style.top = (cY - offset[1]) + 'px';
+    }
+};
+
+const endDrag = () => { if(activeWin) { activeWin.style.zIndex = 10; activeWin = null; } };
+
+document.querySelectorAll('.window-header').forEach(h => {
+    h.addEventListener('mousedown', (e) => startDrag(e, h));
+    h.addEventListener('touchstart', (e) => startDrag(e, h), {passive: false});
+});
+
+document.addEventListener('mousemove', doDrag);
+document.addEventListener('touchmove', doDrag, {passive: false});
+document.addEventListener('mouseup', endDrag);
+document.addEventListener('touchend', endDrag);
+
+/* --- INTERFACE LOGIC --- */
+function unlockSystem() {
+    systemBooted = true;
+    document.getElementById('boot-modal').classList.add('hidden');
+    document.getElementById('os-panels').classList.add('booted');
+    document.body.classList.add('rumble');
+    setTimeout(()=>document.body.classList.remove('rumble'), 300);
+    addLog("SYSTEM_BOOT: OK.");
+    drawTelemetry(0); drawRadar(0);
+    startAnomalySystem();
+}
+
+const decryptText = (el, target) => {
+    const chars = "!<>-_\\/[]{}—=+*^?#________";
+    let iterations = 0;
+    if(target.includes('<')) { el.innerHTML = target; return; }
+    const interval = setInterval(() => {
+        el.innerHTML = target.split("").map((letter, index) => {
+            if(index < iterations) return target[index];
+            return chars[Math.floor(Math.random() * chars.length)];
+        }).join("");
+        if(iterations >= target.length) clearInterval(interval);
+        iterations += 1/2;
+    }, 20);
+};
+
+function populate() {
+    const list = document.getElementById('nav-list');
+    list.innerHTML = '';
+    archiveData.filter(i => !i.hidden).forEach(item => {
+        const d = document.createElement('div');
+        d.className = 'fs-item';
+        d.innerText = `[ ${item.name} ]`;
+        d.onclick = () => {
+            if(!systemBooted) return;
+            document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
+            d.classList.add('active');
+            decryptText(document.getElementById('obj-title'), item.name);
+            document.getElementById('obj-desc').innerText = item.desc;
+            document.getElementById('svg-stage').innerHTML = item.svg;
+            decryptText(document.getElementById('imaging-output'), item.imgText);
+            document.getElementById('tele-meta').innerText = `${item.freq}HZ`;
+            const btn = document.getElementById('action-btn');
+            if(item.url) {
+                btn.innerText = "LAUNCH_REMOTE_PROTOCOL";
+                btn.onclick = () => window.open(item.url, '_blank');
+            } else {
+                btn.innerText = "INITIALIZE_SCAN";
+                btn.onclick = () => { document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),200); };
+            }
+            addLog(`MOUNTING: ${item.id}`);
+        };
+        list.appendChild(d);
+    });
+}
+
+/* --- TERMINAL & SYSTEM --- */
+const cli = document.getElementById('cli-input');
+cli.onkeydown = (e) => {
+    if(!systemBooted) return;
+    if(e.key === 'Enter') {
+        const val = cli.value.toUpperCase().trim();
+        
+        if(val === 'HELP') {
+            addLog("CMDS: HELP, MEMO [TEXT], LOGS, EXPORT, CLEAR, SCAN, OVERRIDE");
+        } else if(val.startsWith('MEMO ')) {
+            const m = JSON.parse(localStorage.getItem('b_m') || '[]');
+            m.push({t: new Date().toLocaleTimeString(), c: val.substring(5)});
+            localStorage.setItem('b_m', JSON.stringify(m));
+            addLog("MEMO_SAVED.");
+        } else if(val === 'LOGS') {
+            const m = JSON.parse(localStorage.getItem('b_m') || '[]');
+            m.forEach(i => addLog(`MEMO: ${i.c}`));
+        } else if(val === 'EXPORT') {
+            const m = JSON.parse(localStorage.getItem('b_m') || '[]');
+            const blob = new Blob([m.map(i => `[${i.t}] REPORT: ${i.c}`).join('\n')], {type: 'text/plain'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'INCIDENT_REPORT.txt'; a.click();
+            addLog("REPORT_GENERATED.");
+        } else if(val === 'WINDEN_33') {
+            archiveData[5].hidden = false; populate();
+            addLog("AUTH_GRANTED: PROJECT_NOAH_VISIBLE.");
+            document.body.classList.add('rumble'); setTimeout(()=>document.body.classList.remove('rumble'),400);
+        } else if(val === 'CLEAR') {
+            document.getElementById('log-stream').innerHTML = '';
+        } else if(val === 'SCAN') {
+            addLog("INITIATING DEEP NETWORK SCAN...");
+            let scanCount = 0;
+            const scanInt = setInterval(() => {
+                addLog(`PING: 192.168.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)} - TIMEOUT`);
+                scanCount++;
+                if(scanCount > 5) {
+                    clearInterval(scanInt);
+                    addLog("<span class='alert-text'>1 UNKNOWN DEVICE FOUND ON LOCAL SUBNET. PROCEED WITH CAUTION.</span>");
+                }
+            }, 800);
+        } else if(val === 'OVERRIDE') {
+            addLog("<span class='alert-text'>CRITICAL: OVERRIDE SEQUENCE INITIATED. CORE MELTDOWN IMMINENT.</span>");
+            document.documentElement.style.setProperty('--burn', '0.8'); 
+            document.body.classList.add('rumble');
+            setTimeout(() => {
+                document.documentElement.style.setProperty('--burn', sessionHeat / 200); 
+                document.body.classList.remove('rumble');
+                addLog("OVERRIDE FAILED. INSUFFICIENT CLEARANCE.");
+            }, 3000);
+        } else if(val !== '') {
+            addLog(`ERR: UNKNOWN COMMAND '${val}'. TYPE 'HELP'.`);
+        }
+        
+        cli.value = '';
+    }
+};
+
+function addLog(m) {
+    const s = document.getElementById('log-stream');
+    const d = document.createElement('div');
+    d.innerHTML = `<span style="color:var(--accent-dim)">[${new Date().toLocaleTimeString()}]</span> > ${m}`;
+    s.prepend(d);
+    if(s.children.length > 8) s.lastChild.remove();
+}
+
+/* --- CANVAS & HARDWARE --- */
+const tCanvas = document.getElementById('teleCanvas');
+const tCtx = tCanvas.getContext('2d');
+tCanvas.onmousedown = () => { if(systemBooted) ripple = 80; };
+
+function drawTelemetry(t) {
+    if(!systemBooted) return;
+    tCanvas.width = tCanvas.offsetWidth; tCanvas.height = tCanvas.offsetHeight;
+    tCtx.clearRect(0,0,tCanvas.width, tCanvas.height);
+    tCtx.strokeStyle = '#00f0ff'; tCtx.lineWidth = 2; tCtx.beginPath();
+    const amp = 30 + (mouseVelocity * 0.8) + ripple;
+    if(ripple > 0) ripple -= 2;
+    for(let i=0; i<tCanvas.width; i+=2) {
+        const y = tCanvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * amp;
+        tCtx.lineTo(i,y);
+    }
+    tCtx.stroke(); requestAnimationFrame(drawTelemetry);
+}
+
+const rCanvas = document.getElementById('radarCanvas');
+const rCtx = rCanvas.getContext('2d');
+function drawRadar(t) {
+    if(!systemBooted) return;
+    rCanvas.width = 40; rCanvas.height = 40;
+    rCtx.clearRect(0,0,40,40); rCtx.translate(20,20); rCtx.rotate(t * 0.003);
+    rCtx.fillStyle = 'rgba(0, 240, 255, 0.4)'; rCtx.beginPath();
+    rCtx.moveTo(0,0); rCtx.arc(0,0, 18, 0, Math.PI/4); rCtx.fill();
+    requestAnimationFrame(drawRadar);
+}
+
+if(navigator.getBattery) {
+    navigator.getBattery().then(bat => {
+        const up = () => { document.getElementById('integrity-val').innerText = (bat.level * 100).toFixed(0) + "%"; }
+        bat.addEventListener('levelchange', up); up();
+    });
+}
+
+document.addEventListener('mousemove', e => {
+    if(!systemBooted) return;
+    mouseVelocity = Math.min(100, Math.sqrt(Math.abs(e.clientX - lastMousePos.x)**2 + Math.abs(e.clientY - lastMousePos.y)**2));
+    lastMousePos = {x: e.clientX, y: e.clientY};
+    document.getElementById('drift-val').innerText = (mouseVelocity/10).toFixed(2) + "ms";
+});
+
+setInterval(() => {
+    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    if(!systemBooted) return;
+    document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
+    sessionHeat = Math.min(sessionHeat + 0.1, 100);
+    document.documentElement.style.setProperty('--burn', sessionHeat / 200);
+}, 1000);
+
+populate();
+
+/* --- AMBIENT ANOMALIES (SILENT) --- */
+function startAnomalySystem() {
+    const creepyMessages = [
+        "<span class='alert-text'>WARN: UNKNOWN CONNECTION ON PORT 8042</span>",
+        "DATA_BUFFER_OVERFLOW // THEY ARE WATCHING",
+        "PROTOCOL_BREACH: NODE_7 IS COMPROMISED",
         "<span style='color:#ff0055'>WHERE IS WINDEN?</span>",
+        "ERR: CHRONO-SYNC FAILED. TIME DRIFT DETECTED."
+    ];
+
+    setInterval(() => {
+        if (!systemBooted) return;
+        if (Math.random() < 0.15) {
+            document.body.classList.add('rumble');
+            setTimeout(() => document.body.classList.remove('rumble'), 800);
+            const randomMsg = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
+            addLog(randomMsg);
+            mouseVelocity += 150; 
+            ripple = 200;
+        }
+    }, 5000); 
+}
+</script>
+</body>
+</html>
         "ERR: CHRONO-SYNC FAILED. TIME DRIFT DETECTED."
     ];
 
