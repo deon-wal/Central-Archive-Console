@@ -25,6 +25,7 @@
             height: 100vh; cursor: crosshair;
         }
 
+        /* --- CRT FX --- */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
@@ -34,11 +35,10 @@
         #static-overlay { position: fixed; inset: 0; z-index: 10000; pointer-events: none; background: #fff; opacity: 0; }
 
         /* --- LANDING --- */
-        #view-landing { position: relative; z-index: 1; transition: opacity 1s ease; background: var(--bg); min-height: 100vh; }
+        #view-landing { position: relative; z-index: 1; transition: opacity 1s ease; background: var(--bg); min-height: 100vh; overflow-y: auto; }
         nav { padding: 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
         .logo { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 5px; color: var(--accent); text-decoration: none; }
         .nav-links a { color: var(--subtext); text-decoration: none; margin-left: 30px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; }
-        .nav-links a:hover { color: var(--accent); }
         .highlight { border: 1px solid var(--accent); padding: 8px 15px; border-radius: 20px; color: var(--accent) !important; }
 
         .directory-grid {
@@ -46,7 +46,8 @@
             gap: 1px; background: rgba(212, 175, 55, 0.1); width: 100%; max-width: 1200px; margin: 40px auto; border: 1px solid rgba(212, 175, 55, 0.1);
         }
         .dir-item { background: var(--bg); padding: 40px; transition: 0.4s; }
-        .dir-item h3 { font-weight: 300; letter-spacing: 2px; margin-bottom: 10px; }
+        .dir-item h3 { font-weight: 300; letter-spacing: 2px; margin-bottom: 10px; color: #fff; }
+        .dir-item p { font-size: 13px; color: var(--subtext); margin-bottom: 20px; font-family: 'Inter'; }
         .dir-link { font-family: 'Space Mono'; font-size: 10px; color: var(--accent); text-decoration: none; cursor: pointer; }
 
         /* --- TERMINAL --- */
@@ -82,18 +83,19 @@
         </div>
     </nav>
     <main style="padding: 10vh 20px; text-align: center;">
-        <h1 style="font-size: 7vw; font-weight: 900; letter-spacing: -5px; line-height: 1;">EVERYTHING IS CONNECTED.</h1>
+        <h1 style="font-size: 7vw; font-weight: 900; letter-spacing: -5px; line-height: 1; color: #fff;">EVERYTHING IS CONNECTED.</h1>
+        <p style="font-family:'Space Mono'; color:var(--accent); margin-top:10px; letter-spacing:3px;">TEMPORAL_ARCHIVE_NODE_7</p>
         <div class="directory-grid" id="landing-grid"></div>
     </main>
-    <footer style="text-align:center; opacity:0.3; font-size:10px; font-family:'Space Mono';">
-        USAGE: CMD + MEMO [TEXT] TO SAVE DATA // REF: <span style="color:var(--accent)">WINDEN_33</span>
+    <footer style="text-align:center; opacity:0.3; font-size:10px; font-family:'Space Mono'; padding: 40px;">
+        CMD: MEMO [TEXT] // LOGS // WINDEN_33
     </footer>
 </section>
 
 <section id="view-terminal">
     <div class="app-container">
         <header class="panel" style="grid-column: 1/span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
-            <div style="color:var(--accent); font-weight: bold; letter-spacing: 3px; font-family: 'Space Mono';">INTERNAL_ARCHIVE_7</div>
+            <div style="color:var(--accent); font-weight: bold; letter-spacing: 3px; font-family: 'Space Mono';">STATION_TAS_7</div>
             <div id="clock" style="font-family: 'Space Mono'; color:var(--accent);">00:00:00</div>
         </header>
 
@@ -103,7 +105,7 @@
         </aside>
 
         <main class="panel" style="background:#000;">
-            <div class="panel-header">LIVE_VOID_OSCILLATION</div>
+            <div class="panel-header">LIVE_VOID_OSCILLATION // SYNC: 99.9%</div>
             <canvas id="teleCanvas"></canvas>
         </main>
 
@@ -120,7 +122,7 @@
         <footer class="panel" style="grid-column: 1/span 3; display:grid; grid-template-columns: 1fr 450px; padding:15px; gap:20px; background:#080807;">
             <div id="log-stream" style="font-size:9px; color:var(--accent); overflow:hidden; font-family:'Space Mono'; opacity:0.7;"></div>
             <div>
-                <input type="text" id="cli-input" placeholder="CMD: HELP, MEMO [TEXT], LOGS..." autocomplete="off">
+                <input type="text" id="cli-input" placeholder="CMD: MEMO [TEXT], LOGS, CLEAR..." autocomplete="off">
             </div>
         </footer>
     </div>
@@ -128,14 +130,14 @@
 
 <script>
 /* ========================================
-   DATA ARCHIVE (NOW WITH URLS)
+   THE MASTER ARCHIVE DATA
    ======================================== */
 const archiveData = [
   { 
     name: "The Apparatus", 
     desc: "A dual-chamber brass device utilizing Cesium-137. Designed for localized transit.", 
     id: "apparatus",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` 
   },
   { 
     name: "Substrate Protocol", 
@@ -145,8 +147,8 @@ const archiveData = [
     svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="0.5"/><line x1="10" y1="10" x2="90" y2="90" stroke="var(--accent)" stroke-width="0.2"/></svg>`
   },
   { 
-    name: "D.U.E.", 
-    name_full: "Department of Unfinished Events",
+    name: "Department of Unfinished Events", 
+    name_short: "D.U.E.",
     desc: "The central repository for chronologically displaced artifacts and records.", 
     id: "due",
     url: "Department-Of-Unfinished-Events-DUE",
@@ -157,19 +159,25 @@ const archiveData = [
     desc: "Live monitoring of seismic and solar collapse. Everything is connected.", 
     id: "anomaly-observatory",
     url: "Anomaly-Observatory/",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="5;25;5" dur="4s" repeatCount="indefinite"/></circle></svg>`
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="5;25;5" dur="4s" repeatCount="indefinite"/></circle><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="0.2" stroke-dasharray="5 2"/></svg>`
+  },
+  { 
+    name: "Higgs Field", 
+    desc: "Visible manifestation of the God Particle. Magnetic containment is fluctuating.", 
+    id: "higgs",
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="12" fill="var(--accent)"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/></circle>${Array.from({length:8}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*40}" y2="${50+Math.sin(i)*40}" stroke="var(--accent)" stroke-width="0.2"/>`).join('')}</svg>`
   },
   { 
     name: "Project Noah", 
     desc: "The cycle is complete. The beginning is the end. Sic Mundus Creatus Est.", 
     id: "noah", 
     hidden: true, 
-    svg: `<svg viewBox="0 0 100 100"><path d="M50 10 L90 85 H10 Z" fill="none" stroke="var(--alert)" stroke-width="1"/></svg>` 
+    svg: `<svg viewBox="0 0 100 100"><path d="M50 10 L90 85 H10 Z" fill="none" stroke="var(--alert)" stroke-width="1"/><circle cx="50" cy="55" r="15" fill="none" stroke="var(--alert)" stroke-width="1"/></svg>` 
   }
 ];
 
 /* ========================================
-   AUDIO ENGINE (HUM & CLICKS)
+   CORE SYSTEM ENGINE
    ======================================== */
 let audioCtx;
 const startAudio = () => {
@@ -195,17 +203,12 @@ const playClick = () => {
     if(!audioCtx) return;
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+    osc.frequency.setValueAtTime(150 + Math.random()*50, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
     osc.connect(g); g.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
 };
-
-/* ========================================
-   SYSTEM LOGIC
-   ======================================== */
-let activeProject = null;
 
 function initiateBreach() {
     startAudio();
@@ -222,7 +225,7 @@ function initiateBreach() {
             document.getElementById('view-terminal').style.opacity = '1';
             document.getElementById('view-terminal').style.pointerEvents = 'all';
             document.body.classList.remove('rumble');
-            addLog("STATION_7 LINK ESTABLISHED.");
+            addLog("STATION_7 ONLINE. SYNC_COMPLETE.");
         }
     }, 50);
 }
@@ -240,12 +243,11 @@ function populateUI() {
 
         const div = document.createElement('div');
         div.className = 'nav-item';
-        div.innerText = (item.id).toUpperCase();
+        div.innerText = (item.name_short || item.name).toUpperCase();
         div.onclick = () => {
-            activeProject = item;
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             div.classList.add('active');
-            document.getElementById('obj-title').innerText = item.name_full || item.name;
+            document.getElementById('obj-title').innerText = item.name;
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
             
@@ -257,21 +259,21 @@ function populateUI() {
                 btn.innerText = "INITIALIZE_DEEP_SCAN";
                 btn.onclick = deepScan;
             }
-            addLog(`MOUNTING: ${item.id}`);
+            addLog(`MOUNTING_OBJECT: ${item.id}`);
         };
         list.appendChild(div);
     });
 }
 
 const saveMemo = (txt) => {
-    const m = JSON.parse(localStorage.getItem('memos') || '[]');
+    const m = JSON.parse(localStorage.getItem('b_memos') || '[]');
     m.push({t: new Date().toLocaleTimeString(), c: txt});
-    localStorage.setItem('memos', JSON.stringify(m));
+    localStorage.setItem('b_memos', JSON.stringify(m));
     addLog("MEMO_RECORDS_UPDATED.");
 };
 
 const listMemos = () => {
-    const m = JSON.parse(localStorage.getItem('memos') || '[]');
+    const m = JSON.parse(localStorage.getItem('b_memos') || '[]');
     if(m.length === 0) return addLog("ERR: NO_RECORDS.");
     m.forEach(i => addLog(`[${i.t}] >> ${i.c}`));
 };
@@ -297,9 +299,9 @@ cli.onkeydown = (e) => {
         if(upperCmd === 'MEMO') saveMemo(args.join(' '));
         else if(upperCmd === 'LOGS') listMemos();
         else if(upperCmd === 'WINDEN_33') {
-            addLog("AUTH_SUCCESS: NOAH_RESTORED.");
+            addLog("!!! AUTH_SUCCESS: NOAH_RESTORED.");
             archiveData[archiveData.length-1].hidden = false; populateUI();
-        } else if(upperCmd === 'HELP') addLog("MEMO [TEXT], LOGS, CLEAR, SCAN");
+        } else if(upperCmd === 'HELP') addLog("CMDS: MEMO [TEXT], LOGS, CLEAR, SCAN, WINDEN_33");
         else if(upperCmd === 'CLEAR') document.getElementById('log-stream').innerHTML = '';
         
         cli.value = '';
@@ -321,7 +323,7 @@ function draw(t) {
     ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1;
     ctx.beginPath();
     for(let i=0; i<canvas.width; i+=2) {
-        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * 50 + (Math.random() * 5);
+        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * 45 + (Math.random() * 5);
         ctx.lineTo(i,y);
     }
     ctx.stroke();
