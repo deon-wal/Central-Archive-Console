@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>THE BUREAU // NODE_7 // TERMINUS</title>
+    <title>THE BUREAU // NODE_7 // THE MONOLITH</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
         :root {
@@ -13,227 +13,187 @@
             --rust: #2a1f16;
             --alert: #ff0000;
             --text: #c4beaf;
-            --drift: 0px;
-            --burn: 0;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
         body { 
             background: var(--bg); color: var(--text); 
             font-family: 'Inter', sans-serif; overflow: hidden; 
-            height: 100vh; transition: filter 0.5s;
+            height: 100vh;
         }
 
-        /* --- THE CRT SHUTTER --- */
+        /* --- THE SHUTTER (THE NEW LANDING) --- */
+        #shutter {
+            position: fixed; inset: 0; z-index: 1000;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
+                        rgba(212, 175, 55, 0.15) 0%, 
+                        rgba(0,0,0,1) 20%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: transform 1.2s cubic-bezier(0.85, 0, 0.15, 1), opacity 1s;
+            border-bottom: 2px solid var(--rust);
+        }
+
+        #shutter.open { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+
+        .shutter-logo { font-family: 'Space Mono'; font-weight: 900; letter-spacing: 15px; color: var(--accent); font-size: 3rem; margin-bottom: 20px; text-shadow: 0 0 20px var(--accent-dim); }
+        .shutter-sub { font-family: 'Space Mono'; font-size: 10px; letter-spacing: 5px; opacity: 0.5; margin-bottom: 50px; }
+
+        /* --- THE CORE TERMINAL --- */
+        #terminal-core {
+            display: grid;
+            grid-template-columns: 300px 1fr 400px;
+            grid-template-rows: 60px 1fr 180px;
+            height: 100vh; gap: 10px; padding: 10px;
+            background: #050505;
+        }
+
+        .panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+        .panel-header { padding: 8px 12px; background: var(--rust); color: var(--accent); font-size: 9px; font-weight: bold; font-family: 'Space Mono'; display: flex; justify-content: space-between; }
+
+        /* --- INTERACTIVE FS --- */
+        .fs-item { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 10px; transition: 0.3s; }
+        .fs-item:hover { background: rgba(212, 175, 55, 0.08); padding-left: 20px; }
+        .fs-item.active { border-left: 3px solid var(--accent); background: rgba(212, 175, 55, 0.05); color: #fff; }
+
+        /* --- VISUAL ELEMENTS --- */
+        #svg-stage { height: 280px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--rust); padding: 20px; }
+        svg { width: 100%; height: 100%; filter: drop-shadow(0 0 8px var(--accent-dim)); }
+
+        canvas { width: 100%; flex: 1; filter: sepia(0.5); }
+
+        #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 12px; font-family: 'Space Mono'; outline: none; font-size: 11px; }
+
+        /* --- CRT FX --- */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px; z-index: 1000; pointer-events: none;
-            filter: sepia(var(--burn)); /* Simulated screen burn-in */
+            background-size: 100% 4px; z-index: 2000; pointer-events: none;
         }
 
-        /* --- LANDING / FLASHLIGHT --- */
-        #view-landing {
-            position: fixed; inset: 0; z-index: 100;
-            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(212, 175, 55, 0.15) 0%, rgba(0,0,0,1) 25%);
-            transition: opacity 1s ease; display: flex; flex-direction: column; overflow-y: auto;
-        }
-
-        #view-terminal { position: fixed; inset: 0; opacity: 0; pointer-events: none; z-index: 5; background: #050505; }
-        .app-container { display: grid; grid-template-columns: 320px 1fr 420px; grid-template-rows: 60px 1fr 180px; height: 100vh; gap: 10px; padding: 10px; }
+        /* --- UTILS --- */
+        .btn-breach { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; border-radius: 50px; transition: 0.3s; font-size: 12px; }
+        .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 30px var(--accent-dim); }
         
-        .panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; }
-        .panel-header { padding: 10px; background: var(--rust); color: var(--accent); font-size: 10px; font-family: 'Space Mono'; font-weight: bold; display: flex; justify-content: space-between; }
-
-        .nav-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 10px; }
-        .nav-item.active { border-left: 4px solid var(--accent); background: rgba(212, 175, 55, 0.05); }
-
-        #svg-stage { height: 260px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--rust); }
-        svg { width: 55%; height: auto; }
-
-        #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
-        #log-stream { font-size: 9px; color: var(--accent); padding: 10px; overflow: hidden; font-family: 'Space Mono'; line-height: 1.5; }
-
-        /* --- DYNAMIC OVERLAYS --- */
-        #static-overlay { position: fixed; inset: 0; background: #0a0a0a; z-index: 10000; opacity: 0; pointer-events: none; }
-        .emergency { animation: rumble 0.1s infinite; filter: contrast(1.5) brightness(1.2) hue-rotate(10deg); }
-        @keyframes rumble { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 100% { transform: translate(0,0); } }
+        @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-2px, 2px); } 100% { transform: translate(0,0); } }
+        .glitch-active { animation: rumble 0.1s infinite; filter: contrast(2) invert(0.1); }
     </style>
 </head>
 <body class="crt">
 
-<div id="static-overlay"></div>
+    <div id="shutter">
+        <div class="shutter-logo">THE BUREAU</div>
+        <div class="shutter-sub">STATION_TAS_7 // [NODE_7_LOCKED]</div>
+        <h1 style="font-size: 5vw; font-weight: 900; margin-bottom: 50px; letter-spacing: -2px;">EVERYTHING IS CONNECTED.</h1>
+        <button class="btn-breach" onclick="unlockSystem()">INITIALIZE_BREACH_SEQUENCE</button>
+    </div>
 
-<section id="view-landing">
-    <nav style="padding:40px; border-bottom:1px solid rgba(212,175,55,0.1);">
-        <a href="#" style="font-family:'Space Mono'; color:var(--accent); font-weight:700; letter-spacing:8px; text-decoration:none;">THE BUREAU</a>
-    </nav>
-    <main style="text-align: center; margin: auto;">
-        <h1 style="font-size: 7vw; font-weight: 900; letter-spacing: -4px; color: #fff;">EVERYTHING IS CONNECTED.</h1>
-        <div id="landing-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 40px auto; opacity: 0.6;"></div>
-        <button onclick="initiateBreach()" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:15px 50px; font-family:'Space Mono'; cursor:pointer; font-size:1.1rem; border-radius:30px;">[ ACCESS NODE ]</button>
-    </main>
-    <footer style="text-align:center; padding:20px; font-size:9px; opacity:0.3; font-family:'Space Mono';">WINDEN_33 // CORE_STABILITY_CRITICAL</footer>
-</section>
-
-<section id="view-terminal">
-    <div class="app-container">
-        <header class="panel" style="grid-column: 1/span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
-            <div style="font-family:'Space Mono'; color:var(--accent); font-weight: bold;">STATION_TAS_7 // DRIFT: <span id="drift-val">0.00ms</span></div>
+    <div id="terminal-core">
+        <header class="panel" style="grid-column: 1 / span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
+            <div style="font-family:'Space Mono'; color:var(--accent); font-weight:700;">NODE_7_INTERNAL_OS</div>
             <div id="clock" style="font-family:'Space Mono'; color:var(--accent);">00:00:00</div>
         </header>
 
         <aside class="panel">
-            <div class="panel-header">REGISTRY_VOL_I</div>
-            <div id="nav-list"></div>
-            <div style="padding:15px; border-top:1px solid var(--rust); background:#080807;">
-                <div style="font-size:8px; color:var(--accent); margin-bottom:5px;">SIMULATED_CORE_TEMP</div>
-                <div style="height:2px; background:#1a1a1a; width:100%;"><div id="burn-fill" style="height:100%; background:var(--accent); width:0%;"></div></div>
+            <div class="panel-header">FILE_EXPLORER <span>ROOT/VOL_I</span></div>
+            <div id="fs-list" style="overflow-y: auto;"></div>
+            <div style="padding:15px; border-top:1px solid var(--rust);">
+                <div style="font-size:8px; opacity:0.5; margin-bottom:5px;">VOID_ENTROPY_INDEX</div>
+                <div style="height:2px; background:#1a1a1a;"><div id="entropy-bar" style="height:100%; background:var(--accent); width:33%;"></div></div>
             </div>
         </aside>
 
         <main class="panel" style="background:#000;">
-            <div class="panel-header">VOID_OSCILLATION // <span id="tele-meta">SYNCING...</span></div>
-            <canvas id="teleCanvas" style="cursor: cell;"></canvas>
+            <div class="panel-header">VOID_OSCILLATION // SYNC: <span id="sync-val">--</span></div>
+            <canvas id="teleCanvas"></canvas>
         </main>
 
         <aside class="panel">
             <div class="panel-header">OBJECT_MANIFEST</div>
             <div id="svg-stage"></div>
             <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
-                <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom: 10px;">--</h2>
-                <p id="obj-desc" style="font-size: 11px; line-height: 1.6; opacity: 0.8; height: 80px;"></p>
-                <button id="action-btn" style="margin-top:auto; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:12px; font-family:'Space Mono'; cursor:pointer;">SCAN_ANOMALY</button>
+                <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; font-size: 1rem; margin-bottom: 8px;">--</h2>
+                <p id="obj-desc" style="font-size: 11px; line-height: 1.6; opacity: 0.7; height: 100px;"></p>
+                <button id="action-btn" class="btn-breach" style="margin-top: auto; padding: 10px; font-size: 10px; border-radius: 0;">SCAN_ANOMALY</button>
             </div>
         </aside>
 
-        <footer class="panel" style="grid-column: 1/span 3; display: grid; grid-template-columns: 1fr 450px; padding: 15px; background: #080807; gap: 20px;">
-            <div id="log-stream"></div>
-            <div>
-                <input type="text" id="cli-input" placeholder="MEMO, LOGS, CLEAR, WINDEN_33..." autocomplete="off">
-            </div>
+        <footer class="panel" style="grid-column: 1 / span 3; display: grid; grid-template-columns: 1fr 400px; padding: 12px; gap: 20px; background:#080807;">
+            <div id="log-stream" style="font-size:9px; color:var(--accent); overflow:hidden; font-family:'Space Mono'; line-height: 1.4;"></div>
+            <input type="text" id="cli-input" placeholder="CMD: MEMO [TEXT], LOGS, CLEAR, WINDEN_33..." autocomplete="off">
         </footer>
     </div>
-</section>
 
 <script>
 /* ========================================
-   1. THE ARCHIVE DATA (8 PROJECTS)
+   1. UNIFIED DATA ARCHIVE
    ======================================== */
 const archiveData = [
-  { name: "The Apparatus", id: "apparatus", desc: "Dual-chamber brass device utilizing Cesium-137. Key for transit.", freq: 55, type: 'sawtooth', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle></svg>` },
-  { name: "Substrate Protocol", id: "substrate", desc: "Recursive data architecture for visual telemetry. Deep mapping.", freq: 110, type: 'sine', url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
-  { name: "D.U.E.", id: "due", desc: "Department of Unfinished Events. Displaced chronological records.", freq: 44, type: 'square', url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
-  { name: "Anomaly Observatory", id: "obs", desc: "Live monitoring of seismic/solar collapse.", freq: 88, type: 'triangle', url: "Anomaly-Observatory/", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="10;30;10" dur="4s" repeatCount="indefinite"/></circle></svg>` },
-  { name: "Higgs Field", id: "higgs", desc: "Manifestation of the God Particle. Magnetic containment fluctuating.", freq: 70, type: 'sine', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="15" fill="var(--accent)"><animate attributeName="opacity" values="1;0.2;1" dur="1s" repeatCount="indefinite"/></circle></svg>` },
-  { name: "Passage 33", id: "caves", desc: "Geological survey of Winden Cave system. Tunnel intersection.", freq: 40, type: 'sawtooth', svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>` },
-  { name: "Emerald Tablet", id: "tablet", desc: "Ancient text. 'Sic Mundus Creatus Est'. FOUND: 1921.", freq: 60, type: 'triangle', svg: `<svg viewBox="0 0 100 100"><rect x="25" y="25" width="50" height="50" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M25 25 L75 75" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
-  { name: "Project Noah", id: "noah", desc: "The cycle is complete. The beginning is the end.", freq: 33, type: 'sawtooth', hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="1.5"/></svg>` }
+    { name: "The Apparatus", id: "apparatus", freq: 55, desc: "Brass transit device. Utilizing Cesium-137 for non-linear displacement.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="5 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="10s" repeatCount="indefinite"/></circle></svg>` },
+    { name: "Substrate Protocol", id: "substrate", freq: 110, desc: "Recursive architecture for visual telemetry. Direct data layer mapping.", url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
+    { name: "D.U.E.", id: "due", freq: 44, desc: "Department of Unfinished Events. Central vault for chronological anomalies.", url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="20" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="20" y="50" width="60" height="20" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
+    { name: "Noah's Ark", id: "noah", freq: 33, desc: "The cycle is complete. The beginning is the end.", hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 10 L90 85 H10 Z" fill="none" stroke="var(--alert)" stroke-width="2"/></svg>` }
 ];
 
 /* ========================================
-   2. REFINED AUDIO & VISUAL ENGINES
+   2. CORE ENGINE
    ======================================== */
-let audioCtx, mainOsc, mainGain, currentFreq = 55;
-let sessionHeat = 0;
+let audioCtx, mainOsc, currentFreq = 55;
 
-const startAudio = (freq = 55, type = 'sine') => {
+// Shutter Flashlight
+document.addEventListener('mousemove', e => {
+    document.getElementById('shutter').style.setProperty('--x', e.clientX + 'px');
+    document.getElementById('shutter').style.setProperty('--y', e.clientY + 'px');
+});
+
+function unlockSystem() {
+    startAudio(55);
+    document.getElementById('shutter').classList.add('open');
+    addLog("BREACH_SUCCESSFUL. NODE_7_OS_INITIALIZED.");
+}
+
+function startAudio(f) {
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if(mainOsc) mainOsc.stop();
     mainOsc = audioCtx.createOscillator();
-    mainGain = audioCtx.createGain();
-    mainOsc.type = type;
-    mainOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    mainGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400 - (sessionHeat * 2);
-    mainOsc.connect(mainGain); mainGain.connect(filter); filter.connect(audioCtx.destination);
+    const g = audioCtx.createGain();
+    mainOsc.frequency.value = f;
+    g.gain.value = 0.03;
+    mainOsc.connect(g); g.connect(audioCtx.destination);
     mainOsc.start();
-};
-
-const playClick = () => {
-    if(!audioCtx) return;
-    const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
-    osc.frequency.setValueAtTime(200 + Math.random()*100, audioCtx.currentTime);
-    g.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-};
-
-// Text Decryption
-const decryptText = (el, target) => {
-    const chars = "!<>-_\\/[]{}—=+*^?#________";
-    let iterations = 0;
-    const interval = setInterval(() => {
-        el.innerText = target.split("").map((letter, index) => {
-            if(index < iterations) return target[index];
-            return chars[Math.floor(Math.random() * chars.length)];
-        }).join("");
-        if(iterations >= target.length) clearInterval(interval);
-        iterations += 1/3;
-    }, 25);
-};
-
-/* ========================================
-   3. SYSTEM FUNCTIONS
-   ======================================== */
-document.addEventListener('mousemove', e => {
-    const landing = document.getElementById('view-landing');
-    landing.style.setProperty('--x', e.clientX + 'px');
-    landing.style.setProperty('--y', e.clientY + 'px');
-    const drift = (Math.abs(e.movementX) + Math.abs(e.movementY)) / 10;
-    document.getElementById('drift-val').innerText = drift.toFixed(2) + "ms";
-});
-
-function initiateBreach() {
-    startAudio();
-    const ov = document.getElementById('static-overlay');
-    ov.style.opacity = '0.7';
-    document.body.classList.add('emergency');
-    setTimeout(() => {
-        ov.style.opacity = '0';
-        document.getElementById('view-landing').style.display = 'none';
-        document.getElementById('view-terminal').style.opacity = '1';
-        document.getElementById('view-terminal').style.pointerEvents = 'all';
-        document.body.classList.remove('emergency');
-        addLog("CONNECTION_SECURE. STATION_7_NODE_ACTIVE.");
-    }, 800);
 }
 
 function populate() {
-    const list = document.getElementById('nav-list');
-    const grid = document.getElementById('landing-grid');
-    list.innerHTML = ''; grid.innerHTML = '';
+    const list = document.getElementById('fs-list');
+    list.innerHTML = '';
     archiveData.filter(i => !i.hidden).forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'nav-item';
-        div.innerText = item.name.toUpperCase();
-        div.onclick = () => {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            div.classList.add('active');
-            decryptText(document.getElementById('obj-title'), item.name);
-            decryptText(document.getElementById('obj-desc'), item.desc);
+        const d = document.createElement('div');
+        d.className = 'fs-item';
+        d.innerText = `> ${item.name.toUpperCase()}`;
+        d.onclick = () => {
+            document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
+            d.classList.add('active');
+            document.getElementById('obj-title').innerText = item.name;
+            document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
             currentFreq = item.freq;
-            document.getElementById('tele-meta').innerText = `SYNC_${item.freq}HZ`;
-            startAudio(item.freq, item.type);
-            addLog(`MOUNTING_OBJECT: ${item.id}`);
+            startAudio(item.freq);
+            addLog(`MOUNTING: ${item.id}`);
         };
-        list.appendChild(div);
-
-        const card = document.createElement('div');
-        card.style.border = "1px solid rgba(212,175,55,0.2)";
-        card.style.padding = "20px";
-        card.innerHTML = `<div style="font-size:10px; color:var(--accent); font-family:'Space Mono';">${item.id}</div><div style="font-size:14px; margin:10px 0;">${item.name}</div><a class="dir-link" onclick="initiateBreach()">ACCESS</a>`;
-        grid.appendChild(card);
+        list.appendChild(d);
     });
+}
+
+function addLog(m) {
+    const s = document.getElementById('log-stream');
+    const d = document.createElement('div');
+    d.innerText = `[${new Date().toLocaleTimeString()}] > ${m}`;
+    s.prepend(d);
 }
 
 const cli = document.getElementById('cli-input');
 cli.onkeydown = (e) => {
-    playClick();
     if(e.key === 'Enter') {
         const val = cli.value.toUpperCase().trim();
         if(val.startsWith('MEMO ')) {
@@ -245,65 +205,35 @@ cli.onkeydown = (e) => {
             const m = JSON.parse(localStorage.getItem('b_m') || '[]');
             m.forEach(i => addLog(`MEMO: ${i.c}`));
         } else if(val === 'WINDEN_33') {
-            addLog("!!! AUTH_SUCCESS: PROJECT_NOAH_RESTORED.");
-            archiveData[7].hidden = false; populate();
-        } else if(val === 'CLEAR') {
-            document.getElementById('log-stream').innerHTML = '';
+            archiveData[3].hidden = false; populate();
+            addLog("AUTH_GRANTED: PROJECT_NOAH_VISIBLE.");
         }
         cli.value = '';
     }
 };
 
-function addLog(msg) {
-    const s = document.getElementById('log-stream');
-    const d = document.createElement('div');
-    d.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
-    s.prepend(d);
-}
-
-// Telemetry Canvas with Click Interruption
 const canvas = document.getElementById('teleCanvas');
 const ctx = canvas.getContext('2d');
-let ripple = 0;
-canvas.onmousedown = () => {
-    ripple = 100;
-    addLog("VOID_SYNC_INTERRUPTED.");
-    if(audioCtx) {
-        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
-        osc.frequency.value = 30; g.gain.value = 0.2;
-        osc.connect(g); g.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-    }
-};
-
 function draw(t) {
     canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width, canvas.height);
     ctx.strokeStyle = '#d4af37';
     ctx.beginPath();
     for(let i=0; i<canvas.width; i+=2) {
-        const y = canvas.height/2 + Math.sin(i * (currentFreq/2000) + t * 0.002) * (40 + ripple) + (Math.random() * (ripple/10));
-        ctx.lineTo(i, y);
+        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * (currentFreq/2);
+        ctx.lineTo(i,y);
     }
     ctx.stroke();
-    if(ripple > 0) ripple -= 2;
     requestAnimationFrame(draw);
 }
 
-// Global Entropy & Burn-in Loop
-setInterval(() => {
-    sessionHeat = Math.min(sessionHeat + 0.1, 100);
-    document.getElementById('burn-fill').style.width = sessionHeat + "%";
-    document.documentElement.style.setProperty('--burn', sessionHeat / 200);
-    if(sessionHeat > 90 && Math.random() > 0.95) {
-        document.body.classList.add('emergency');
-        setTimeout(() => document.body.classList.remove('emergency'), 200);
-    }
-}, 2000);
-
 populate();
 draw(0);
-setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+setInterval(() => {
+    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    document.getElementById('entropy-bar').style.width = Math.random() * 100 + "%";
+    document.getElementById('sync-val').innerText = (98 + Math.random()*2).toFixed(2) + "%";
+}, 1000);
 </script>
 </body>
 </html>
