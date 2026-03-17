@@ -91,14 +91,14 @@
             background: rgba(0,0,0,0.4); font-family: 'Space Mono'; 
             transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 1px;
             color: var(--accent-dim); display: flex; flex-direction: column; justify-content: space-between; gap: 15px;
-            min-height: 140px;
+            min-height: 140px; cursor: pointer;
         }
         .fs-item:hover {
             border-color: var(--accent); background: rgba(197, 160, 89, 0.05); color: var(--text);
             box-shadow: inset 0 0 15px rgba(197, 160, 89, 0.1);
         }
-        .fs-item-title { font-size: 13px; font-weight: bold; cursor: pointer; color: var(--accent); border-bottom: 1px solid var(--accent-dim); padding-bottom: 10px;}
-        .fs-item-desc { font-size: 9px; line-height: 1.4; color: var(--text); opacity: 0.7; flex: 1; cursor: pointer; }
+        .fs-item-title { font-size: 13px; font-weight: bold; color: var(--accent); border-bottom: 1px solid var(--accent-dim); padding-bottom: 10px;}
+        .fs-item-desc { font-size: 9px; line-height: 1.4; color: var(--text); opacity: 0.7; flex: 1; }
         
         .fs-action-btn {
             background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 10px;
@@ -317,24 +317,22 @@ function populate() {
         descBlock.className = 'fs-item-desc';
         descBlock.innerText = item.desc;
         
-        // Massive, obvious button
         const btn = document.createElement('a');
         btn.className = 'fs-action-btn';
         if(item.url && item.url !== "#") {
             btn.innerText = "[ ACCESS PROTOCOL ]";
             btn.href = item.url;
-            btn.target = "_blank"; // Opens in new tab
+            btn.target = "_blank"; 
         } else {
             btn.innerText = "[ DATA CORRUPTED ]";
-            btn.onclick = () => addLog(`ERR: PROTOCOL ${item.id} IS CORRUPT.`);
+            btn.onclick = (e) => { e.stopPropagation(); addLog(`ERR: PROTOCOL ${item.id} IS CORRUPT.`); };
         }
 
         d.appendChild(titleBlock);
         d.appendChild(descBlock);
         d.appendChild(btn);
 
-        // Making the whole card trigger the preview
-        const triggerPreview = () => {
+        d.onclick = () => {
             if(!systemBooted) return;
             document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
             d.classList.add('active'); 
@@ -357,9 +355,6 @@ function populate() {
             addLog(`MOUNTING: ${item.id}`);
         };
 
-        titleBlock.onclick = triggerPreview;
-        descBlock.onclick = triggerPreview;
-        
         list.appendChild(d);
     });
 }
@@ -413,7 +408,7 @@ function startAnomalySystem() {
     }, 15000); 
 }
 
-/* --- UPGRADED 3D WIREFRAME CCTV FEED --- */
+/* --- 3D WIREFRAME CCTV FEED --- */
 const cctvCanvas = document.getElementById('cctvCanvas');
 const cCtx = cctvCanvas.getContext('2d');
 let timeAngle = 0;
@@ -426,65 +421,52 @@ function drawCCTV() {
     const w = cctvCanvas.width;
     const h = cctvCanvas.height;
     
-    // Clear background
     cCtx.fillStyle = '#050505';
     cCtx.fillRect(0, 0, w, h);
     
-    // Draw 3D Rotating Wireframe Cube (to simulate an object scanner)
     cCtx.save();
     cCtx.translate(w/2, h/2);
     timeAngle += 0.02;
     
-    // Simple 3D projection math
-    const size = 40;
+    const size = 35;
     const nodes = [[-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1], [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]];
     const edges = [[0,1], [1,3], [3,2], [2,0], [4,5], [5,7], [7,6], [6,4], [0,4], [1,5], [2,6], [3,7]];
     
-    cCtx.strokeStyle = 'rgba(197, 160, 89, 0.6)'; // Brass wireframe
-    cCtx.lineWidth = 1.5;
+    cCtx.strokeStyle = 'rgba(197, 160, 89, 0.6)'; 
+    cCtx.lineWidth = 1;
     
     cCtx.beginPath();
     edges.forEach(edge => {
-        const p1 = nodes[edge[0]];
-        const p2 = nodes[edge[1]];
-        
-        // Rotate X & Y
+        const p1 = nodes[edge[0]], p2 = nodes[edge[1]];
         const cosA = Math.cos(timeAngle), sinA = Math.sin(timeAngle);
         const y1 = p1[1]*cosA - p1[2]*sinA, z1 = p1[1]*sinA + p1[2]*cosA;
         const x1 = p1[0]*cosA - z1*sinA, zz1 = p1[0]*sinA + z1*cosA;
         const y2 = p2[1]*cosA - p2[2]*sinA, z2 = p2[1]*sinA + p2[2]*cosA;
         const x2 = p2[0]*cosA - z2*sinA, zz2 = p2[0]*sinA + z2*cosA;
 
-        // Faux perspective projection
         const fov = 150;
-        const scale1 = fov / (fov + zz1*size);
-        const scale2 = fov / (fov + zz2*size);
-        
+        const scale1 = fov / (fov + zz1*size), scale2 = fov / (fov + zz2*size);
         cCtx.moveTo(x1 * size * scale1, y1 * size * scale1);
         cCtx.lineTo(x2 * size * scale2, y2 * size * scale2);
     });
     cCtx.stroke();
     cCtx.restore();
 
-    // Generate Static over the top
     const imgData = cCtx.getImageData(0, 0, w, h);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
         if(Math.random() > 0.5) {
             const noise = Math.random() * 30; 
-            data[i] += noise;     
-            data[i+1] += noise;   
-            data[i+2] += noise;        
+            data[i] += noise; data[i+1] += noise; data[i+2] += noise;        
         }
     }
     cCtx.putImageData(imgData, 0, 0);
 
-    // Creepy subliminal flash
     if (Math.random() > 0.99) {
         cCtx.fillStyle = 'rgba(139, 58, 43, 0.6)';
         cCtx.fillRect(0, 0, w, h);
         cCtx.fillStyle = '#000';
-        cCtx.font = 'bold 20px Space Mono';
+        cCtx.font = 'bold 16px Space Mono';
         cCtx.textAlign = 'center';
         cCtx.fillText("SUBJECT CONTAINED", w/2, h/2);
     }
@@ -522,7 +504,6 @@ function verifyCompliance() {
 setInterval(() => {
     if(systemBooted && Math.random() < 0.1) triggerComplianceCheck();
 }, 20000);
-
 </script>
 </body>
 </html>
