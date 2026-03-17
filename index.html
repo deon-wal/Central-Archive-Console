@@ -2,347 +2,370 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>THE BUREAU // SIC MUNDUS // ARCHIVE_STATION_7</title>
+<title>THE BUREAU // 1953_STATION_ALPHA</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-/* ========================================
-   1. SYSTEM VARS & ROOT
-   ========================================
-*/
+/* ============================================================
+   1. CORE ARCHITECTURE & THE "GRAIN"
+   ============================================================ */
 :root {
-  --accent: #d4af37;
-  --accent-dim: #5c4a1e;
-  --bg: #0a0a09;
-  --panel: #11100e;
-  --rust: #3d2b1f;
-  --alert: #8b0000;
-  --crt-glow: 0 0 15px rgba(212, 175, 55, 0.2);
-  --text: #9a9483;
+  --gold: #d4af37;
+  --gold-dim: #3d2b1f;
+  --bg: #070706;
+  --panel: #0d0c0a;
+  --rust: #2b1d12;
+  --alert: #ff3b30;
+  --glow: 0 0 20px rgba(212, 175, 55, 0.15);
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
 
-/* ========================================
-   2. GLOBAL ATMOSPHERE
-   ========================================
-*/
 * { box-sizing: border-box; cursor: crosshair; }
 body { 
-  margin: 0; background: var(--bg); color: var(--text); 
+  margin: 0; background: var(--bg); color: #8a8375; 
   font-family: 'Space Mono', monospace; overflow: hidden;
-  height: 100vh; text-transform: uppercase; font-size: 10px;
+  height: 100vh; text-transform: uppercase; font-size: 9px;
+  perspective: 1000px; /* For the "Pulse" warp */
 }
 
-#grain {
-  position: fixed; inset: 0; pointer-events: none; z-index: 9000;
-  background: url('https://grainy-gradients.vercel.app/noise.svg');
-  opacity: 0.15; filter: contrast(200%) brightness(120%);
+/* THE CATHODE TUBE OVERLAY */
+#crt-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 10000;
+  background: 
+    linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%),
+    linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
+  background-size: 100% 3px, 3px 100%;
+}
+#vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 10001;
+  background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.8) 120%);
 }
 
-/* CRT SCANLINE RECURSION */
-body::after {
-  content: " "; display: block; position: absolute; inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), 
-              linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
-  z-index: 8000; pointer-events: none; background-size: 100% 4px, 4px 100%;
+/* ============================================================
+   2. BOOT INTERFACE (TERMINAL WARMUP)
+   ============================================================ */
+#boot-sequence {
+  position: fixed; inset: 0; background: #000; z-index: 20000;
+  padding: 80px; color: var(--gold); display: flex; flex-direction: column;
 }
+.boot-txt { margin-bottom: 4px; font-size: 11px; opacity: 0; transition: opacity 0.1s; }
 
-/* ========================================
-   3. BOOT SEQUENCE & LOADING
-   ========================================
-*/
-#boot-wrap {
-  position: fixed; inset: 0; background: #000; z-index: 9999;
-  padding: 60px; color: var(--accent); display: flex; flex-direction: column;
-}
-.boot-line { margin-bottom: 8px; font-size: 12px; height: 1.2em; overflow: hidden; visibility: hidden; }
-
-/* ========================================
-   4. LAYOUT GRID (THE TRI-ERA SYSTEM)
-   ========================================
-*/
-.app-container {
+/* ============================================================
+   3. THE BUREAU GRID (650+ LINES CAPABLE)
+   ============================================================ */
+.bureau-frame {
   display: grid;
-  grid-template-columns: 350px 1fr 450px;
-  grid-template-rows: 70px 1fr 200px;
-  height: 100vh; gap: 20px; padding: 20px;
-  opacity: 0; transition: opacity 2s ease;
+  grid-template-columns: 360px 1fr 450px;
+  grid-template-rows: 80px 1fr 220px;
+  height: 100vh; gap: 20px; padding: 25px;
+  opacity: 0; transform: scale(1.05); transition: all 3s cubic-bezier(0.1, 0, 0, 1);
 }
 
-header { grid-column: 1 / span 3; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--rust); background: var(--panel); padding: 0 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-.panel { background: var(--panel); border: 1px solid var(--rust); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.8); }
-.panel-header { padding: 10px 15px; background: var(--rust); color: var(--accent); font-weight: 700; font-size: 10px; letter-spacing: 3px; display: flex; justify-content: space-between; }
+header { 
+  grid-column: 1 / span 3; border: 1px solid var(--rust); 
+  background: var(--panel); display: flex; align-items: center; 
+  padding: 0 30px; justify-content: space-between;
+  box-shadow: var(--glow);
+}
 
-/* ========================================
-   5. NAVIGATION & DIRECTORY
-   ========================================
-*/
-.nav-scroll { flex: 1; overflow-y: auto; scrollbar-width: thin; }
-.nav-item {
-  padding: 18px 25px; border-bottom: 1px solid rgba(255,255,255,0.03);
+.panel { 
+  background: var(--panel); border: 1px solid var(--rust); 
+  display: flex; flex-direction: column; overflow: hidden; 
+  position: relative;
+}
+.panel-header { 
+  background: var(--rust); color: var(--gold); padding: 8px 15px; 
+  font-weight: 700; letter-spacing: 4px; display: flex; justify-content: space-between;
+}
+
+/* ============================================================
+   4. NAVIGATION (THE CHRONOS DIRECTORY)
+   ============================================================ */
+.nav-area { flex: 1; overflow-y: auto; }
+.nav-row {
+  padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.02);
   transition: 0.3s; cursor: pointer; position: relative;
 }
-.nav-item:hover { background: rgba(212, 175, 55, 0.08); }
-.nav-item.active { background: rgba(212, 175, 55, 0.15); border-left: 5px solid var(--accent); color: #fff; }
-.nav-tag { font-size: 8px; opacity: 0.4; display: block; margin-top: 4px; }
+.nav-row:hover { background: rgba(212, 175, 55, 0.05); }
+.nav-row.active { background: rgba(212, 175, 55, 0.1); border-left: 6px solid var(--gold); color: #fff; }
+.nav-row .meta { font-size: 7px; opacity: 0.3; margin-top: 5px; }
 
-/* ========================================
-   6. VISUAL TELEMETRY (CENTER)
-   ========================================
-*/
-.main-viewport { grid-column: 2; background: #030302; border: 3px solid #1a1917; position: relative; }
-canvas { width: 100%; height: 100%; filter: sepia(0.4) contrast(1.2) brightness(0.9); }
-#scanline-v { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: rgba(212,175,55,0.1); animation: scan 8s linear infinite; pointer-events: none; }
-@keyframes scan { from { top: 0; } to { top: 100%; } }
+/* ============================================================
+   5. VISUAL TELEMETRY & SIGNAL (CENTER)
+   ============================================================ */
+.monitor-core { grid-column: 2; background: #020202; position: relative; }
+canvas#waveCanvas { width: 100%; height: 100%; opacity: 0.7; }
+.scope-overlay { position: absolute; inset: 0; pointer-events: none; border: 20px solid transparent; border-image: radial-gradient(circle, transparent 70%, #000 100%) 1; }
 
-/* ========================================
-   7. SCHEMATIC ENGINE (RIGHT)
-   ========================================
-*/
-.schematic-viewer { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; background: radial-gradient(circle, #1a1917 0%, #0a0a09 100%); }
-svg { width: 95%; height: auto; max-height: 350px; filter: drop-shadow(var(--crt-glow)); }
+/* ============================================================
+   6. MECHANICAL SCHEMATICS (RIGHT)
+   ============================================================ */
+.schematic-box { flex: 1; display: flex; align-items: center; justify-content: center; padding: 30px; position: relative; }
+.schematic-box svg { width: 90%; filter: drop-shadow(0 0 10px var(--gold)); transition: transform 0.5s; }
+.schematic-box:hover svg { transform: scale(1.05); }
 
-/* ========================================
-   8. COMMAND CENTER (FOOTER)
-   ========================================
-*/
-.terminal-footer { 
-  grid-column: 1 / span 3; background: #080807; 
-  padding: 20px; border: 1px solid var(--rust); 
-  display: grid; grid-template-columns: 1fr 350px 250px; gap: 30px;
+/* ============================================================
+   7. THE COMMAND DECK (FOOTER)
+   ============================================================ */
+footer { 
+  grid-column: 1 / span 3; background: #050504; border: 1px solid var(--rust);
+  display: grid; grid-template-columns: 1fr 400px 300px; padding: 20px; gap: 30px;
 }
-#log-stream { overflow-y: hidden; line-height: 1.8; color: var(--accent); font-size: 9px; }
-.cli-input-wrap { border-left: 1px solid var(--rust); padding-left: 20px; display: flex; flex-direction: column; }
-#cli-input { background: transparent; border: 1px solid var(--accent-dim); color: var(--accent); padding: 10px; font-family: inherit; margin-top: 10px; outline: none; }
+#terminal-out { font-size: 8px; color: var(--gold); overflow: hidden; line-height: 1.6; }
+.cmd-input-box { border-left: 1px solid var(--rust); padding-left: 20px; }
+input#cmd-field { 
+  width: 100%; background: transparent; border: 1px solid var(--gold-dim); 
+  color: var(--gold); padding: 12px; font-family: inherit; outline: none; margin-top: 10px;
+}
+input#cmd-field:focus { border-color: var(--gold); box-shadow: var(--glow); }
 
-/* ========================================
-   9. INTERACTIVE ELEMENTS & HUD
-   ========================================
-*/
-#hud-cursor { position: fixed; pointer-events: none; z-index: 9500; font-size: 8px; color: var(--accent); white-space: nowrap; }
-.status-led { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-.led-red { background: var(--alert); box-shadow: 0 0 5px var(--alert); animation: blink 1s infinite; }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+/* ============================================================
+   8. ANIMATIONS & HUD
+   ============================================================ */
+#biometric-hud { position: fixed; pointer-events: none; z-index: 15000; font-size: 7px; color: var(--gold); }
+@keyframes flicker { 0% { opacity: 0.98; } 10% { opacity: 0.94; } 20% { opacity: 0.99; } 100% { opacity: 1; } }
+.bureau-frame.flicker { animation: flicker 0.1s infinite; }
 
-.btn-action { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; font-family: inherit; font-size: 9px; cursor: pointer; transition: 0.3s; }
-.btn-action:hover { background: var(--accent); color: var(--bg); font-weight: bold; }
-
-/* ========================================
-   10. SCROLLBARS & UTILS
-   ========================================
-*/
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--rust); border-radius: 2px; }
-.glitch { animation: glitch-text 0.2s infinite; }
-@keyframes glitch-text { 0% { transform: translate(0); } 20% { transform: translate(-1px, 1px); } 40% { transform: translate(-1px, -1px); } 60% { transform: translate(1px, 1px); } 80% { transform: translate(1px, -1px); } 100% { transform: translate(0); } }
-
+.btn-bureau {
+  background: transparent; border: 1px solid var(--gold); color: var(--gold);
+  padding: 12px; font-family: inherit; font-size: 8px; letter-spacing: 2px;
+  cursor: pointer; transition: 0.3s;
+}
+.btn-bureau:hover { background: var(--gold); color: var(--bg); box-shadow: var(--glow); }
 </style>
 </head>
-<body>
+<body onclick="initAudio()">
 
-<div id="grain"></div>
-<div id="boot-wrap"></div>
-<div id="hud-cursor">X:000 Y:000 // BIOMETRIC_SCAN: ACTIVE</div>
+<div id="crt-overlay"></div>
+<div id="vignette"></div>
+<div id="boot-sequence"></div>
+<div id="biometric-hud">POS_X: 000 // POS_Y: 000</div>
 
-<div class="app-container" id="main-ui">
+<div class="bureau-frame" id="app">
   <header>
-    <div style="display: flex; align-items: center;">
-      <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent); letter-spacing: 4px;">THE BUREAU</div>
-      <div style="margin-left: 40px; border-left: 1px solid var(--rust); padding-left: 20px;">
-        <span style="opacity:0.4">NODE:</span> <span style="color:var(--accent)">STATION_TAS_7</span>
-      </div>
+    <div>
+      <span style="font-size: 1.8rem; font-weight: 700; color: var(--gold); letter-spacing: 6px;">SIC MUNDUS</span>
+      <span style="margin-left: 20px; opacity: 0.4;">EST. 1921 // STATION_7</span>
     </div>
-    <div style="display: flex; gap: 15px;">
-      <div style="font-size: 9px; text-align: right;">
-        VOID_INTEGRITY: <span id="integrity-val" style="color:var(--accent)">100%</span><br>
-        SIGNAL_DRIFT: <span id="drift-val" style="color:var(--alert)">0.003ms</span>
+    <div style="display: flex; gap: 40px; align-items: center;">
+      <div style="text-align: right;">
+        <div style="font-size: 7px; opacity: 0.5;">TEMPORAL_FLUX</div>
+        <div id="flux-meter" style="color: var(--gold); font-weight: bold;">0.00033 Hz</div>
       </div>
-      <div id="clock" style="font-size: 1.4rem; color: var(--accent); font-weight: bold; width: 120px;">00:00:00</div>
+      <div id="master-clock" style="font-size: 1.6rem; color: var(--gold); font-weight: bold;">00:00:00</div>
     </div>
   </header>
 
   <aside class="panel">
-    <div class="panel-header"><span>REGISTRY_VOL_I</span><span>SEC_LVL: 5</span></div>
-    <div class="nav-scroll" id="nav-list"></div>
-    <div style="padding: 20px; border-top: 1px solid var(--rust); background: rgba(0,0,0,0.2);">
-      <div style="margin-bottom: 8px;">ENTROPY_INDEX</div>
-      <div style="height: 4px; background: var(--rust);"><div id="entropy-bar" style="height: 100%; background: var(--accent); width: 33%;"></div></div>
-      <div style="font-size: 8px; margin-top: 8px; opacity: 0.5;">> RECURSION_DETECTED // CYCLE_33</div>
+    <div class="panel-header"><span>ARCHIVE_DIR</span><span>V.1953</span></div>
+    <div class="nav-area" id="nav-list"></div>
+    <div style="padding: 20px; border-top: 1px solid var(--rust);">
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <span>CORE_TEMP</span><span id="temp-val">33.0°C</span>
+      </div>
+      <div style="height:2px; background:var(--rust);"><div id="temp-bar" style="height:100%; background:var(--gold); width:33%;"></div></div>
     </div>
   </aside>
 
-  <main class="panel main-viewport">
-    <div class="panel-header">
-      <span><span class="status-led led-red"></span>LIVE_VOID_OSCILLATION</span>
-      <span>SYNC_STABLE</span>
-    </div>
-    <div id="scanline-v"></div>
-    <canvas id="teleCanvas"></canvas>
+  <main class="panel monitor-core">
+    <div class="panel-header"><span>● SIGNAL_INTERCEPT</span><span>STABLE</span></div>
+    <canvas id="waveCanvas"></canvas>
+    <div class="scope-overlay"></div>
   </main>
 
   <aside class="panel">
-    <div class="panel-header">OBJECT_MANIFEST</div>
-    <div class="schematic-viewer" id="svg-stage"></div>
-    <div style="padding: 25px; border-top: 1px solid var(--rust); background: #0c0b0a;">
-      <h2 id="obj-title" style="margin: 0 0 12px 0; color: var(--accent); font-size: 1.2rem;">--</h2>
-      <p id="obj-desc" style="font-size: 10px; line-height: 1.8; opacity: 0.7; min-height: 80px;"></p>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-        <button class="btn-action" onclick="triggerAlert()">INIT_SCAN</button>
-        <button class="btn-action" style="border-color:var(--alert); color:var(--alert);">PURGE</button>
+    <div class="panel-header">DATA_SPECIFICATION</div>
+    <div class="schematic-box" id="svg-stage"></div>
+    <div style="padding: 30px; border-top: 1px solid var(--rust); background: rgba(0,0,0,0.3);">
+      <h2 id="obj-name" style="margin: 0; color: var(--gold); letter-spacing: 1px;">--</h2>
+      <p id="obj-desc" style="font-size: 10px; line-height: 1.8; opacity: 0.6; min-height: 100px;"></p>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <button class="btn-bureau" onclick="triggerDefrag()">DEFRAG</button>
+        <button class="btn-bureau" style="background: var(--gold); color: var(--bg);">INIT_SYNC</button>
       </div>
     </div>
   </aside>
 
-  <footer class="terminal-footer">
-    <div id="log-stream"></div>
-    <div class="cli-input-wrap">
-      <div style="font-size: 8px; opacity: 0.5;">BUREAU_CLI_V1.0.4</div>
-      <input type="text" id="cli-input" placeholder="ENTER COMMAND (HELP, SCAN, CLEAR)..." autocomplete="off">
+  <footer>
+    <div id="terminal-out"></div>
+    <div class="cmd-input-box">
+      <div style="font-size: 7px; opacity: 0.4;">BUREAU_CMD_SHELL_V.7</div>
+      <input type="text" id="cmd-field" placeholder="TYPE COMMAND (HELP, SCAN, TIME)..." autocomplete="off">
     </div>
-    <div style="border-left: 1px solid var(--rust); padding-left: 20px; font-size: 8px;">
-      <div style="margin-bottom: 10px;">TEMPORAL_FOCUS:</div>
-      <div style="color:var(--accent)">>> 1953_CYC [ACTIVE]</div>
-      <div style="color:var(--text); opacity:0.3">>> 1986_CYC [LOCKED]</div>
-      <div style="color:var(--text); opacity:0.3">>> 2019_CYC [LOCKED]</div>
+    <div style="border-left: 1px solid var(--rust); padding-left: 20px;">
+      <div style="font-size: 7px; opacity: 0.4; margin-bottom: 10px;">SYSTEM_NODES:</div>
+      <div style="color:var(--gold)">>> NODE_1953 [OK]</div>
+      <div style="opacity:0.2">>> NODE_1986 [??]</div>
+      <div style="opacity:0.2">>> NODE_2019 [??]</div>
     </div>
   </footer>
 </div>
 
 <script>
-/* ========================================
-   11. DATA ARCHIVE (8 DEEP PROJECTS)
-   ========================================
-*/
-const archiveData = [
-  { id: "app-01", name: "The Apparatus", desc: "A dual-chamber brass device utilizing Cesium-137. Designed for localized non-linear transit. Status: Critical.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><g transform-origin="50 50"><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></g><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect><path d="M50 5 V95 M5 50 H95" stroke="var(--rust)" stroke-width="0.2"/></svg>` },
-  { id: "god-p", name: "Higgs Field", desc: "Visible manifestation of the God Particle. Magnetic containment is fluctuating. Do not approach without lead shielding.", svg: `<svg viewBox="0 0 100 100"><defs><filter id="f1"><feGaussianBlur stdDeviation="3"/></filter></defs><circle cx="50" cy="50" r="12" fill="var(--accent)" filter="url(#f1)"><animate attributeName="r" values="10;15;10" dur="1.5s" repeatCount="indefinite"/></circle>${Array.from({length:24}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*45}" y2="${50+Math.sin(i)*45}" stroke="var(--accent)" stroke-width="0.1" opacity="0.4"><animate attributeName="opacity" values="0.1;0.5;0.1" dur="${1+Math.random()}s" repeatCount="indefinite"/></line>`).join('')}</svg>` },
-  { id: "caves", name: "Passage 33", desc: "Geological survey of the Winden Cave system. Inter-temporal tunnel located at coordinates 51.12N, 10.4E.", svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--accent)" stroke-width="1.5"/><path d="M25 90 Q50 40 75 90" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.4"/><line x1="50" y1="10" x2="50" y2="90" stroke="var(--rust)" stroke-width="0.2" stroke-dasharray="2 2"/></svg>` },
-  { id: "tablet", name: "Emerald Tablet", desc: "Ancient hermetic text. 'Sic Mundus Creatus Est'. Found engraved on the bunker doors.", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="0.5"/><path d="M30 30 L70 70 M70 30 L30 70" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="5" fill="var(--accent)"/></svg>` },
-  { id: "radio", name: "Radio Device", desc: "Modified 1950s receiver tuned to sub-harmonic frequencies. Intercepting signals from 1986.", svg: `<svg viewBox="0 0 100 100"><rect x="15" y="30" width="70" height="40" rx="5" fill="none" stroke="var(--accent)" stroke-width="1"/><circle cx="30" cy="50" r="8" fill="none" stroke="var(--accent)" stroke-width="0.5"/><line x1="50" y1="40" x2="75" y2="40" stroke="var(--accent)" stroke-width="0.5"/><line x1="50" y1="50" x2="75" y2="50" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
-  { id: "chair", name: "The Chair", desc: "Experimental prototype for temporal displacement. Early trials resulted in consistent ocular damage. Failed.", svg: `<svg viewBox="0 0 100 100"><path d="M40 80 V40 H60 V80 M30 80 H70" fill="none" stroke="var(--accent)" stroke-width="1"/><circle cx="50" cy="30" r="5" fill="none" stroke="var(--accent)" stroke-width="0.5"/><path d="M20 50 H80" stroke="var(--alert)" stroke-width="0.2"/></svg>` },
-  { id: "helge", name: "The Shack", desc: "Woodland structure used for assembly of components. Significant temporal residue detected.", svg: `<svg viewBox="0 0 100 100"><path d="M20 80 V50 L50 20 L80 50 V80 Z" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="42" y="60" width="16" height="20" fill="none" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
-  { id: "diary", name: "Claudia's Log", desc: "Comprehensive notes on the 33-year cycle. Every detail matches. The cycle is repeating.", svg: `<svg viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><line x1="30" y1="35" x2="70" y2="35" stroke="var(--accent)" stroke-width="0.3"/><line x1="30" y1="45" x2="70" y2="45" stroke="var(--accent)" stroke-width="0.3"/><line x1="30" y1="55" x2="60" y2="55" stroke="var(--accent)" stroke-width="0.3"/></svg>` }
+/* ============================================================
+   9. DATA REPOSITORY (THE MEAT)
+   ============================================================ */
+const projects = [
+  { id: "apparatus", name: "The Apparatus", desc: "Mechanical time displacement engine. Constructed by H.G. Tannhaus. Requires stable Higgs-Field input for activation.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--gold)" stroke-width="0.5"/><g><circle cx="50" cy="50" r="30" fill="none" stroke="var(--gold)" stroke-width="2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></g><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--gold)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect><path d="M50 0 V100 M0 50 H100" stroke="var(--rust)" stroke-width="0.2"/></svg>` },
+  { id: "cesium", name: "Cesium-137", desc: "Isotope extracted from nuclear plant waste. Primary catalyst for the 33-year wormhole stability. Handle with extreme caution.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="var(--gold)"><animate attributeName="r" values="8;14;8" dur="1s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/></circle>${Array.from({length:16}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*40}" y2="${50+Math.sin(i)*40}" stroke="var(--gold)" stroke-width="0.2" opacity="0.3"/>`).join('')}</svg>` },
+  { id: "passage", name: "Winden Caves", desc: "Site of the first successful breach. Geological mapping shows abnormal quartz density around the central portal.", svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--gold)" stroke-width="1.5"/><path d="M30 90 Q50 50 70 90" fill="none" stroke="var(--gold)" stroke-width="0.5" opacity="0.4"/><path d="M0 80 H100" stroke="var(--rust)" stroke-width="0.2"/></svg>` },
+  { id: "emerald", name: "The Tablet", desc: "Alchemical text dating back centuries. 'Quod est superius, est sicut quod est inferius'. Translated: That which is above is like that which is below.", svg: `<svg viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" fill="none" stroke="var(--gold)" stroke-width="1"/><path d="M35 30 L65 70 M65 30 L35 70" stroke="var(--gold)" stroke-width="0.5"/><circle cx="50" cy="50" r="15" fill="none" stroke="var(--gold)" stroke-width="0.3"/></svg>` },
+  { id: "bunker", name: "The Bunker", desc: "Heavily fortified room beneath the Helge Doppler estate. Used for early chair prototypes. Temporal residue: High.", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="50" fill="none" stroke="var(--gold)" stroke-width="1"/><path d="M20 30 L50 10 L80 30" fill="none" stroke="var(--gold)" stroke-width="1"/><rect x="42" y="60" width="16" height="20" fill="none" stroke="var(--gold)" stroke-width="0.5"/></svg>` },
+  { id: "radio", name: "The Signal", desc: "Short-wave interception from 1986. Audio data contains a looped message regarding the 'White Devil'.", svg: `<svg viewBox="0 0 100 60">${Array.from({length:30}).map((_,i)=>`<rect x="${i*3.3}" y="${30-Math.random()*20}" width="1" height="${Math.random()*40}" fill="var(--gold)"><animate attributeName="height" values="5;40;5" dur="${0.2+Math.random()}s" repeatCount="indefinite"/></rect>`).join('')}</svg>` },
+  { id: "claudia", name: "White Devil", desc: "Subject profile: Claudia Tiedemann. Known to inhabit multiple timelines. Objective: Containment.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="15" fill="none" stroke="var(--gold)" stroke-width="1"/><path d="M30 80 Q50 60 70 80" fill="none" stroke="var(--gold)" stroke-width="1"/><circle cx="50" cy="50" r="45" fill="none" stroke="var(--gold)" stroke-width="0.1"/></svg>` },
+  { id: "cycle", name: "33-Year Cycle", desc: "Every 33 years, the planets align and the wormhole resets. The cycle is absolute. It cannot be broken.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="33" fill="none" stroke="var(--gold)" stroke-width="0.5" stroke-dasharray="2 2"/><circle cx="50" cy="17" r="4" fill="var(--gold)"/><circle cx="50" cy="83" r="4" fill="var(--gold)"/></svg>` }
 ];
 
-/* ========================================
-   12. CORE ENGINE (JS)
-   ========================================
-*/
-const bootLines = [
-  "BUREAU_OS_V99_LOAD", "CHECKING_VACUUM_TUBES...", "MOUNTING_LOCAL_STORAGE...", 
-  "DECRYPTING_O5_FILES...", "SYNCING_TEMPORAL_CLK...", "SCANNING_BIOMETRICS...", 
-  "CONNECTED_TO_STATION_7", "STATUS: STABLE", "WELCOME, OPERATOR."
-];
-
-// BOOT SEQUENCE
-const bootContainer = document.getElementById('boot-wrap');
-bootLines.forEach((t, i) => {
-  const l = document.createElement('div');
-  l.className = 'boot-line';
-  l.innerText = `> ${t}`;
-  bootContainer.appendChild(l);
-  setTimeout(() => l.style.visibility = 'visible', i * 350);
-});
-
-setTimeout(() => {
-  bootContainer.style.opacity = '0';
-  document.getElementById('main-ui').style.opacity = '1';
-  setTimeout(() => bootContainer.remove(), 2000);
-}, 3800);
-
-// NAVIGATION LOGIC
-const navList = document.getElementById('nav-list');
-const stage = document.getElementById('svg-stage');
-
-function selectProject(p) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`nav-${p.id}`).classList.add('active');
-  document.getElementById('obj-title').innerText = p.name;
-  document.getElementById('obj-desc').innerText = p.desc;
-  stage.innerHTML = p.svg;
-  addLog(`ACCESSING: ${p.name.toUpperCase()} ... [OK]`);
+/* ============================================================
+   10. SYSTEM LOGIC (AUDIO, VISUAL, CLI)
+   ============================================================ */
+// AUDIO ENGINE (Mechanical Clicks & Hum)
+let audioCtx;
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const hum = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  hum.type = 'sawtooth';
+  hum.frequency.setValueAtTime(50, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.005, audioCtx.currentTime);
+  hum.connect(gain);
+  gain.connect(audioCtx.destination);
+  hum.start();
+}
+function playClick() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+  g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
 }
 
-archiveData.forEach(p => {
+// BOOT ENGINE
+const bootContainer = document.getElementById('boot-sequence');
+const bootLines = [
+  "BUREAU_TERMINAL_V1953_INITIALIZING...", "VOLTAGE: 220V [STABLE]", "VACUUM_TUBES_WARMING...",
+  "SEARCHING_TEMPORAL_NODES...", "NODE_1953: FOUND", "NODE_1986: ERROR_33", "NODE_2019: ERROR_66",
+  "ESTABLISHING_VOID_LINK...", "ACCESS_GRANTED_OPERATOR", "SYSTEM_READY."
+];
+bootLines.forEach((t, i) => {
+  const l = document.createElement('div');
+  l.className = 'boot-txt';
+  l.innerText = `> ${t}`;
+  bootContainer.appendChild(l);
+  setTimeout(() => l.style.opacity = '1', i * 300);
+});
+setTimeout(() => {
+  bootContainer.style.opacity = '0';
+  document.getElementById('app').style.opacity = '1';
+  document.getElementById('app').style.transform = 'scale(1)';
+  setTimeout(() => bootContainer.remove(), 2000);
+}, 4000);
+
+// UI CONTROLLER
+const nav = document.getElementById('nav-list');
+const stage = document.getElementById('svg-stage');
+const term = document.getElementById('terminal-out');
+
+function select(p) {
+  playClick();
+  document.querySelectorAll('.nav-row').forEach(r => r.classList.remove('active'));
+  document.getElementById(`nav-${p.id}`).classList.add('active');
+  document.getElementById('obj-name').innerText = p.name;
+  document.getElementById('obj-desc').innerText = p.desc;
+  stage.innerHTML = p.svg;
+  addLog(`FILE_LOADED: ${p.id.toUpperCase()}... DECRYPTION_COMPLETE.`);
+}
+
+projects.forEach(p => {
   const d = document.createElement('div');
   d.id = `nav-${p.id}`;
-  d.className = 'nav-item';
-  d.innerHTML = `<div>${p.name}</div><span class="nav-tag">REF_${p.id.toUpperCase()}</span>`;
-  d.onclick = () => selectProject(p);
-  navList.appendChild(d);
+  d.className = 'nav-row';
+  d.innerHTML = `<div>${p.name}</div><div class="meta">REF_ID: ${p.id.toUpperCase()}_53</div>`;
+  d.onclick = () => select(p);
+  nav.appendChild(d);
 });
 
-// TELEMETRY CANVAS ENGINE
-const canvas = document.getElementById('teleCanvas');
-const ctx = canvas.getContext('2d');
-function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
-window.onresize = resize; resize();
+function addLog(msg) {
+  const d = document.createElement('div');
+  d.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  term.prepend(d);
+  if(term.childNodes.length > 8) term.lastChild.remove();
+}
 
-function draw(t) {
-  ctx.fillStyle = 'rgba(10, 10, 9, 0.2)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+// CLI INPUT
+const cmdField = document.getElementById('cmd-field');
+cmdField.onkeydown = (e) => {
+  if(e.key === 'Enter') {
+    const v = cmdField.value.toLowerCase();
+    addLog(`CMD_EXEC: ${v.toUpperCase()}`);
+    if(v === 'help') addLog("VALID: SCAN, TIME, CLEAR, REBOOT, SYNC");
+    else if(v === 'reboot') window.location.reload();
+    else if(v === 'scan') triggerDefrag();
+    else if(v === 'clear') term.innerHTML = '';
+    else addLog("ERR: CMD_NOT_RECOGNIZED");
+    cmdField.value = '';
+    playClick();
+  }
+};
+
+// CANVAS SIGNAL ENGINE
+const canvas = document.getElementById('waveCanvas');
+const ctx = canvas.getContext('2d');
+function res() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+window.onresize = res; res();
+
+function drawWave(t) {
+  ctx.fillStyle = 'rgba(7, 7, 6, 0.2)';
+  ctx.fillRect(0,0,canvas.width, canvas.height);
   
-  ctx.strokeStyle = 'rgba(212, 175, 55, 0.05)';
+  // Grid Lines
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.03)';
   for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
   
-  ctx.beginPath();
-  ctx.strokeStyle = 'var(--accent)';
-  ctx.lineWidth = 1;
+  // Waveform
+  ctx.beginPath(); ctx.strokeStyle = 'var(--gold)'; ctx.lineWidth = 1;
   for(let x=0; x<canvas.width; x+=5) {
-    const y = canvas.height/2 + Math.sin(x*0.01 + t*0.001) * 40 + Math.random() * 5;
+    const y = canvas.height/2 + Math.sin(x*0.02 + t*0.002) * 25 + Math.random()*10;
     ctx.lineTo(x, y);
   }
   ctx.stroke();
-  requestAnimationFrame(draw);
+  requestAnimationFrame(drawWave);
 }
-draw(0);
+drawWave(0);
 
-// TERMINAL LOGIC
-const logStream = document.getElementById('log-stream');
-const cliInput = document.getElementById('cli-input');
-
-function addLog(msg) {
-  const l = document.createElement('div');
-  l.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  logStream.prepend(l);
-  if(logStream.childNodes.length > 8) logStream.lastChild.remove();
-}
-
-cliInput.onkeydown = (e) => {
-  if(e.key === 'Enter') {
-    const val = cliInput.value.toLowerCase();
-    addLog(`USER_CMD: ${val.toUpperCase()}`);
-    if(val === 'help') addLog("VALID: SCAN, PURGE, STATUS, CLEAR, HELP");
-    else if(val === 'scan') triggerAlert();
-    else if(val === 'clear') logStream.innerHTML = '';
-    else addLog("ERR: INVALID_COMMAND");
-    cliInput.value = '';
-  }
-};
-
-// HUD & MISC
+// HUD MOUSE TRACKER
 window.onmousemove = (e) => {
-  const hud = document.getElementById('hud-cursor');
+  const hud = document.getElementById('biometric-hud');
   hud.style.left = (e.clientX + 15) + 'px';
   hud.style.top = (e.clientY + 15) + 'px';
-  hud.innerText = `LNX:${e.clientX} LNY:${e.clientY} // BIO_SIG: RECOGNIZED`;
+  hud.innerText = `POS_X: ${e.clientX} // POS_Y: ${e.clientY}`;
 };
 
+// TIMERS & ENTROPY
 setInterval(() => {
-  document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-  document.getElementById('integrity-val').innerText = (98 + Math.random()*2).toFixed(2) + "%";
-  document.getElementById('entropy-bar').style.width = (Math.random()*100) + "%";
+  document.getElementById('master-clock').innerText = new Date().toLocaleTimeString();
+  document.getElementById('flux-meter').innerText = (0.0003 + Math.random()*0.0001).toFixed(5) + " Hz";
+  document.getElementById('temp-bar').style.width = (30 + Math.random()*10) + "%";
+  if(Math.random() > 0.95) {
+    document.getElementById('app').classList.add('flicker');
+    setTimeout(() => document.getElementById('app').classList.remove('flicker'), 150);
+  }
 }, 1000);
 
-function triggerAlert() {
-  addLog("CRITICAL: PERFORMING DEEP VOID SCAN...");
-  document.body.style.filter = "brightness(2) contrast(3)";
+function triggerDefrag() {
+  playClick();
+  document.body.style.filter = "invert(1) contrast(5)";
   setTimeout(() => document.body.style.filter = "none", 100);
+  addLog("CRITICAL: SECTOR_DEFRAG_COMPLETE.");
 }
 
-selectProject(archiveData[0]);
+select(projects[0]);
 </script>
 </body>
 </html>
