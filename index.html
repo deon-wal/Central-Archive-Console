@@ -9,14 +9,14 @@
             /* 1984 / BRAZIL / DARK ANALOG PALETTE */
             --accent: #c5a059; /* Tarnished Brass */
             --accent-dim: #4a3b18; /* Dark Brass/Oil */
-            --bg: #0a0908; /* Very dark warm gray */
-            --panel: #141210; /* Dark bureaucratic brown/grey */
+            --bg: #070605; /* Deepest warm gray/black */
+            --panel: #110f0e; /* Dark bureaucratic brown/grey */
             --rust: #8b3a2b; /* Dried blood / rust */
             --alert: #d9381e; /* Harsh CRT Red */
             --blue: #556b2f; /* Olive / Sickly Phosphor Green */
             --text: #d1c7b7; /* Faded parchment */
             --burn: 0;
-            --system-opacity: 0.15;
+            --system-opacity: 0.05;
         }
 
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
@@ -33,15 +33,15 @@
         /* THE UPGRADED SPREAD-OUT GRID */
         #os-panels {
             flex: 1;
-            padding: 60px 20px 40px 20px;
+            padding: 55px 20px 35px 20px;
             display: none; /* Hidden until boot */
             /* Left takes most space, Right is a fixed sidebar */
             grid-template-columns: 1fr 380px; 
-            grid-template-rows: 1fr 220px 180px; 
-            gap: 20px;
+            grid-template-rows: 1fr 240px 180px; 
+            gap: 15px;
             opacity: var(--system-opacity);
-            transition: opacity 2s ease, filter 2s ease;
-            filter: grayscale(1) blur(2px);
+            transition: opacity 1.5s ease, filter 1.5s ease;
+            filter: grayscale(1) blur(4px);
         }
 
         #os-panels.booted {
@@ -52,9 +52,10 @@
 
         /* LOCKED BRUTALIST WINDOWS */
         .window {
-            background: var(--panel); border: 1px solid var(--accent-dim);
+            background: var(--panel); border: 2px solid var(--accent-dim);
             display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.9), inset 0 0 10px rgba(0,0,0,0.8); 
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.8); 
+            position: relative;
         }
 
         /* Specific Window Placements */
@@ -64,79 +65,113 @@
         #win-cli { grid-column: 1 / span 2; grid-row: 3; } /* Terminal across the bottom */
 
         .window-header {
-            padding: 10px; background: #0d0c0b; color: var(--accent);
+            padding: 8px 12px; background: #080706; color: var(--accent);
             font-family: 'Space Mono'; font-size: 10px; font-weight: bold; text-transform: uppercase;
-            display: flex; justify-content: space-between; user-select: none;
+            display: flex; justify-content: space-between; align-items: center; user-select: none;
             border-bottom: 2px solid var(--accent-dim);
+            letter-spacing: 1px;
         }
 
         #boot-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 20000; text-align: center; width: 450px;
+            z-index: 20000; text-align: center; width: 500px;
             background: #0a0908; border: 2px solid var(--accent-dim);
-            padding: 40px; box-shadow: 15px 15px 0px rgba(0,0,0,1);
+            padding: 50px; box-shadow: 20px 20px 0px rgba(0,0,0,0.9);
             transition: opacity 0.5s, transform 0.5s;
         }
-        #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.9); pointer-events: none; }
+        #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.95); pointer-events: none; }
 
         /* UPGRADED GRID REGISTRY ITEMS */
         #nav-list { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* Spread out as a card grid! */
-            gap: 20px; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 15px; 
             padding: 20px; overflow-y: auto; flex: 1; 
+            align-content: start;
         }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050404; border-left: 1px solid var(--accent-dim); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
         .fs-item { 
-            padding: 20px; border: 1px dashed var(--accent-dim); 
-            background: rgba(0,0,0,0.4); font-family: 'Space Mono'; 
-            transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 1px;
-            color: var(--accent-dim); display: flex; flex-direction: column; justify-content: space-between; gap: 15px;
+            padding: 18px; border: 1px solid var(--accent-dim); 
+            background: rgba(0,0,0,0.6); font-family: 'Space Mono'; 
+            transition: all 0.1s ease; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--accent-dim); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
             min-height: 140px; cursor: pointer;
+            position: relative;
+        }
+        .fs-item::before { /* Decorative corner marker */
+            content: ''; position: absolute; top: 0; left: 0; width: 8px; height: 8px;
+            border-top: 2px solid var(--accent-dim); border-left: 2px solid var(--accent-dim);
         }
         .fs-item:hover {
-            border-color: var(--accent); background: rgba(197, 160, 89, 0.05); color: var(--text);
-            box-shadow: inset 0 0 15px rgba(197, 160, 89, 0.1);
+            border-color: var(--accent); background: rgba(197, 160, 89, 0.03); color: var(--text);
+            box-shadow: inset 0 0 15px rgba(197, 160, 89, 0.05);
         }
-        .fs-item-title { font-size: 13px; font-weight: bold; color: var(--accent); border-bottom: 1px solid var(--accent-dim); padding-bottom: 10px;}
-        .fs-item-desc { font-size: 9px; line-height: 1.4; color: var(--text); opacity: 0.7; flex: 1; }
+        .fs-item-title { font-size: 13px; font-weight: bold; color: var(--accent); border-bottom: 1px dashed var(--accent-dim); padding-bottom: 8px;}
+        .fs-item-desc { font-size: 10px; line-height: 1.5; color: var(--text); opacity: 0.6; flex: 1; }
         
         .fs-action-btn {
-            background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 10px;
+            background: var(--bg); color: var(--accent); border: 1px solid var(--accent-dim); padding: 8px;
             font-family: 'Space Mono'; font-size: 10px; font-weight: bold; cursor: pointer;
             text-align: center; text-decoration: none; transition: 0.2s;
         }
-        .fs-action-btn:hover { background: var(--accent); color: #000; }
+        .fs-action-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
         
-        .fs-item.active { border: 2px solid var(--accent); background: rgba(197, 160, 89, 0.15); box-shadow: 0 0 15px rgba(0,0,0,0.8); transform: translateY(-2px); }
+        .fs-item.active { 
+            border: 2px solid var(--accent); background: rgba(197, 160, 89, 0.08); 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.8); transform: translate(-2px, -2px); 
+        }
+        .fs-item.active .fs-item-desc { opacity: 0.9; }
+        .fs-item.active .fs-action-btn { border-color: var(--accent); }
 
         #svg-stage { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 2px solid var(--accent-dim); padding: 10px; overflow: hidden; position: relative; }
-        svg { width: 100%; height: 100%; filter: drop-shadow(0 0 5px var(--accent-dim)); }
+        svg { width: 100%; height: 100%; filter: drop-shadow(0 0 8px rgba(197, 160, 89, 0.3)); }
         
         /* Image support for projects */
-        .project-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; mix-blend-mode: luminosity; display: none; }
+        .project-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; mix-blend-mode: luminosity; display: none; filter: contrast(1.2) sepia(0.5); }
 
-        #cli-input { width: 100%; background: #050404; border: none; border-top: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
-        #cli-input:focus { background: #0a0908; }
-        #log-stream { flex: 1; font-size: 9px; color: var(--text); padding: 15px; overflow-y: auto; font-family: 'Space Mono'; display: flex; flex-direction: column-reverse; }
+        /* Terminal Input Area */
+        .terminal-container { display: flex; flex-direction: column; flex: 1; background: #050404; }
+        #log-stream { flex: 1; font-size: 10px; color: var(--text); padding: 15px; overflow-y: auto; font-family: 'Space Mono'; display: flex; flex-direction: column-reverse; line-height: 1.4; }
+        .input-wrapper { display: flex; align-items: center; border-top: 2px solid var(--accent-dim); background: #0a0908; padding: 0 15px;}
+        .input-prompt { color: var(--accent); font-family: 'Space Mono'; font-size: 11px; font-weight: bold; margin-right: 10px; }
+        #cli-input { flex: 1; background: transparent; border: none; color: var(--text); padding: 15px 0; font-family: 'Space Mono'; font-size: 11px; outline: none; }
+        #cli-input::placeholder { color: var(--accent-dim); opacity: 0.5; }
+        
+        /* Blinking Caret for Typewriter and Terminal */
+        .cursor-blink::after { content: '█'; animation: blink 1s step-end infinite; color: var(--accent); margin-left: 4px; vertical-align: bottom; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* HEAVIER CRT GRIME */
+        /* ENHANCED CRT GRIME & VIGNETTE */
+        .crt::before {
+            content: " "; display: block; position: absolute; inset: 0;
+            background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+            z-index: 4999; pointer-events: none;
+        }
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
             background-size: 100% 4px; z-index: 5000; pointer-events: none; opacity: 0.6;
             filter: sepia(var(--burn));
+            animation: crt-flicker 0.15s infinite;
         }
+        @keyframes crt-flicker { 0% { opacity: 0.55; } 50% { opacity: 0.6; } 100% { opacity: 0.55; } }
 
-        .rumble { animation: rumble 0.1s infinite; filter: contrast(1.5) sepia(0.8); }
-        @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-3px, 3px); } 100% { transform: translate(0,0); } }
+        .rumble { animation: rumble 0.1s infinite; filter: contrast(1.6) sepia(0.8) hue-rotate(-10deg); }
+        @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-4px, 4px); } 100% { transform: translate(0,0); } }
 
         .btn-breach { background: transparent; border: 2px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.2s; font-weight: bold; width: 100%; letter-spacing: 2px; }
-        .btn-breach:hover { background: var(--accent); color: #000; }
+        .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
 
         /* HEADER & FOOTER */
         #bureau-header {
             position: fixed; top: 0; left: 0; width: 100%; height: 40px;
-            background: var(--bg); border-bottom: 1px solid var(--accent-dim);
+            background: var(--bg); border-bottom: 2px solid var(--accent-dim);
             display: flex; justify-content: space-between; align-items: center;
             padding: 0 20px; font-family: 'Space Mono'; font-size: 10px; color: var(--accent); z-index: 9000;
         }
@@ -145,11 +180,11 @@
             position: fixed; bottom: 0; left: 0; width: 100%; height: 25px;
             background: var(--accent-dim); color: #000;
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; font-family: 'Space Mono'; font-size: 9px; font-weight: bold; z-index: 9000; border-top: 1px solid var(--accent);
+            padding: 0 20px; font-family: 'Space Mono'; font-size: 9px; font-weight: bold; z-index: 9000; border-top: 2px solid var(--accent);
         }
 
         @media (max-width: 900px) {
-            #os-panels.booted { grid-template-columns: 1fr; grid-template-rows: auto 300px 250px 200px; overflow-y: auto; }
+            #os-panels.booted { grid-template-columns: 1fr; grid-template-rows: auto 350px 250px 200px; overflow-y: auto; padding-top: 50px; }
             #win-nav { grid-column: 1; grid-row: 1; min-height: 500px; }
             #win-man { grid-column: 1; grid-row: 2; }
             #win-cctv { grid-column: 1; grid-row: 3; }
@@ -163,69 +198,96 @@
         
         <div id="bureau-header">
             <div>NODE_7_SYSTEM_INTEGRITY // PORTFOLIO_INDEX</div>
-            <div>BAT_SYNC: <span id="integrity-val">--%</span></div>
-            <div id="clock" style="font-weight: bold;">00:00:00</div>
+            <div style="display:flex; gap: 20px;">
+                <div>BAT_SYNC: <span id="integrity-val" style="color:#fff;">--%</span></div>
+                <div id="clock" style="font-weight: bold; color:#fff;">00:00:00</div>
+            </div>
         </div>
 
         <div id="boot-modal">
-            <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:10px; font-size: 1.2rem;">MINISTRY OF ANOMALIES</div>
-            <h1 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 30px; color:var(--text); letter-spacing: -1px; border-bottom: 1px solid var(--accent-dim); padding-bottom: 10px;">SIC MUNDUS CREATUS EST.</h1>
-            <div style="font-family:'Space Mono'; font-size: 9px; opacity: 0.5; margin-bottom: 30px; color: var(--alert);">TERMINAL OFFLINE. AWAITING MANUAL OVERRIDE.</div>
+            <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:15px; font-size: 1.2rem; border-bottom: 1px dashed var(--accent-dim); padding-bottom: 15px;">MINISTRY OF ANOMALIES</div>
+            <h1 style="font-size: 1.8rem; font-weight: 900; margin-bottom: 30px; color:var(--text); letter-spacing: -1px; text-shadow: 2px 2px 0px rgba(0,0,0,1);">SIC MUNDUS CREATUS EST.</h1>
+            <div style="font-family:'Space Mono'; font-size: 10px; opacity: 0.7; margin-bottom: 40px; color: var(--alert); background: rgba(217, 56, 30, 0.1); padding: 10px; border: 1px solid var(--rust);">TERMINAL OFFLINE. AWAITING MANUAL OVERRIDE.</div>
             <button class="btn-breach" onclick="unlockSystem()">[ POWER ON NODE_7 ]</button>
         </div>
 
         <div id="os-panels">
             
+            <!-- REGISTRY (LEFT, MASSIVE SPREAD) -->
             <div class="window" id="win-nav">
-                <div class="window-header">MASTER_REGISTRY_VOL_I</div>
+                <div class="window-header">
+                    <span>MASTER_REGISTRY_VOL_I</span>
+                    <span style="color:var(--accent-dim);">DIR: /ROOT/ARCHIVE</span>
+                </div>
                 <div id="nav-list"></div>
-                <div style="padding:15px; border-top:1px solid var(--accent-dim); background:#0a0908;">
-                    <div style="font-size:8px; color:var(--accent-dim);">CORE_ENTROPY / HEAT</div>
-                    <div style="height:2px; background:#111; margin-top:5px;"><div id="entropy-fill" style="height:100%; background:var(--rust); width:0%; transition: width 0.5s;"></div></div>
+                <div style="padding:15px; border-top:2px solid var(--accent-dim); background:#0a0908; display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size:9px; color:var(--accent-dim); font-family: 'Space Mono'; font-weight: bold;">CORE_ENTROPY</div>
+                    <div style="height:4px; background:#111; flex: 1; position: relative; border: 1px solid #000;">
+                        <div id="entropy-fill" style="height:100%; background:var(--rust); width:0%; transition: width 0.5s;"></div>
+                    </div>
                 </div>
             </div>
 
+            <!-- MANIFEST ANALYSIS (RIGHT TOP) -->
             <div class="window" id="win-man">
-                <div class="window-header">MANIFEST_PREVIEW</div>
+                <div class="window-header">
+                    <span>MANIFEST_PREVIEW</span>
+                    <span style="color:var(--rust);">[RESTRICTED]</span>
+                </div>
                 <div id="svg-stage">
                     <img id="project-real-img" class="project-image" src="" alt="Project Image">
                     <div id="project-svg-container" style="width: 100%; height: 100%;"></div>
                 </div>
-                <div style="padding:15px; flex: 1; display: flex; flex-direction: column; background: #030303;">
-                    <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px; font-size: 12px;">--</h2>
-                    <div id="obj-logs" style="font-size: 9px; font-family: 'Space Mono'; color: var(--text); opacity: 0.8; line-height: 1.5;">AWAITING SELECTION...</div>
+                <div style="padding:15px; flex: 1; display: flex; flex-direction: column; background: #050404;">
+                    <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px; font-size: 12px; font-weight: bold;">--</h2>
+                    <div id="obj-logs" class="cursor-blink" style="font-size: 10px; font-family: 'Space Mono'; color: var(--text); opacity: 0.8; line-height: 1.6; height: 100%; overflow-y: auto;">AWAITING SELECTION...</div>
                 </div>
             </div>
 
+            <!-- CCTV (RIGHT BOTTOM) -->
             <div class="window" id="win-cctv">
-                <div class="window-header">CONTAINMENT_CELL_CAM</div>
+                <div class="window-header">
+                    <span>CONTAINMENT_CELL_CAM</span>
+                    <span style="color:var(--blue);">REC ●</span>
+                </div>
                 <canvas id="cctvCanvas" style="width: 100%; flex: 1; background: #000; border-bottom: 2px solid var(--accent-dim);"></canvas>
-                <div style="padding: 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent-dim); background: #000; display: flex; justify-content: space-between;">
-                    <span>STATUS: ACTIVE SCANNING</span>
+                <div style="padding: 8px 12px; font-size: 9px; font-family: 'Space Mono'; color: var(--accent-dim); background: #050404; display: flex; justify-content: space-between;">
+                    <span id="cctv-status">STATUS: ACTIVE SCANNING</span>
                     <span id="cctv-time">--:--</span>
                 </div>
             </div>
 
-            <div class="window" id="win-cli">
-                <div class="window-header">BUREAU_TERMINAL_V9 // ROOT</div>
-                <div id="log-stream"></div>
-                <input type="text" id="cli-input" placeholder="CMD: HELP, SCAN, LOGS..." autocomplete="off">
+            <!-- TERMINAL (BOTTOM FULL WIDTH) -->
+            <div class="window" id="win-cli" onclick="document.getElementById('cli-input').focus()">
+                <div class="window-header">
+                    <span>BUREAU_TERMINAL_V9</span>
+                    <span style="color:var(--accent-dim);">SYS_OP</span>
+                </div>
+                <div class="terminal-container">
+                    <div id="log-stream"></div>
+                    <div class="input-wrapper">
+                        <span class="input-prompt">CMD:></span>
+                        <input type="text" id="cli-input" placeholder="TYPE 'HELP' FOR COMMANDS..." autocomplete="off" spellcheck="false">
+                    </div>
+                </div>
             </div>
 
-            <div id="compliance-modal" style="position: absolute; bottom: 80px; right: 20px; width: 280px; background: var(--rust); border: 2px solid #000; z-index: 15000; padding: 15px; display: none; box-shadow: 8px 8px 0 rgba(0,0,0,0.9);">
-                <div style="font-family: 'Space Mono'; font-size: 10px; color: #000; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">ATTENTION WORKER:</div>
-                <div style="font-family: 'Space Mono'; font-size: 9px; color: #fff; margin-bottom: 15px; line-height: 1.4;">RANDOM COMPLIANCE CHECK. VERIFY PRESENCE IMMEDIATELY OR FACE PENALTY.</div>
-                <button class="btn-breach" style="background: #000; color: var(--accent); border-color: var(--accent-dim); padding: 8px; font-size: 9px; box-shadow: none;" onclick="verifyCompliance()">[ ACKNOWLEDGE ]</button>
+            <!-- COMPLIANCE CHECK POP-UP -->
+            <div id="compliance-modal" style="position: absolute; bottom: 80px; right: 20px; width: 300px; background: var(--rust); border: 2px solid #000; z-index: 15000; padding: 20px; display: none; box-shadow: 10px 10px 0 rgba(0,0,0,0.9);">
+                <div style="font-family: 'Space Mono'; font-size: 12px; color: #000; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 8px;">ATTENTION WORKER:</div>
+                <div style="font-family: 'Space Mono'; font-size: 10px; color: #fff; margin-bottom: 20px; line-height: 1.5; font-weight: bold;">RANDOM COMPLIANCE CHECK TRIGGERED.<br><br>VERIFY PRESENCE IMMEDIATELY OR FACE SEVERE PENALTY.</div>
+                <button class="btn-breach" style="background: #000; color: var(--accent); border-color: var(--accent-dim); padding: 12px; font-size: 10px; box-shadow: none;" onclick="verifyCompliance()">[ ACKNOWLEDGE PRESENCE ]</button>
             </div>
 
         </div>
 
     </div>
 
+    <!-- THE FOOTER -->
     <div id="bureau-footer">
         <div>DEPT. OF UNFINISHED EVENTS // AUTHORIZED PERSONNEL ONLY</div>
         <div>TICK TOCK.</div>
-        <div>GLORY TO THE STATE.</div>
+        <div style="color: var(--rust);">GLORY TO THE STATE.</div>
     </div>
 
 <script>
@@ -236,7 +298,7 @@ const archiveData = [
     id: "apparatus", 
     desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
     url: "#",
-    imgText: "> ERR 404: NO VISUAL RECORD FOUND.",
+    imgText: "> QUERYING CENTRAL DB...\n> CONNECTING...\n> [DATA STREAM INTERCEPTED]\n\n> <span style='color:var(--alert)'>ERR 404: NO VISUAL RECORD FOUND.</span>\n> <span style='color:var(--alert)'>THE APPARATUS HAS BEEN MOVED.</span>",
     svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--rust)" stroke-width="2" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle></svg>`,
     imgUrl: "" 
   },
@@ -245,7 +307,7 @@ const archiveData = [
     id: "substrate", 
     desc: "SVC architecture. Hierarchical spatial mapping.", 
     url: "https://deon-wal.github.io/Substrate-Protocol/", 
-    imgText: "> STATUS: LINKED. READY FOR DEPLOYMENT.",
+    imgText: "> RETRIEVING BLUEPRINT DATA...\n> DECRYPTING SVC ARCHITECTURE...\n> MATCH FOUND.\n\n> <span style='color:var(--blue)'>STATUS: LINKED. READY FOR DEPLOYMENT.</span>",
     svg: `<svg viewBox="0 0 100 100"><g transform="translate(50, 75) scale(1, 0.45) rotate(45)"><rect x="-35" y="-35" width="70" height="70" fill="rgba(197, 160, 89, 0.05)" stroke="var(--accent)" stroke-width="1.5"/></g></svg>` 
   },
   { 
@@ -253,7 +315,7 @@ const archiveData = [
     id: "due", 
     desc: "Department of Unfinished Events. Chronological records vault.", 
     url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/", 
-    imgText: "> REMOTE UPLINK ESTABLISHED.",
+    imgText: "> PINGING D.U.E. MAINFRAME...\n> HANDSHAKE ACCEPTED.\n\n> <span style='color:var(--accent)'>REMOTE UPLINK ESTABLISHED.</span>\n> WAITING FOR USER INPUT...",
     svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--blue)" stroke-width="1.5"/></svg>` 
   },
   { 
@@ -261,7 +323,7 @@ const archiveData = [
     id: "observatory", 
     desc: "Monitoring spatial irregularities across the Bureau network.", 
     url: "https://deon-wal.github.io/Anomaly-Observatory/", 
-    imgText: "> WARNING: PHASE SHIFT DETECTED IN SECTOR 4.",
+    imgText: "> ACCESSING LIVE FEED...\n> CALIBRATING SENSORS...\n\n> <span style='color:var(--alert)'>WARNING: PHASE SHIFT DETECTED IN SECTOR 4.</span>\n> RECOMMEND IMMEDIATE EVACUATION.",
     svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>` 
   },
   { 
@@ -269,12 +331,13 @@ const archiveData = [
     id: "test_node", 
     desc: "Diagnostic sandbox for kernel verification.", 
     url: "https://deon-wal.github.io/Test/Test.html", 
-    imgText: "> ALL SYSTEMS NOMINAL.",
+    imgText: "> RUNNING DIAGNOSTICS...\n> CHECKING MEMORY ALLOCATION...\n> VERIFYING INTEGRITY...\n\n> <span style='color:var(--blue)'>ALL SYSTEMS NOMINAL.</span>",
     svg: `<svg viewBox="0 0 100 100"><path d="M20 20 L80 80 M80 20 L20 80" stroke="var(--accent)" stroke-width="2"/></svg>` 
   }
 ];
 
 let systemBooted = false, sessionHeat = 0;
+let typeInterval = null;
 
 /* --- INTERFACE LOGIC --- */
 function unlockSystem() {
@@ -282,24 +345,46 @@ function unlockSystem() {
     document.getElementById('boot-modal').classList.add('hidden');
     document.getElementById('os-panels').classList.add('booted');
     document.body.classList.add('rumble');
-    setTimeout(()=>document.body.classList.remove('rumble'), 300);
-    addLog("SYSTEM_BOOT: OK.");
-    addLog("AWAITING USER INPUT.");
+    setTimeout(()=>document.body.classList.remove('rumble'), 400);
+    
+    // Staggered boot logs
+    setTimeout(() => addLog("SYSTEM_BOOT: OK."), 500);
+    setTimeout(() => addLog("INITIALIZING MAINFRAME CONNECTION..."), 1200);
+    setTimeout(() => addLog("AWAITING USER INPUT."), 2000);
+    
     startAnomalySystem();
     drawCCTV(); 
+    document.getElementById('cli-input').focus();
 }
 
-const decryptText = (el, target) => {
-    const chars = "!<>-_\\/[]{}—=+*^?#________";
-    let iterations = 0;
-    const interval = setInterval(() => {
-        el.innerText = target.split("").map((letter, index) => {
-            if(index < iterations) return target[index];
-            return chars[Math.floor(Math.random() * chars.length)];
-        }).join("");
-        if(iterations >= target.length) clearInterval(interval);
-        iterations += 1/2;
-    }, 20);
+// Robust Typewriter effect for HTML strings
+const typeText = (el, htmlString) => {
+    if(typeInterval) clearInterval(typeInterval);
+    el.innerHTML = '';
+    
+    const parts = [];
+    let isTag = false;
+    let currentTag = "";
+    
+    for (let i = 0; i < htmlString.length; i++) {
+        const char = htmlString[i];
+        if (char === '<') { isTag = true; currentTag = char; }
+        else if (char === '>') { isTag = false; currentTag += char; parts.push(currentTag); currentTag = ""; }
+        else if (isTag) { currentTag += char; }
+        else if (char === '\n') { parts.push('<br>'); }
+        else { parts.push(char); }
+    }
+
+    let i = 0;
+    typeInterval = setInterval(() => {
+        if (i < parts.length) {
+            el.innerHTML += parts[i];
+            el.scrollTop = el.scrollHeight; // Auto-scroll
+            i++;
+        } else {
+            clearInterval(typeInterval);
+        }
+    }, 20); // Typing speed
 };
 
 function populate() {
@@ -311,7 +396,7 @@ function populate() {
         
         const titleBlock = document.createElement('div');
         titleBlock.className = 'fs-item-title';
-        titleBlock.innerText = item.name;
+        titleBlock.innerText = `// ${item.name}`;
 
         const descBlock = document.createElement('div');
         descBlock.className = 'fs-item-desc';
@@ -325,20 +410,23 @@ function populate() {
             btn.target = "_blank"; 
         } else {
             btn.innerText = "[ DATA CORRUPTED ]";
-            btn.onclick = (e) => { e.stopPropagation(); addLog(`ERR: PROTOCOL ${item.id} IS CORRUPT.`); };
+            btn.onclick = (e) => { e.stopPropagation(); addLog(`<span style="color:var(--alert)">ERR: PROTOCOL ${item.id} IS CORRUPT.</span>`); };
         }
 
         d.appendChild(titleBlock);
         d.appendChild(descBlock);
         d.appendChild(btn);
 
-        d.onclick = () => {
+        // Making the whole card trigger the preview
+        const triggerPreview = () => {
             if(!systemBooted) return;
             document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
             d.classList.add('active'); 
             
-            decryptText(document.getElementById('obj-title'), ">> " + item.name.toUpperCase());
-            document.getElementById('obj-logs').innerHTML = item.imgText;
+            document.getElementById('obj-title').innerText = ">> " + item.name.toUpperCase();
+            
+            // Trigger the Typewriter
+            typeText(document.getElementById('obj-logs'), item.imgText);
             
             const realImg = document.getElementById('project-real-img');
             const svgContainer = document.getElementById('project-svg-container');
@@ -355,6 +443,9 @@ function populate() {
             addLog(`MOUNTING: ${item.id}`);
         };
 
+        titleBlock.onclick = triggerPreview;
+        descBlock.onclick = triggerPreview;
+        
         list.appendChild(d);
     });
 }
@@ -367,8 +458,13 @@ cli.onkeydown = (e) => {
         const val = cli.value.toUpperCase().trim();
         if(val === 'HELP') { addLog("CMDS: HELP, SCAN, CLEAR"); } 
         else if(val === 'CLEAR') { document.getElementById('log-stream').innerHTML = ''; } 
-        else if(val === 'SCAN') { addLog("INITIATING SCAN... ALL SECTORS CLEAR."); } 
-        else if(val !== '') { addLog(`ERR: UNKNOWN COMMAND '${val}'.`); }
+        else if(val === 'SCAN') { 
+            addLog("INITIATING SCAN...");
+            setTimeout(() => addLog("SECTOR 1: CLEAR"), 800);
+            setTimeout(() => addLog("SECTOR 2: CLEAR"), 1600);
+            setTimeout(() => addLog("SECTOR 3: <span style='color:var(--alert)'>ANOMALY DETECTED</span>"), 2400);
+        } 
+        else if(val !== '') { addLog(`<span style="color:var(--alert)">ERR: UNKNOWN COMMAND '${val}'.</span>`); }
         cli.value = '';
     }
 };
@@ -378,7 +474,7 @@ function addLog(m) {
     const d = document.createElement('div');
     d.innerHTML = `<span style="color:var(--accent-dim)">[${new Date().toLocaleTimeString()}]</span> > ${m}`;
     s.prepend(d); 
-    if(s.children.length > 15) s.lastChild.remove();
+    if(s.children.length > 20) s.lastChild.remove();
 }
 
 if(navigator.getBattery) {
@@ -403,12 +499,14 @@ function startAnomalySystem() {
         if (systemBooted && Math.random() < 0.1) {
             document.body.classList.add('rumble');
             setTimeout(() => document.body.classList.remove('rumble'), 400);
-            addLog("<span class='alert-text'>WARN: SPATIAL FLUCTUATION DETECTED.</span>");
+            addLog("<span style='color:var(--alert)'>WARN: SPATIAL FLUCTUATION DETECTED.</span>");
+            document.getElementById('cctv-status').innerText = "STATUS: INTERFERENCE";
+            setTimeout(() => document.getElementById('cctv-status').innerText = "STATUS: ACTIVE SCANNING", 3000);
         }
     }, 15000); 
 }
 
-/* --- 3D WIREFRAME CCTV FEED --- */
+/* --- 3D WIREFRAME CCTV FEED + TELEMETRY --- */
 const cctvCanvas = document.getElementById('cctvCanvas');
 const cCtx = cctvCanvas.getContext('2d');
 let timeAngle = 0;
@@ -416,23 +514,28 @@ let timeAngle = 0;
 function drawCCTV() {
     if(!systemBooted) return;
     
-    cctvCanvas.width = cctvCanvas.offsetWidth;
-    cctvCanvas.height = cctvCanvas.offsetHeight;
+    // Ensure canvas internal resolution matches CSS
+    const rect = cctvCanvas.getBoundingClientRect();
+    if(cctvCanvas.width !== rect.width || cctvCanvas.height !== rect.height) {
+        cctvCanvas.width = rect.width;
+        cctvCanvas.height = rect.height;
+    }
+    
     const w = cctvCanvas.width;
     const h = cctvCanvas.height;
     
-    cCtx.fillStyle = '#050505';
+    cCtx.fillStyle = '#050404';
     cCtx.fillRect(0, 0, w, h);
     
     cCtx.save();
     cCtx.translate(w/2, h/2);
-    timeAngle += 0.02;
+    timeAngle += 0.015;
     
-    const size = 35;
+    const size = Math.min(w, h) * 0.25; // Responsive cube size
     const nodes = [[-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1], [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]];
     const edges = [[0,1], [1,3], [3,2], [2,0], [4,5], [5,7], [7,6], [6,4], [0,4], [1,5], [2,6], [3,7]];
     
-    cCtx.strokeStyle = 'rgba(197, 160, 89, 0.6)'; 
+    cCtx.strokeStyle = 'rgba(197, 160, 89, 0.4)'; 
     cCtx.lineWidth = 1;
     
     cCtx.beginPath();
@@ -452,23 +555,28 @@ function drawCCTV() {
     cCtx.stroke();
     cCtx.restore();
 
+    // Draw telemetry data overlay
+    cCtx.fillStyle = 'rgba(197, 160, 89, 0.7)';
+    cCtx.font = '9px Space Mono';
+    cCtx.fillText(`AX: ${(Math.sin(timeAngle)*100).toFixed(2)}`, 10, 20);
+    cCtx.fillText(`AY: ${(Math.cos(timeAngle)*100).toFixed(2)}`, 10, 35);
+    cCtx.fillText(`TRG: ${Math.random().toString(16).substr(2, 6).toUpperCase()}`, w - 70, 20);
+
+    // Static overlay
     const imgData = cCtx.getImageData(0, 0, w, h);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
         if(Math.random() > 0.5) {
-            const noise = Math.random() * 30; 
+            const noise = Math.random() * 25; 
             data[i] += noise; data[i+1] += noise; data[i+2] += noise;        
         }
     }
     cCtx.putImageData(imgData, 0, 0);
 
+    // Flash
     if (Math.random() > 0.99) {
-        cCtx.fillStyle = 'rgba(139, 58, 43, 0.6)';
+        cCtx.fillStyle = 'rgba(139, 58, 43, 0.5)';
         cCtx.fillRect(0, 0, w, h);
-        cCtx.fillStyle = '#000';
-        cCtx.font = 'bold 16px Space Mono';
-        cCtx.textAlign = 'center';
-        cCtx.fillText("SUBJECT CONTAINED", w/2, h/2);
     }
 
     document.getElementById('cctv-time').innerText = new Date().toISOString().substr(11, 8) + "Z";
@@ -485,11 +593,11 @@ function triggerComplianceCheck() {
     modal.style.display = 'block';
     document.body.classList.add('rumble');
     setTimeout(() => document.body.classList.remove('rumble'), 400);
-    addLog("<span class='alert-text'>WARN: COMPLIANCE CHECK INITIATED.</span>");
+    addLog("<span style='color:var(--alert)'>WARN: COMPLIANCE CHECK INITIATED.</span>");
     
     complianceTimer = setTimeout(() => {
         modal.style.display = 'none';
-        addLog("<span class='alert-text'>ERR: WORKER UNRESPONSIVE. DEMERIT LOGGED.</span>");
+        addLog("<span style='color:var(--alert)'>ERR: WORKER UNRESPONSIVE. DEMERIT LOGGED.</span>");
         document.documentElement.style.setProperty('--burn', '0.6'); 
         setTimeout(() => document.documentElement.style.setProperty('--burn', sessionHeat / 200), 2000);
     }, 10000); 
@@ -502,8 +610,8 @@ function verifyCompliance() {
 }
 
 setInterval(() => {
-    if(systemBooted && Math.random() < 0.1) triggerComplianceCheck();
-}, 20000);
+    if(systemBooted && Math.random() < 0.08) triggerComplianceCheck();
+}, 25000);
 </script>
 </body>
 </html>
