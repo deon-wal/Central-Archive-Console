@@ -94,7 +94,6 @@
         #svg-stage { height: 250px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 2px solid var(--accent-dim); padding: 10px; overflow: hidden; }
         svg { width: 100%; height: 100%; filter: drop-shadow(0 0 5px var(--accent-dim)); }
 
-        #teleCanvas { width: 100%; height: 180px; background: #000; border-bottom: 1px solid var(--accent-dim); }
         #radarCanvas { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--accent-dim); }
 
         #cli-input { width: 100%; background: #050404; border: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
@@ -119,25 +118,6 @@
         .btn-breach { background: transparent; border: 2px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.2s; font-weight: bold; width: 100%; letter-spacing: 2px; }
         .btn-breach:hover { background: var(--accent); color: #000; }
 
-        /* THE COSMIC ANOMALY / BLACK HOLE */
-        #black-hole {
-            position: fixed; bottom: 60px; right: 40px; width: 250px; height: 250px;
-            z-index: 0; pointer-events: none; border-radius: 50%;
-            background: #000;
-            border: 1px dashed var(--accent-dim);
-            box-shadow: 0 0 40px var(--rust), inset 0 0 30px #000;
-            animation: pulse-hole 8s infinite alternate, spin-hole 40s linear infinite;
-            opacity: var(--system-opacity);
-            transition: opacity 2s ease;
-        }
-        #os-panels.booted ~ #black-hole { opacity: 0.8; }
-        
-        @keyframes spin-hole { 100% { transform: rotate(360deg); } }
-        @keyframes pulse-hole { 
-            0% { box-shadow: 0 0 20px var(--rust), inset 0 0 40px #000, 0 0 60px var(--accent-dim); } 
-            100% { box-shadow: 0 0 60px var(--accent), inset 0 0 10px #000, 0 0 120px var(--rust); } 
-        }
-
         /* BUREAUCRATIC FOOTER */
         #bureau-footer {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 25px;
@@ -150,11 +130,10 @@
         @media (max-width: 800px) {
             .window { width: 90vw !important; left: 5vw !important; }
             #win-nav { top: 80px; }
-            #win-tele { top: 380px; }
+            #win-cctv { top: 380px; left: 5vw !important; }
             #win-img { top: 620px; }
             #win-man { display: none; }
             #win-cli { top: 920px; bottom: 40px !important; }
-            #black-hole { width: 150px; height: 150px; bottom: 50px; right: -20px; }
         }
     </style>
 </head>
@@ -187,12 +166,12 @@
                 </div>
             </div>
 
-            <div class="window drag" id="win-tele" style="top:80px; left:440px; width:calc(100% - 880px);">
-                <div class="window-header">VOID_OSCILLATION // SYNC <span id="tele-meta">--</span> <span>[DRAG]</span></div>
-                <canvas id="teleCanvas"></canvas>
+            <div class="window drag" id="win-cctv" style="top:80px; left:440px; width:calc(100% - 880px); min-width: 320px;">
+                <div class="window-header">SECURITY_FEED_04 <span>[DRAG]</span></div>
+                <canvas id="cctvCanvas" style="width: 100%; height: 180px; background: #000; border-bottom: 2px solid var(--accent-dim);"></canvas>
                 <div style="padding: 5px 10px; font-size: 8px; font-family: 'Space Mono'; color: var(--accent-dim); background: #000; display: flex; justify-content: space-between;">
-                    <span>MOUSE_VELOCITY_OVERRIDE_ACTIVE</span>
-                    <span id="drift-val">0.00ms</span>
+                    <span>STATUS: SIGNAL DEGRADED</span>
+                    <span id="cctv-time">--:--</span>
                 </div>
             </div>
 
@@ -218,13 +197,13 @@
                 <div id="log-stream"></div>
                 <input type="text" id="cli-input" placeholder="CMD: HELP, SCAN, MEMO [TEXT], OVERRIDE..." autocomplete="off">
             </div>
-        </div>
-        
-        <div id="black-hole">
-            <svg viewBox="0 0 100 100" style="width:100%; height:100%; opacity:0.3; filter:none;">
-                <circle cx="50" cy="50" r="48" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 4"></circle>
-                <circle cx="50" cy="50" r="30" fill="none" stroke="var(--rust)" stroke-width="1"></circle>
-            </svg>
+
+            <div id="compliance-modal" style="position: absolute; bottom: 80px; right: 20px; width: 280px; background: var(--rust); border: 2px solid #000; z-index: 15000; padding: 15px; display: none; box-shadow: 8px 8px 0 rgba(0,0,0,0.9);">
+                <div style="font-family: 'Space Mono'; font-size: 10px; color: #000; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">ATTENTION WORKER:</div>
+                <div style="font-family: 'Space Mono'; font-size: 9px; color: #fff; margin-bottom: 15px; line-height: 1.4;">RANDOM COMPLIANCE CHECK. VERIFY PRESENCE IMMEDIATELY OR FACE PENALTY.</div>
+                <button class="btn-breach" style="background: #000; color: var(--accent); border-color: var(--accent-dim); padding: 8px; font-size: 9px; box-shadow: none;" onclick="verifyCompliance()">[ ACKNOWLEDGE ]</button>
+            </div>
+
         </div>
     </div>
 
@@ -335,8 +314,9 @@ function unlockSystem() {
     document.body.classList.add('rumble');
     setTimeout(()=>document.body.classList.remove('rumble'), 300);
     addLog("SYSTEM_BOOT: OK.");
-    drawTelemetry(0); drawRadar(0);
+    drawRadar(0);
     startAnomalySystem();
+    drawCCTV(); // Start the cameras!
 }
 
 const decryptText = (el, target) => {
@@ -368,7 +348,6 @@ function populate() {
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
             decryptText(document.getElementById('imaging-output'), item.imgText);
-            document.getElementById('tele-meta').innerText = `${item.freq}HZ`;
             const btn = document.getElementById('action-btn');
             if(item.url) {
                 btn.innerText = "LAUNCH_REMOTE_PROTOCOL";
@@ -448,24 +427,6 @@ function addLog(m) {
 }
 
 /* --- CANVAS & HARDWARE --- */
-const tCanvas = document.getElementById('teleCanvas');
-const tCtx = tCanvas.getContext('2d');
-tCanvas.onmousedown = () => { if(systemBooted) ripple = 80; };
-
-function drawTelemetry(t) {
-    if(!systemBooted) return;
-    tCanvas.width = tCanvas.offsetWidth; tCanvas.height = tCanvas.offsetHeight;
-    tCtx.clearRect(0,0,tCanvas.width, tCanvas.height);
-    tCtx.strokeStyle = '#c5a059'; tCtx.lineWidth = 1; tCtx.beginPath();
-    const amp = 30 + (mouseVelocity * 0.8) + ripple;
-    if(ripple > 0) ripple -= 2;
-    for(let i=0; i<tCanvas.width; i+=2) {
-        const y = tCanvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * amp;
-        tCtx.lineTo(i,y);
-    }
-    tCtx.stroke(); requestAnimationFrame(drawTelemetry);
-}
-
 const rCanvas = document.getElementById('radarCanvas');
 const rCtx = rCanvas.getContext('2d');
 function drawRadar(t) {
@@ -488,7 +449,6 @@ document.addEventListener('mousemove', e => {
     if(!systemBooted) return;
     mouseVelocity = Math.min(100, Math.sqrt(Math.abs(e.clientX - lastMousePos.x)**2 + Math.abs(e.clientY - lastMousePos.y)**2));
     lastMousePos = {x: e.clientX, y: e.clientY};
-    document.getElementById('drift-val').innerText = (mouseVelocity/10).toFixed(2) + "ms";
 });
 
 setInterval(() => {
@@ -523,6 +483,94 @@ function startAnomalySystem() {
         }
     }, 5000); 
 }
+
+/* --- NEW FEATURES: CCTV & COMPLIANCE --- */
+
+// 1. CCTV Noise Generator
+const cctvCanvas = document.getElementById('cctvCanvas');
+const cCtx = cctvCanvas.getContext('2d');
+
+function drawCCTV() {
+    if(!systemBooted) return;
+    
+    // Set actual canvas resolution to match its CSS size
+    cctvCanvas.width = cctvCanvas.offsetWidth;
+    cctvCanvas.height = cctvCanvas.offsetHeight;
+    const w = cctvCanvas.width;
+    const h = cctvCanvas.height;
+    
+    const imgData = cCtx.createImageData(w, h);
+    const data = imgData.data;
+    
+    // Generate gritty analog static
+    for (let i = 0; i < data.length; i += 4) {
+        const noise = Math.random() * 40; 
+        data[i] = noise + 15;     // Red (slight warm rust tint)
+        data[i+1] = noise + 10;   // Green
+        data[i+2] = noise;        // Blue
+        data[i+3] = 255;          // Alpha
+    }
+    cCtx.putImageData(imgData, 0, 0);
+
+    // Occasional VCR tracking line
+    if (Math.random() > 0.9) {
+        cCtx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        cCtx.fillRect(0, Math.random() * h, w, 8);
+    }
+    
+    // Creepy subliminal flashes
+    if (Math.random() > 0.98) {
+        cCtx.fillStyle = 'rgba(139, 58, 43, 0.4)'; // Rust red flash
+        cCtx.fillRect(0, 0, w, h);
+        cCtx.fillStyle = 'var(--accent)';
+        cCtx.font = 'bold 14px Space Mono';
+        cCtx.textAlign = 'center';
+        cCtx.fillText("OBEY.", w/2, h/2);
+    }
+
+    // Update timecode
+    document.getElementById('cctv-time').innerText = new Date().toISOString().substr(11, 8) + "Z";
+    
+    requestAnimationFrame(drawCCTV);
+}
+
+// 2. Compliance Check Logic
+let complianceTimer;
+function triggerComplianceCheck() {
+    if (!systemBooted) return;
+    const modal = document.getElementById('compliance-modal');
+    
+    // Don't trigger if already open
+    if(modal.style.display === 'block') return; 
+    
+    modal.style.display = 'block';
+    document.body.classList.add('rumble');
+    setTimeout(() => document.body.classList.remove('rumble'), 400);
+    addLog("<span class='alert-text'>WARN: COMPLIANCE CHECK INITIATED.</span>");
+    
+    // Auto-fail after 10 seconds
+    complianceTimer = setTimeout(() => {
+        modal.style.display = 'none';
+        addLog("<span class='alert-text'>ERR: WORKER UNRESPONSIVE. DEMERIT LOGGED.</span>");
+        document.documentElement.style.setProperty('--burn', '0.6'); // Screen gets slightly more oppressive
+        setTimeout(() => document.documentElement.style.setProperty('--burn', sessionHeat / 200), 2000);
+    }, 10000); 
+}
+
+function verifyCompliance() {
+    clearTimeout(complianceTimer);
+    document.getElementById('compliance-modal').style.display = 'none';
+    addLog("COMPLIANCE VERIFIED. GLORY TO THE STATE.");
+}
+
+// 3. Hook everything up to run randomly in the background
+setInterval(() => {
+    // 10% chance to trigger a check every 20 seconds
+    if(systemBooted && Math.random() < 0.1) { 
+        triggerComplianceCheck();
+    }
+}, 20000);
+
 </script>
 </body>
 </html>
