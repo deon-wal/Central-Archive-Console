@@ -121,12 +121,15 @@
         .fs-item-title { font-size: 18px; font-weight: bold; color: var(--accent); border-bottom: 1px dashed var(--accent-dim); padding-bottom: 12px; letter-spacing: 2px;}
         .fs-item-desc { font-size: 12px; line-height: 1.6; color: var(--text); opacity: 0.7; flex: 1; }
         
+        @keyframes soft-pulse { 0% { box-shadow: 0 0 0px transparent; } 50% { box-shadow: 0 0 12px rgba(212, 175, 55, 0.2); } 100% { box-shadow: 0 0 0px transparent; } }
+        
         .fs-action-btn {
             background: var(--bg); color: var(--accent); border: 1px solid var(--accent-dim); padding: 10px;
             font-family: 'Space Mono'; font-size: 12px; font-weight: bold; cursor: pointer;
             text-align: center; text-decoration: none; transition: 0.2s;
+            animation: soft-pulse 3s infinite;
         }
-        .fs-action-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        .fs-action-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); animation: none; }
         
         .fs-item.active { 
             border: 2px solid var(--accent); background: rgba(212, 175, 55, 0.08); 
@@ -153,7 +156,7 @@
         .cursor-blink::after { content: '█'; animation: blink 1s step-end infinite; color: var(--accent); margin-left: 4px; vertical-align: bottom; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* ENHANCED CRT GRIME & VIGNETTE */
+        /* ENHANCED CRT GRIME, VIGNETTE & SCANLINE */
         .crt::before {
             content: " "; display: block; position: absolute; inset: 0;
             background: radial-gradient(circle at center, transparent 35%, rgba(0,0,0,0.85) 100%);
@@ -167,6 +170,15 @@
             animation: crt-flicker 0.15s infinite;
         }
         @keyframes crt-flicker { 0% { opacity: 0.55; } 50% { opacity: 0.6; } 100% { opacity: 0.55; } }
+
+        /* Cinematic Slow Scanline */
+        .global-scanline {
+            width: 100%; height: 120px;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(212, 175, 55, 0.05) 50%, rgba(0,0,0,0) 100%);
+            position: absolute; top: -120px; left: 0; z-index: 5001; pointer-events: none;
+            animation: scanline-pan 10s linear infinite;
+        }
+        @keyframes scanline-pan { 0% { top: -120px; } 100% { top: 110vh; } }
 
         .rumble { animation: rumble 0.1s infinite; filter: contrast(1.6) sepia(0.8) hue-rotate(-10deg); }
         @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-4px, 4px); } 100% { transform: translate(0,0); } }
@@ -202,6 +214,8 @@
     </style>
 </head>
 <body class="crt">
+    
+    <div class="global-scanline"></div>
 
     <div id="os-workspace">
         
@@ -223,7 +237,7 @@
             <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:15px; font-size: 1.4rem; border-bottom: 1px dashed var(--accent-dim); padding-bottom: 15px;">MINISTRY OF ANOMALIES</div>
             <h1 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 30px; color:var(--text); letter-spacing: -1px; text-shadow: 2px 2px 0px rgba(0,0,0,1);">SIC MUNDUS CREATUS EST.</h1>
             <div id="boot-status" style="font-family:'Space Mono'; font-size: 12px; opacity: 0.9; margin-bottom: 40px; color: var(--alert); background: rgba(255, 68, 51, 0.08); padding: 15px; border: 1px solid var(--rust); height: 90px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
-                <div class="cursor-blink" style="text-align: center;">TERMINAL OFFLINE. AWAITING MANUAL OVERRIDE.</div>
+                <div class="cursor-blink" id="offline-txt" style="text-align: center;">TERMINAL OFFLINE. AWAITING MANUAL OVERRIDE.</div>
             </div>
             <button id="boot-btn" class="btn-breach" onclick="runBootSequence()">[ POWER ON NODE_7 ]</button>
         </div>
@@ -314,7 +328,7 @@
 
 <script>
 /* --- 3D ENGINE SETUP (FOR MANIFEST PREVIEW) --- */
-let previewScene, previewCamera, previewRenderer, previewMesh, previewWireframe;
+let previewScene, previewCamera, previewRenderer, previewMesh, previewWireframe, previewParticles;
 const previewUniforms = {
     time: { value: 0 },
     speed: { value: 1.0 },
@@ -413,6 +427,24 @@ function init3DViewer() {
     );
     previewScene.add(previewWireframe);
 
+    // Add Volumetric Particle Swarm
+    const particleGeo = new THREE.BufferGeometry();
+    const particleCount = 800;
+    const posArray = new Float32Array(particleCount * 3);
+    for(let i=0; i<particleCount*3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 4; // Spread particles around the object
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const particleMat = new THREE.PointsMaterial({
+        size: 0.02,
+        color: 0xd4af37,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending
+    });
+    previewParticles = new THREE.Points(particleGeo, particleMat);
+    previewScene.add(previewParticles);
+
     function animate3D() {
         requestAnimationFrame(animate3D);
         previewUniforms.time.value += 0.01;
@@ -421,6 +453,11 @@ function init3DViewer() {
         previewMesh.rotation.x += 0.0005;
         previewWireframe.rotation.z -= 0.001;
         previewWireframe.rotation.y -= 0.0005;
+        
+        // Swarm rotation
+        previewParticles.rotation.y += 0.0005;
+        previewParticles.rotation.x -= 0.0002;
+
         previewRenderer.render(previewScene, previewCamera);
     }
     animate3D();
@@ -504,6 +541,15 @@ let typeInterval = null;
 /* --- INTERFACE LOGIC & BOOT MEMORY --- */
 window.onload = () => {
     init3DViewer();
+    // Subtle boot glitch effect on load
+    setInterval(() => {
+        const offTxt = document.getElementById('offline-txt');
+        if(offTxt) {
+            if(Math.random() > 0.95) offTxt.style.opacity = 0.3;
+            else offTxt.style.opacity = 1;
+        }
+    }, 50);
+
     // Check if the user has booted the terminal before
     if (localStorage.getItem('bureau_booted') === 'true') {
         unlockSystem(true); // Fast bypass
@@ -702,6 +748,11 @@ function populate() {
                     previewUniforms.intensity.value = item.model.intensity;
                     previewUniforms.glitchColor.value.setHex(item.model.glitchColor);
                     previewWireframe.material.color.setHex(item.model.cageColor);
+                    
+                    // Match particle swarm color to project
+                    if(previewParticles) {
+                        previewParticles.material.color.setHex(item.model.glitchColor);
+                    }
                 }
             }
             addLog(`MOUNTING: ${item.id}`);
