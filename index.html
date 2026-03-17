@@ -2,338 +2,293 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>THE BUREAU // SIC MUNDUS ARCHIVE — Winden 1953</title>
+<title>THE BUREAU // SIC MUNDUS ARCHIVE — STATION_7</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
-:root{
-  --accent:#bfa16a;
-  --bg:#0d0c0a;
-  --panel:rgba(12,10,8,0.98);
-  --rust:#5c2e1a;
-  --muted:#bfb3a0;
-  --glass: rgba(255,255,255,0.03);
-  --highlight: rgba(191, 161, 106, 0.12);
+:root {
+  --accent: #d4af37;
+  --accent-muted: #4a3728;
+  --bg: #0a0a09;
+  --panel: #11100e;
+  --rust: #3d2b1f;
+  --alert: #8b0000;
+  --crt-glow: 0 0 12px rgba(212, 175, 55, 0.25);
 }
 
-/* Scrollbar Styling */
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+/* RESET & BASE */
+* { box-sizing: border-box; cursor: crosshair; }
+body { 
+  margin: 0; background: var(--bg); color: #8e8a7d; 
+  font-family: 'Space Mono', monospace; overflow: hidden;
+  height: 100vh; text-transform: uppercase; font-size: 10px;
+}
+
+/* CRT & ATMOSPHERE */
+#grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 5000;
+  background: url('https://grainy-gradients.vercel.app/noise.svg');
+  opacity: 0.12; filter: contrast(180%);
+}
+body::after {
+  content: " "; display: block; position: absolute; inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
+  z-index: 4000; pointer-events: none; background-size: 100% 3px, 3px 100%;
+}
+
+/* BOOT SYSTEM */
+#boot-wrap {
+  position: fixed; inset: 0; background: #000; z-index: 9999;
+  padding: 50px; color: var(--accent); display: flex; flex-direction: column;
+}
+.boot-line { margin-bottom: 5px; visibility: hidden; }
+
+/* LAYOUT ENGINE */
+.app-container {
+  display: grid;
+  grid-template-columns: 340px 1fr 400px;
+  grid-template-rows: 60px 1fr 160px;
+  height: 100vh; gap: 15px; padding: 15px;
+  opacity: 0; transition: opacity 2s ease;
+}
+
+.top-bar { grid-column: 1 / span 3; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--rust); background: var(--panel); padding: 0 20px; }
+.panel { background: var(--panel); border: 1px solid var(--rust); position: relative; display: flex; flex-direction: column; overflow: hidden; }
+.panel-header { padding: 8px 15px; background: var(--rust); color: var(--accent); font-weight: bold; font-size: 9px; letter-spacing: 2px; display: flex; justify-content: space-between; align-items: center; }
+
+/* HUD & INTERFACE */
+#hud-pos { position: fixed; pointer-events: none; z-index: 6000; font-size: 8px; color: var(--accent); white-space: nowrap; text-shadow: var(--crt-glow); }
+
+.nav-scroll { flex: 1; overflow-y: auto; }
+.nav-item {
+  padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.02);
+  transition: 0.2s; cursor: pointer; display: flex; justify-content: space-between;
+}
+.nav-item:hover { background: rgba(212, 175, 55, 0.05); }
+.nav-item.active { background: rgba(212, 175, 55, 0.12); border-left: 4px solid var(--accent); color: #fff; }
+
+/* MONITOR VIEW */
+.main-monitor { grid-column: 2; background: #040403; border-radius: 4px; box-shadow: inset 0 0 40px #000; }
+canvas { width: 100%; height: 100%; filter: sepia(0.3) contrast(1.1); }
+
+/* SCHEMATIC VIEW */
+.schematic-box { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; background: radial-gradient(circle, #151412 0%, #0d0c0a 100%); }
+svg { width: 100%; height: auto; max-height: 280px; filter: drop-shadow(var(--crt-glow)); }
+
+/* LOGS */
+.terminal-footer { 
+  grid-column: 1 / span 3; background: #070706; 
+  padding: 15px; border: 1px solid var(--rust); 
+  display: grid; grid-template-columns: 1fr 300px; gap: 20px;
+}
+#log-stream { overflow: hidden; line-height: 1.6; color: var(--accent); }
+
+/* SCROLLBARS */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--rust); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--rust); }
 
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:var(--bg);font-family:"Courier New",monospace;color:var(--muted);cursor:crosshair; overflow: hidden;}
-a{color:inherit;text-decoration:none}
-
-/* film grain + overlays */
-#grain{
-  position:fixed;inset:0;pointer-events:none;
-  background:url('https://grainy-gradients.vercel.app/noise.svg');
-  filter: contrast(150%) brightness(100%);
-  opacity:0.12;z-index:30;
+/* ERA SELECTOR */
+.era-btn { 
+  background: transparent; border: 1px solid var(--accent-muted); color: var(--accent-muted);
+  padding: 4px 10px; font-family: inherit; font-size: 9px; margin-left: 5px; transition: 0.3s;
 }
-#flicker{position:fixed;inset:0;pointer-events:none;z-index:25;opacity:0.06;background:linear-gradient(transparent, rgba(0,0,0,0.1));animation:lampFlicker 8s infinite}
-@keyframes lampFlicker{
-  0%{opacity:.02} 5%{opacity:.15} 7%{opacity:.02} 9%{opacity:.1} 20%{opacity:.04} 100%{opacity:.03}
-}
+.era-btn.active { border-color: var(--accent); color: var(--accent); box-shadow: var(--crt-glow); }
 
-/* frame */
-.app { display:flex; height:100vh; padding:20px; gap:20px; }
-.console-frame {
-  flex:1;
-  border-radius:24px;
-  border:1px solid #222;
-  background:var(--panel);
-  display:grid;
-  grid-template-columns:320px 1fr;
-  overflow:hidden;
-  box-shadow: 0 0 100px rgba(0,0,0,1);
-}
-
-/* sidebar */
-.sidebar{padding:28px;border-right:1px solid var(--rust);display:flex;flex-direction:column;gap:20px; background: rgba(0,0,0,0.2);}
-.logo{font-size:1.1rem;color:var(--accent);letter-spacing:5px; font-weight: bold;}
-.id{font-size:.6rem;opacity:.4; letter-spacing: 2px;}
-.era-selector{border-left: 2px solid var(--accent); padding-left: 15px; margin: 10px 0;}
-.era-btn{display:block;background:transparent;border:0;color:var(--accent);text-align:left;padding:8px 0;font-size:.8rem;opacity:.9;}
-.notes{flex:1;font-size:.7rem;line-height:2;opacity:.5; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 20px;}
-
-/* main view */
-.main-view{position:relative;padding:34px;overflow:auto; }
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;border-bottom:1px solid rgba(191, 161, 106, 0.1);padding-bottom:15px}
-
-/* Glitch Animation */
-.glitch { position: relative; color: var(--accent); font-weight: 700; animation: textGlitch 4s infinite; }
-@keyframes textGlitch {
-  0%, 90%, 100% { transform: translate(0); opacity: 1; }
-  92% { transform: translate(-2px, 1px); opacity: 0.8; }
-  94% { transform: translate(2px, -1px); opacity: 0.8; color: #fff; }
-  96% { transform: translate(-1px, -2px); }
-}
-
-/* content grid */
-.content-grid{display:grid;grid-template-columns:1fr 340px;gap:25px;}
-
-/* Panels */
-.live-panel{background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.03);padding:15px;border-radius:4px;}
-.live-canvas{background:#050505;border:1px solid var(--rust);position:relative; overflow: hidden;}
-.project-card{
-  background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03);
-  padding:15px; margin-bottom: 10px; transition: 0.3s; cursor: pointer;
-}
-.project-card:hover { background: var(--highlight); border-color: var(--accent); }
-.project-card.active { background: var(--highlight); border-left: 4px solid var(--accent); }
-.project-card h3 { margin: 0; font-size: 0.9rem; color: var(--accent); }
-.project-card p { margin: 5px 0 0; font-size: 0.75rem; opacity: 0.6; }
-
-/* Detail Panel */
-.detail-panel{ background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03); padding: 20px; border-radius: 4px;}
-.svc-image{ margin-top: 15px; border: 1px solid rgba(191, 161, 106, 0.2); background: #000; transition: 0.3s;}
-.svc-image:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(191, 161, 106, 0.1); }
-
-/* Buttons */
-.cam-btn, .close-btn {
-  background: transparent; border: 1px solid var(--rust); color: var(--muted);
-  font-family: inherit; font-size: 0.6rem; padding: 4px 10px; cursor: pointer;
-}
-.cam-btn:hover { background: var(--rust); color: #fff; }
-
-/* HUD */
-.hud-corner{position:absolute;right:38px;bottom:30px;width:250px; font-size:.65rem; color:var(--accent); pointer-events: none;}
-.signal-item{ opacity: 0.5; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.02);}
-
-/* Modal */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;visibility:hidden;transition:0.3s;}
-.modal.open{opacity:1;visibility:visible;}
-.modal-content{width:90%; max-width:1000px; background:var(--panel); border:1px solid var(--accent); padding:30px;}
-
-#clock { color: var(--accent); letter-spacing: 2px; }
+@keyframes flicker { 0% { opacity: 0.99; } 5% { opacity: 0.95; } 10% { opacity: 0.99; } 100% { opacity: 1; } }
+.app-container { animation: flicker 0.15s infinite; }
 </style>
 </head>
 <body>
-  <div id="grain"></div>
-  <div id="flicker"></div>
 
-  <div class="app">
-    <div class="console-frame">
-      <aside class="sidebar">
-        <div class="id">EST_WINDEN_1953</div>
-        <div class="logo">THE BUREAU</div>
-        <div class="era-selector">
-          <div style="font-size:.6rem; opacity:.5; margin-bottom:5px">TEMPORAL_FOCUS</div>
-          <button class="era-btn">CYCLE_01 // 1953</button>
-        </div>
-        <div class="notes">
-          > Sic mundus creatus est.<br>
-          > The end is the beginning.<br>
-          > Accessing local archive...
-        </div>
-        <div id="clock">00:00:00</div>
-      </aside>
+<div id="grain"></div>
+<div id="boot-wrap"></div>
+<div id="hud-pos">X:000 Y:000</div>
 
-      <main class="main-view">
-        <div class="header">
-          <div class="status glitch">ARCHIVE_LINK: STABLE</div>
-          <div style="font-size:.7rem; opacity:.4">STATION: MORNINGTON_TAS</div>
-        </div>
-
-        <div class="content-grid">
-          <section>
-            <div class="live-panel">
-              <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
-                <span style="font-size:.7rem;"><span style="color:red">●</span> LIVE_FEED: CAM_03</span>
-                <button class="cam-btn" id="cam-toggle">TOGGLE_MODE</button>
-              </div>
-              <div class="live-canvas" style="height:250px">
-                <canvas id="liveFeed"></canvas>
-              </div>
-            </div>
-
-            <div style="margin-top:25px">
-              <div style="font-size:.7rem; color:var(--accent); margin-bottom:10px; letter-spacing:2px">DATA_REPOSITORY</div>
-              <div id="project-list"></div>
-            </div>
-          </section>
-
-          <aside class="detail-panel">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-              <h4 id="detail-name" style="margin:0; color:var(--accent)">-</h4>
-              <button class="cam-btn" id="view-large">EXPAND</button>
-            </div>
-            <p id="detail-desc" style="font-size:.75rem; line-height:1.6; min-height:60px"></p>
-            <div class="svc-image" id="svc-image"></div>
-            
-            <div style="margin-top:20px; font-size:.65rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top:15px">
-              <div>AUTH_LEVEL: <span style="color:var(--accent)">O5_CLEARANCE</span></div>
-              <div style="margin-top:5px">LAST_MOD: <span id="last-sync">--</span></div>
-            </div>
-          </aside>
-        </div>
-
-        <div class="hud-corner">
-          <div style="opacity:.3; margin-bottom:10px">SYSTEM_TRAFFIC:</div>
-          <div id="signal-log"></div>
-        </div>
-      </main>
+<div class="app-container" id="main-ui">
+  <header class="top-bar">
+    <div style="display: flex; align-items: center;">
+      <div style="color: var(--accent); font-weight: 700; font-size: 1.2rem; letter-spacing: 2px;">THE BUREAU</div>
+      <div style="margin-left: 30px; opacity: 0.4;">STATION: MORNINGTON_TAS</div>
     </div>
-  </div>
+    <div id="era-nav">
+      <button class="era-btn active">1953</button>
+      <button class="era-btn">1986</button>
+      <button class="era-btn">2019</button>
+    </div>
+    <div id="clock" style="color: var(--accent); letter-spacing: 3px;">00:00:00</div>
+  </header>
 
-  <div id="modal" class="modal">
-    <div class="modal-content">
-      <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-        <span id="modal-title" style="color:var(--accent)"></span>
-        <button class="cam-btn" onclick="closeModal()">CLOSE_X</button>
+  <aside class="panel">
+    <div class="panel-header"><span>PROJECT_INDEX</span><span>V.99</span></div>
+    <div class="nav-scroll" id="nav-list"></div>
+    <div style="padding: 15px; border-top: 1px solid var(--rust); font-size: 9px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <span>VOID_SYNC:</span><span id="void-val" style="color:var(--accent)">0.00%</span>
       </div>
-      <div id="modal-body"></div>
+      <div style="height:2px; background:var(--accent-muted); width:100%;"><div id="void-bar" style="height:100%; background:var(--accent); width:0%;"></div></div>
     </div>
-  </div>
+  </aside>
+
+  <main class="panel main-monitor">
+    <div class="panel-header"><span><span style="color:red">●</span> LIVE_TELEMETRY</span><span id="sig-id">SIG_77</span></div>
+    <canvas id="telemetryCanvas"></canvas>
+  </main>
+
+  <aside class="panel">
+    <div class="panel-header">OBJECT_SCHEMATICS</div>
+    <div class="schematic-box" id="svg-stage"></div>
+    <div style="padding: 20px; border-top: 1px solid var(--rust);">
+      <h3 id="obj-title" style="margin: 0 0 10px 0; color: var(--accent);">--</h3>
+      <p id="obj-desc" style="font-size: 9px; line-height: 1.6; opacity: 0.6; min-height: 60px;"></p>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button onclick="triggerGlitch()" class="era-btn active" style="margin:0; width:100%; padding:10px;">DECRYPT</button>
+        <button class="era-btn active" style="margin:0; width:100%; padding:10px; background:var(--accent); color:var(--bg);">ARCHIVE</button>
+      </div>
+    </div>
+  </aside>
+
+  <footer class="terminal-footer">
+    <div id="log-stream"></div>
+    <div style="border-left: 1px solid var(--rust); padding-left: 20px;">
+      <div style="font-size: 8px; opacity: 0.5; margin-bottom: 5px;">SYSTEM_DIAGNOSTICS:</div>
+      <div id="diag-bars"></div>
+    </div>
+  </footer>
+</div>
 
 <script>
-/* ==========================================
-   ANIMATED SVC GENERATOR
-   ========================================== */
-function svcSVG(type) {
-  const colors = { line: "#d7c8a2", accent: "#bfa16a" };
-  
-  // Base SVG structure with internal CSS for animations
-  let content = '';
-  
-  if(type === 'substrate') {
-    content = `
-      <style>
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
-        .spin { transform-origin: center; animation: rotate 20s linear infinite; }
-        .pulse { animation: pulse 4s ease-in-out infinite; }
-      </style>
-      <circle cx="400" cy="210" r="150" stroke="${colors.line}" stroke-width="1" fill="none" stroke-dasharray="10 5" class="spin"/>
-      <circle cx="400" cy="210" r="80" stroke="${colors.accent}" stroke-width="2" fill="none" class="pulse"/>
-      <path d="M250 210 L550 210 M400 60 L400 360" stroke="${colors.line}" stroke-width="0.5" opacity="0.3"/>
-      <rect x="300" y="160" width="200" height="100" stroke="${colors.line}" fill="none" stroke-width="1"/>
-    `;
-  } else if (type === 'harrow') {
-    content = `
-      <style>
-        @keyframes flow { to { stroke-dashoffset: -20; } }
-        .flow { stroke-dasharray: 5 5; animation: flow 1s linear infinite; }
-      </style>
-      <path d="M100 100 L700 100 L700 300 L100 300 Z" stroke="${colors.line}" fill="none" />
-      <path d="M100 150 L700 150 M100 200 L700 200 M100 250 L700 250" stroke="${colors.line}" opacity="0.2" />
-      <circle cx="150" cy="100" r="4" fill="${colors.accent}"/>
-      <path d="M150 100 V300" stroke="${colors.accent}" class="flow" />
-    `;
-  } else {
-    content = `
-      <style>
-        @keyframes jitter { 0% { transform: scaleY(1); } 50% { transform: scaleY(1.5); } 100% { transform: scaleY(1); } }
-        .bar { animation: jitter 0.5s infinite; transform-origin: bottom; }
-      </style>
-      <line x1="100" y1="350" x2="700" y2="350" stroke="${colors.line}" />
-      ${Array.from({length: 12}).map((_, i) => `
-        <rect class="bar" x="${150 + i*45}" y="${350 - (Math.random()*150 + 50)}" width="20" height="200" fill="${colors.accent}" opacity="0.6" style="animation-delay: ${i*0.1}s" />
-      `).join('')}
-    `;
-  }
-
-  return `<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100%" height="100%" fill="#050505"/>
-    <g opacity="0.8">${content}</g>
-  </svg>`;
-}
-
-const projects = [
-  { id: "substrate", name: "Substrate Protocol", desc: "A recursive architecture for visual telemetry. Deep-layer data mapping.", type: 'substrate' },
-  { id: "harrow", name: "Harrow OS", desc: "Logic gate diagram detailing heavy hardware architecture and routing.", type: 'harrow' },
-  { id: "anomaly", name: "Anomaly Observatory", desc: "Live monitoring of seismic and solar collapse. Everything is connected.", type: 'anomaly' }
+const archive = [
+  { id: "app-33", name: "The Apparatus", desc: "Dual-layer brass machine capable of temporal displacement. Missing radioactive core.", 
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="0.5"/><g><circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="5 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle></g><path d="M50 5 V95 M5 50 H95" stroke="var(--accent)" stroke-width="0.2" opacity="0.3"/><rect x="40" y="40" width="20" height="20" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="5s" repeatCount="indefinite"/></rect></svg>` },
+  { id: "god-p", name: "God Particle", desc: "A stable Cesium isotope stabilized within a magnetic field. Caution: Highly radioactive.", 
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="var(--accent)"><animate attributeName="r" values="8;14;8" dur="0.8s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.4;1" dur="0.8s" repeatCount="indefinite"/></circle>${Array.from({length:12}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*40}" y2="${50+Math.sin(i)*40}" stroke="var(--accent)" stroke-width="0.2" opacity="0.3"/>`).join('')}</svg>` },
+  { id: "tunnel", name: "Cave Passage", desc: "Natural cave system beneath Winden. 1953 entry point verified. 33-year cycle oscillation.", 
+    svg: `<svg viewBox="0 0 100 100"><path d="M10 80 Q50 10 90 80" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="d" values="M10 80 Q50 10 90 80; M10 80 Q50 50 90 80; M10 80 Q50 10 90 80" dur="4s" repeatCount="indefinite"/></path><path d="M30 80 Q50 40 70 80" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/></svg>` },
+  { id: "emerald", name: "Emerald Tablet", desc: "Hermetic text found on site. 'Sic Mundus Creatus Est'. Origins unknown.", 
+    svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="0.5"/><path d="M30 30 L70 70 M70 30 L30 70" stroke="var(--accent)" stroke-width="0.3"/><path d="M50 20 V80 M20 50 H80" stroke="var(--accent)" stroke-width="0.2" stroke-dasharray="2"/></svg>` },
+  { id: "notebook", name: "The Notebook", desc: "Contains calculations for the 33-year cycle. Pages 1-251 missing. Author: Unknown.", 
+    svg: `<svg viewBox="0 0 100 100"><rect x="30" y="20" width="40" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><line x1="35" y1="30" x2="65" y2="30" stroke="var(--accent)" stroke-width="0.5"/><line x1="35" y1="40" x2="65" y2="40" stroke="var(--accent)" stroke-width="0.5"/><line x1="35" y1="50" x2="55" y2="50" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
+  { id: "power", name: "Plant Schematic", desc: "Winden Nuclear Power Plant cooling system. High probability of core melt in 1986 event.", 
+    svg: `<svg viewBox="0 0 100 100"><rect x="10" y="60" width="80" height="30" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M30 60 V30 Q50 10 70 30 V60" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` }
 ];
 
-let currentProject = projects[0];
+// BOOT ENGINE
+const bootLines = ["WINDEN_SYSTEM_LOAD_V99", "MOUNTING_LOCAL_ARCHIVE...", "CHECKING_TEMPORAL_COHESION...", "RESTORING_1953_RECORDS...", "ACCESS_GRANTED_O5", "READY."];
+const bootWrap = document.getElementById('boot-wrap');
+bootLines.forEach((text, i) => {
+  const d = document.createElement('div');
+  d.className = 'boot-line';
+  d.innerText = `> ${text}`;
+  bootWrap.appendChild(d);
+  setTimeout(() => d.style.visibility = 'visible', i * 400);
+});
+setTimeout(() => {
+  bootWrap.style.opacity = '0';
+  document.getElementById('main-ui').style.opacity = '1';
+  setTimeout(() => bootWrap.remove(), 2000);
+}, 3000);
 
-function render() {
-  const list = document.getElementById('project-list');
-  list.innerHTML = projects.map(p => `
-    <div class="project-card ${p.id === currentProject.id ? 'active' : ''}" onclick="selectProject('${p.id}')">
-      <h3>${p.name}</h3>
-      <p>${p.desc}</p>
-    </div>
-  `).join('');
+// UI CONTROLLER
+const nav = document.getElementById('nav-list');
+const stage = document.getElementById('svg-stage');
+const stream = document.getElementById('log-stream');
 
-  document.getElementById('detail-name').innerText = currentProject.name;
-  document.getElementById('detail-desc').innerText = currentProject.desc;
-  document.getElementById('svc-image').innerHTML = svcSVG(currentProject.type);
-  document.getElementById('last-sync').innerText = new Date().toLocaleTimeString();
+function select(p) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`nav-${p.id}`).classList.add('active');
+  document.getElementById('obj-title').innerText = p.name;
+  document.getElementById('obj-desc').innerText = p.desc;
+  stage.innerHTML = p.svg;
+  pushLog(`ACCESSING_FILE: ${p.id.toUpperCase()} ... [OK]`);
 }
 
-window.selectProject = (id) => {
-  currentProject = projects.find(p => p.id === id);
-  render();
+archive.forEach(p => {
+  const div = document.createElement('div');
+  div.id = `nav-${p.id}`;
+  div.className = 'nav-item';
+  div.innerHTML = `<span>${p.name}</span><span style="opacity:0.3">ID_${Math.floor(Math.random()*999)}</span>`;
+  div.onclick = () => select(p);
+  nav.appendChild(div);
+});
+
+function pushLog(msg) {
+  const div = document.createElement('div');
+  div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  stream.prepend(div);
+  if(stream.childNodes.length > 7) stream.lastChild.remove();
+}
+
+// HUD COORDINATES
+window.onmousemove = (e) => {
+  const hud = document.getElementById('hud-pos');
+  hud.style.left = (e.clientX + 15) + 'px';
+  hud.style.top = (e.clientY + 15) + 'px';
+  hud.innerText = `LNX:${e.clientX} LNY:${e.clientY}`;
 };
 
-/* ==========================================
-   CANVAS LIVE FEED
-   ========================================== */
-const canvas = document.getElementById('liveFeed');
+// TELEMETRY CANVAS
+const canvas = document.getElementById('telemetryCanvas');
 const ctx = canvas.getContext('2d');
-let mode = 'optical';
+function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+window.onresize = resize; resize();
 
-function resize() {
-  canvas.width = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-function draw(t) {
-  ctx.fillStyle = mode === 'optical' ? '#050505' : '#0a1a0a';
+function drawTelemetry(t) {
+  ctx.fillStyle = 'rgba(10, 10, 9, 0.2)';
   ctx.fillRect(0,0,canvas.width, canvas.height);
   
-  // Static noise
-  for(let i=0; i<1000; i++) {
-    ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.05})`;
-    ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
+  // Grid Lines
+  ctx.strokeStyle = 'rgba(212, 175, 55, 0.05)';
+  for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+  for(let j=0; j<canvas.height; j+=50) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
+
+  // Sin Waves
+  ctx.beginPath(); ctx.strokeStyle = 'var(--accent)'; ctx.lineWidth = 1;
+  for(let x=0; x<canvas.width; x+=2) {
+    const y = canvas.height/2 + Math.sin(x*0.01 + t*0.002) * 30 + Math.sin(x*0.05 + t*0.005) * 10;
+    ctx.lineTo(x, y);
   }
+  ctx.stroke();
 
-  // Moving subject
-  const x = canvas.width/2 + Math.sin(t/1000)*50;
-  const y = canvas.height/2 + Math.cos(t/1500)*20;
-  ctx.fillStyle = mode === 'optical' ? 'rgba(255,255,255,0.05)' : 'rgba(0,255,0,0.2)';
-  ctx.beginPath();
-  ctx.arc(x, y, 40, 0, Math.PI*2);
-  ctx.fill();
-
-  requestAnimationFrame(draw);
+  // Noise
+  for(let i=0; i<20; i++) {
+    ctx.fillStyle = `rgba(212, 175, 55, ${Math.random()*0.3})`;
+    ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 1);
+  }
+  requestAnimationFrame(drawTelemetry);
 }
-requestAnimationFrame(draw);
+drawTelemetry(0);
 
-document.getElementById('cam-toggle').onclick = () => {
-  mode = mode === 'optical' ? 'thermal' : 'optical';
-};
-
-/* ==========================================
-   UTILITIES
-   ========================================== */
+// DIAGNOSTICS & SYSTEM CLOCK
 setInterval(() => {
   document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+  const v = (Math.random()*100).toFixed(2);
+  document.getElementById('void-val').innerText = `${v}%`;
+  document.getElementById('void-bar').style.width = `${v}%`;
+  
+  if(Math.random() > 0.9) pushLog("WARNING: SIGNAL_INTERFERENCE_DETECTED");
 }, 1000);
 
-function pushLog() {
-  const logs = ["SYNC_CAVE_01", "PNEUMATIC_SEND", "VOID_DETECTED", "SIGNAL_LOST", "RE-INDEXING"];
-  const logEl = document.getElementById('signal-log');
-  const div = document.createElement('div');
-  div.className = 'signal-item';
-  div.innerText = `> ${logs[Math.floor(Math.random()*logs.length)]} [${new Date().getSeconds()}s]`;
-  logEl.prepend(div);
-  if(logEl.children.length > 5) logEl.lastChild.remove();
+// DIAGNOSTIC BARS
+const diag = document.getElementById('diag-bars');
+for(let i=0; i<4; i++) {
+  const b = document.createElement('div');
+  b.style = "height:4px; background:var(--accent-muted); margin-bottom:5px; width:100%";
+  const inner = document.createElement('div');
+  inner.style = `height:100%; background:var(--accent); width:${40 + Math.random()*50}%`;
+  b.appendChild(inner);
+  diag.appendChild(b);
 }
-setInterval(pushLog, 3000);
 
-window.closeModal = () => document.getElementById('modal').classList.remove('open');
-document.getElementById('view-large').onclick = () => {
-  document.getElementById('modal-title').innerText = currentProject.name;
-  document.getElementById('modal-body').innerHTML = svcSVG(currentProject.type);
-  document.getElementById('modal').classList.add('open');
-};
+function triggerGlitch() {
+  document.body.style.filter = "invert(1) hue-rotate(180deg)";
+  setTimeout(() => document.body.style.filter = "none", 150);
+  pushLog("CRITICAL: DATA_CORRUPTION_PREVENTED");
+}
 
-render();
+select(archive[0]);
 </script>
 </body>
 </html>
