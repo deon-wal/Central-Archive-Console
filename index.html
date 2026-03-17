@@ -2,370 +2,1063 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>THE BUREAU // 1953_STATION_ALPHA</title>
+<title>THE BUREAU // SIC MUNDUS // COMMAND CONSOLE</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
 /* ============================================================
-   1. CORE ARCHITECTURE & THE "GRAIN"
+   1. CORE THEME ENGINE (DYNAMIC VARIABLES)
    ============================================================ */
 :root {
-  --gold: #d4af37;
-  --gold-dim: #3d2b1f;
-  --bg: #070706;
-  --panel: #0d0c0a;
-  --rust: #2b1d12;
-  --alert: #ff3b30;
-  --glow: 0 0 20px rgba(212, 175, 55, 0.15);
+  /* Default Theme: 1953 (Amber/Rust CRT) */
+  --accent: #d4af37;
+  --accent-glow: rgba(212, 175, 55, 0.4);
+  --bg-core: #0a0908;
+  --panel-bg: rgba(18, 16, 14, 0.85);
+  --panel-border: #3d2b1f;
+  --text-main: #b5ac9a;
+  --text-muted: #6b6456;
+  --alert: #ff453a;
+  --font-mono: 'Space Mono', monospace;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --crt-curve: inset 0 0 60px rgba(0,0,0,0.9);
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+/* Theme Variant: 1986 (Neon/VCR) */
+body[data-era="1986"] {
+  --accent: #00f3ff;
+  --accent-glow: rgba(0, 243, 255, 0.4);
+  --bg-core: #050508;
+  --panel-bg: rgba(10, 15, 25, 0.85);
+  --panel-border: #1a2b4c;
+  --text-main: #a3c2ff;
+  --text-muted: #4a6b9c;
+  --alert: #ff0055;
+  --crt-curve: inset 0 0 80px rgba(0,20,40,0.9);
+}
 
-* { box-sizing: border-box; cursor: crosshair; }
+/* Theme Variant: 2019 (Sterile/LCD) */
+body[data-era="2019"] {
+  --accent: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.3);
+  --bg-core: #0f1115;
+  --panel-bg: rgba(20, 24, 30, 0.85);
+  --panel-border: #333d4d;
+  --text-main: #e2e8f0;
+  --text-muted: #64748b;
+  --alert: #ef4444;
+  --crt-curve: inset 0 0 30px rgba(0,0,0,0.5);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Mono:wght@400;700&display=swap');
+
+/* ============================================================
+   2. RESET, GLOBAL STYLES & SCROLLBARS
+   ============================================================ */
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  cursor: crosshair; 
+}
+
 body { 
-  margin: 0; background: var(--bg); color: #8a8375; 
-  font-family: 'Space Mono', monospace; overflow: hidden;
-  height: 100vh; text-transform: uppercase; font-size: 9px;
-  perspective: 1000px; /* For the "Pulse" warp */
+  background-color: var(--bg-core); 
+  color: var(--text-main); 
+  font-family: var(--font-sans); 
+  height: 100vh; 
+  overflow: hidden;
+  transition: background-color 0.8s ease;
 }
 
-/* THE CATHODE TUBE OVERLAY */
-#crt-overlay {
-  position: fixed; inset: 0; pointer-events: none; z-index: 10000;
-  background: 
-    linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%),
-    linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
-  background-size: 100% 3px, 3px 100%;
+::-webkit-scrollbar { 
+  width: 6px; 
+  height: 6px;
 }
-#vignette {
-  position: fixed; inset: 0; pointer-events: none; z-index: 10001;
-  background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.8) 120%);
+
+::-webkit-scrollbar-track { 
+  background: rgba(0,0,0,0.2); 
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb { 
+  background: var(--panel-border); 
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover { 
+  background: var(--accent); 
 }
 
 /* ============================================================
-   2. BOOT INTERFACE (TERMINAL WARMUP)
+   3. ATMOSPHERIC OVERLAYS
    ============================================================ */
-#boot-sequence {
-  position: fixed; inset: 0; background: #000; z-index: 20000;
-  padding: 80px; color: var(--gold); display: flex; flex-direction: column;
+#ambient-noise {
+  position: fixed; 
+  inset: 0; 
+  pointer-events: none; 
+  z-index: 0;
+  background: url('https://grainy-gradients.vercel.app/noise.svg');
+  opacity: 0.12; 
+  mix-blend-mode: overlay;
 }
-.boot-txt { margin-bottom: 4px; font-size: 11px; opacity: 0; transition: opacity 0.1s; }
+
+.scanline {
+  position: fixed; 
+  inset: 0; 
+  pointer-events: none; 
+  z-index: 1;
+  background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 51%);
+  background-size: 100% 4px;
+}
+
+#vignette-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: var(--crt-curve);
+  transition: box-shadow 0.8s ease;
+}
 
 /* ============================================================
-   3. THE BUREAU GRID (650+ LINES CAPABLE)
+   4. BOOT SEQUENCE
    ============================================================ */
-.bureau-frame {
+#boot-screen {
+  position: fixed;
+  inset: 0;
+  background-color: #000;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  padding: 60px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  transition: opacity 1s ease;
+}
+
+.boot-line {
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.2s ease;
+}
+
+/* ============================================================
+   5. APP LAYOUT GRID
+   ============================================================ */
+#app-grid {
+  position: relative; 
+  z-index: 10; 
   display: grid;
-  grid-template-columns: 360px 1fr 450px;
-  grid-template-rows: 80px 1fr 220px;
-  height: 100vh; gap: 20px; padding: 25px;
-  opacity: 0; transform: scale(1.05); transition: all 3s cubic-bezier(0.1, 0, 0, 1);
+  grid-template-columns: 360px 1fr 420px;
+  grid-template-rows: 90px 1fr 220px;
+  gap: 25px; 
+  padding: 25px; 
+  height: 100vh;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 2s ease, transform 2s ease;
 }
 
+.glass-panel {
+  background: var(--panel-bg); 
+  backdrop-filter: blur(12px); 
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border); 
+  border-radius: 8px;
+  display: flex; 
+  flex-direction: column; 
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.2);
+  transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.panel-head {
+  padding: 15px 25px; 
+  border-bottom: 1px solid var(--panel-border);
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  font-family: var(--font-mono); 
+  font-size: 11px; 
+  font-weight: 700;
+  text-transform: uppercase; 
+  color: var(--accent); 
+  letter-spacing: 2px;
+  background: rgba(0,0,0,0.4); 
+  transition: color 0.5s ease;
+}
+
+/* ============================================================
+   6. HEADER & THE TEMPORAL SLIDER
+   ============================================================ */
 header { 
-  grid-column: 1 / span 3; border: 1px solid var(--rust); 
-  background: var(--panel); display: flex; align-items: center; 
-  padding: 0 30px; justify-content: space-between;
-  box-shadow: var(--glow);
+  grid-column: 1 / span 3; 
+  flex-direction: row !important; 
+  align-items: center; 
+  padding: 0 40px; 
+  justify-content: space-between; 
 }
 
-.panel { 
-  background: var(--panel); border: 1px solid var(--rust); 
-  display: flex; flex-direction: column; overflow: hidden; 
+.bureau-title { 
+  font-family: var(--font-mono); 
+  font-size: 1.8rem; 
+  font-weight: 700; 
+  color: var(--accent); 
+  letter-spacing: 6px; 
+  transition: color 0.5s ease;
+}
+
+.slider-container { 
+  display: flex; 
+  align-items: center; 
+  gap: 20px; 
+  background: rgba(0,0,0,0.6); 
+  padding: 12px 25px; 
+  border-radius: 40px; 
+  border: 1px solid var(--panel-border); 
+}
+
+.slider-label { 
+  font-family: var(--font-mono); 
+  font-size: 12px; 
+  font-weight: 700; 
+  color: var(--text-muted); 
+  transition: color 0.3s, text-shadow 0.3s; 
+}
+
+.slider-label.active { 
+  color: var(--accent); 
+  text-shadow: 0 0 12px var(--accent-glow); 
+}
+
+input[type=range] {
+  -webkit-appearance: none; 
+  width: 180px; 
+  background: transparent;
+}
+
+input[type=range]:focus { 
+  outline: none; 
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%; 
+  height: 4px; 
+  background: var(--panel-border); 
+  border-radius: 2px;
+  transition: background 0.5s ease;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  height: 18px; 
+  width: 18px; 
+  border-radius: 50%; 
+  background: var(--accent);
+  cursor: pointer; 
+  -webkit-appearance: none; 
+  margin-top: -7px;
+  box-shadow: 0 0 12px var(--accent-glow); 
+  transition: background 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* ============================================================
+   7. NAVIGATION DIRECTORY (LEFT PANEL)
+   ============================================================ */
+.nav-scroll { 
+  flex: 1; 
+  overflow-y: auto; 
+  padding: 10px 0; 
+}
+
+.nav-item {
+  padding: 18px 25px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px;
+  border-left: 4px solid transparent; 
+  cursor: pointer; 
+  transition: all 0.2s ease;
   position: relative;
 }
-.panel-header { 
-  background: var(--rust); color: var(--gold); padding: 8px 15px; 
-  font-weight: 700; letter-spacing: 4px; display: flex; justify-content: space-between;
+
+.nav-item:hover { 
+  background: rgba(255,255,255,0.03); 
+  padding-left: 30px;
+}
+
+.nav-item.active { 
+  background: rgba(255,255,255,0.06); 
+  border-left-color: var(--accent); 
+}
+
+.nav-title { 
+  font-weight: 600; 
+  font-size: 14px; 
+  color: var(--text-main); 
+  letter-spacing: 1px;
+}
+
+.nav-meta { 
+  font-family: var(--font-mono); 
+  font-size: 10px; 
+  color: var(--text-muted); 
+  text-transform: uppercase; 
+}
+
+.nav-item.active .nav-title { 
+  color: var(--accent); 
 }
 
 /* ============================================================
-   4. NAVIGATION (THE CHRONOS DIRECTORY)
+   8. VISUAL TELEMETRY & SIGNAL CANVAS (CENTER)
    ============================================================ */
-.nav-area { flex: 1; overflow-y: auto; }
-.nav-row {
-  padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.02);
-  transition: 0.3s; cursor: pointer; position: relative;
+.monitor { 
+  grid-column: 2; 
+  position: relative; 
+  background: #020202; 
+  border: 2px solid var(--panel-border); 
 }
-.nav-row:hover { background: rgba(212, 175, 55, 0.05); }
-.nav-row.active { background: rgba(212, 175, 55, 0.1); border-left: 6px solid var(--gold); color: #fff; }
-.nav-row .meta { font-size: 7px; opacity: 0.3; margin-top: 5px; }
+
+canvas { 
+  width: 100%; 
+  height: 100%; 
+  opacity: 0.8;
+}
+
+.live-indicator { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  font-family: var(--font-mono); 
+  font-size: 11px; 
+  color: var(--accent); 
+  position: absolute; 
+  top: 20px; 
+  left: 20px; 
+  z-index: 10; 
+  letter-spacing: 2px;
+}
+
+.dot { 
+  width: 8px; 
+  height: 8px; 
+  background: var(--alert); 
+  border-radius: 50%; 
+  box-shadow: 0 0 10px var(--alert); 
+  animation: blink 1.5s infinite; 
+}
+
+@keyframes blink { 
+  0%, 100% { opacity: 1; } 
+  50% { opacity: 0.2; } 
+}
+
+.hud-overlay {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  text-align: right;
+  opacity: 0.6;
+}
 
 /* ============================================================
-   5. VISUAL TELEMETRY & SIGNAL (CENTER)
+   9. SCHEMATIC VIEWER & DATA (RIGHT PANEL)
    ============================================================ */
-.monitor-core { grid-column: 2; background: #020202; position: relative; }
-canvas#waveCanvas { width: 100%; height: 100%; opacity: 0.7; }
-.scope-overlay { position: absolute; inset: 0; pointer-events: none; border: 20px solid transparent; border-image: radial-gradient(circle, transparent 70%, #000 100%) 1; }
+.svg-stage { 
+  flex: 1; 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  padding: 40px; 
+  background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%); 
+}
+
+svg { 
+  width: 90%; 
+  height: auto; 
+  max-height: 280px; 
+  filter: drop-shadow(0 0 15px var(--accent-glow)); 
+  transition: all 0.5s ease; 
+}
+
+.data-readout { 
+  padding: 30px; 
+  border-top: 1px solid var(--panel-border); 
+  background: rgba(0,0,0,0.5); 
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.data-title { 
+  font-family: var(--font-mono); 
+  font-size: 18px; 
+  color: var(--accent); 
+  margin-bottom: 12px; 
+  text-transform: uppercase; 
+  letter-spacing: 2px; 
+}
+
+.data-desc { 
+  font-size: 13px; 
+  line-height: 1.7; 
+  color: var(--text-main); 
+  flex: 1;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  background: var(--accent);
+  color: var(--bg-core);
+  border-color: var(--accent);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
 
 /* ============================================================
-   6. MECHANICAL SCHEMATICS (RIGHT)
+   10. COMMAND LINE INTERFACE & LOG (FOOTER)
    ============================================================ */
-.schematic-box { flex: 1; display: flex; align-items: center; justify-content: center; padding: 30px; position: relative; }
-.schematic-box svg { width: 90%; filter: drop-shadow(0 0 10px var(--gold)); transition: transform 0.5s; }
-.schematic-box:hover svg { transform: scale(1.05); }
-
-/* ============================================================
-   7. THE COMMAND DECK (FOOTER)
-   ============================================================ */
-footer { 
-  grid-column: 1 / span 3; background: #050504; border: 1px solid var(--rust);
-  display: grid; grid-template-columns: 1fr 400px 300px; padding: 20px; gap: 30px;
+.terminal-footer { 
+  grid-column: 1 / span 3; 
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 30px;
+  padding: 0;
 }
-#terminal-out { font-size: 8px; color: var(--gold); overflow: hidden; line-height: 1.6; }
-.cmd-input-box { border-left: 1px solid var(--rust); padding-left: 20px; }
-input#cmd-field { 
-  width: 100%; background: transparent; border: 1px solid var(--gold-dim); 
-  color: var(--gold); padding: 12px; font-family: inherit; outline: none; margin-top: 10px;
-}
-input#cmd-field:focus { border-color: var(--gold); box-shadow: var(--glow); }
 
-/* ============================================================
-   8. ANIMATIONS & HUD
-   ============================================================ */
-#biometric-hud { position: fixed; pointer-events: none; z-index: 15000; font-size: 7px; color: var(--gold); }
-@keyframes flicker { 0% { opacity: 0.98; } 10% { opacity: 0.94; } 20% { opacity: 0.99; } 100% { opacity: 1; } }
-.bureau-frame.flicker { animation: flicker 0.1s infinite; }
-
-.btn-bureau {
-  background: transparent; border: 1px solid var(--gold); color: var(--gold);
-  padding: 12px; font-family: inherit; font-size: 8px; letter-spacing: 2px;
-  cursor: pointer; transition: 0.3s;
+.log-stream {
+  padding: 20px 25px; 
+  font-family: var(--font-mono); 
+  font-size: 11px; 
+  color: var(--text-muted); 
+  overflow-y: hidden; 
+  display: flex; 
+  flex-direction: column-reverse; 
+  gap: 6px; 
 }
-.btn-bureau:hover { background: var(--gold); color: var(--bg); box-shadow: var(--glow); }
+
+.log-entry { 
+  opacity: 0; 
+  animation: fadeUp 0.3s forwards; 
+}
+
+.log-entry.highlight { 
+  color: var(--accent); 
+}
+
+.log-entry.error {
+  color: var(--alert);
+}
+
+@keyframes fadeUp { 
+  from { opacity: 0; transform: translateY(8px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+
+.cli-container {
+  border-left: 1px solid var(--panel-border);
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+}
+
+.cli-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#cli-input {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--panel-border);
+  color: var(--accent);
+  padding: 15px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+#cli-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
 </style>
 </head>
-<body onclick="initAudio()">
+<body data-era="1953">
 
-<div id="crt-overlay"></div>
-<div id="vignette"></div>
-<div id="boot-sequence"></div>
-<div id="biometric-hud">POS_X: 000 // POS_Y: 000</div>
+<div id="ambient-noise"></div>
+<div class="scanline"></div>
+<div id="vignette-overlay"></div>
 
-<div class="bureau-frame" id="app">
-  <header>
-    <div>
-      <span style="font-size: 1.8rem; font-weight: 700; color: var(--gold); letter-spacing: 6px;">SIC MUNDUS</span>
-      <span style="margin-left: 20px; opacity: 0.4;">EST. 1921 // STATION_7</span>
+<div id="boot-screen">
+  <div id="boot-logs"></div>
+</div>
+
+<div id="app-grid">
+  
+  <header class="glass-panel">
+    <div class="bureau-title">THE BUREAU</div>
+    
+    <div class="slider-container">
+      <span class="slider-label active" id="lbl-1953">1953</span>
+      <input type="range" min="0" max="2" value="0" id="era-slider">
+      <span class="slider-label" id="lbl-1986">1986</span>
+      <span class="slider-label" id="lbl-2019">2019</span>
     </div>
-    <div style="display: flex; gap: 40px; align-items: center;">
+
+    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--text-muted); display: flex; gap: 30px; align-items: center;">
       <div style="text-align: right;">
-        <div style="font-size: 7px; opacity: 0.5;">TEMPORAL_FLUX</div>
-        <div id="flux-meter" style="color: var(--gold); font-weight: bold;">0.00033 Hz</div>
+        <div style="font-size: 9px; opacity: 0.6; margin-bottom: 4px;">LOCAL_SYNC</div>
+        <div id="sync-status" style="color: var(--accent);">STABLE</div>
       </div>
-      <div id="master-clock" style="font-size: 1.6rem; color: var(--gold); font-weight: bold;">00:00:00</div>
+      <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent); letter-spacing: 2px;" id="clock">00:00:00</div>
     </div>
   </header>
 
-  <aside class="panel">
-    <div class="panel-header"><span>ARCHIVE_DIR</span><span>V.1953</span></div>
-    <div class="nav-area" id="nav-list"></div>
-    <div style="padding: 20px; border-top: 1px solid var(--rust);">
-      <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-        <span>CORE_TEMP</span><span id="temp-val">33.0°C</span>
-      </div>
-      <div style="height:2px; background:var(--rust);"><div id="temp-bar" style="height:100%; background:var(--gold); width:33%;"></div></div>
+  <aside class="glass-panel">
+    <div class="panel-head">
+      <span>INDEX</span>
+      <span>VOL.33</span>
     </div>
+    <div class="nav-scroll" id="nav-list">
+      </div>
   </aside>
 
-  <main class="panel monitor-core">
-    <div class="panel-header"><span>● SIGNAL_INTERCEPT</span><span>STABLE</span></div>
-    <canvas id="waveCanvas"></canvas>
-    <div class="scope-overlay"></div>
+  <main class="glass-panel monitor">
+    <div class="live-indicator">
+      <div class="dot"></div> 
+      VOID_RESONANCE_TRACKER
+    </div>
+    <div class="hud-overlay" id="hud-stats">
+      FLUX: 0.003Hz<br>
+      AMP: 44.1V<br>
+      RAD: 0.02μSv/h
+    </div>
+    <canvas id="telemetryCanvas"></canvas>
   </main>
 
-  <aside class="panel">
-    <div class="panel-header">DATA_SPECIFICATION</div>
-    <div class="schematic-box" id="svg-stage"></div>
-    <div style="padding: 30px; border-top: 1px solid var(--rust); background: rgba(0,0,0,0.3);">
-      <h2 id="obj-name" style="margin: 0; color: var(--gold); letter-spacing: 1px;">--</h2>
-      <p id="obj-desc" style="font-size: 10px; line-height: 1.8; opacity: 0.6; min-height: 100px;"></p>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <button class="btn-bureau" onclick="triggerDefrag()">DEFRAG</button>
-        <button class="btn-bureau" style="background: var(--gold); color: var(--bg);">INIT_SYNC</button>
+  <aside class="glass-panel">
+    <div class="panel-head">
+      <span>SCHEMATIC</span>
+      <span id="obj-id-tag">ID_000</span>
+    </div>
+    <div class="svg-stage" id="svg-stage">
+      </div>
+    <div class="data-readout">
+      <div class="data-title" id="obj-title">--</div>
+      <div class="data-desc" id="obj-desc"></div>
+      <div class="action-buttons">
+        <button class="btn" onclick="executeCommand('DECRYPT')">DECRYPT</button>
+        <button class="btn" onclick="executeCommand('OVERRIDE')" style="border-color: var(--alert); color: var(--alert);">OVERRIDE</button>
       </div>
     </div>
   </aside>
 
-  <footer>
-    <div id="terminal-out"></div>
-    <div class="cmd-input-box">
-      <div style="font-size: 7px; opacity: 0.4;">BUREAU_CMD_SHELL_V.7</div>
-      <input type="text" id="cmd-field" placeholder="TYPE COMMAND (HELP, SCAN, TIME)..." autocomplete="off">
-    </div>
-    <div style="border-left: 1px solid var(--rust); padding-left: 20px;">
-      <div style="font-size: 7px; opacity: 0.4; margin-bottom: 10px;">SYSTEM_NODES:</div>
-      <div style="color:var(--gold)">>> NODE_1953 [OK]</div>
-      <div style="opacity:0.2">>> NODE_1986 [??]</div>
-      <div style="opacity:0.2">>> NODE_2019 [??]</div>
+  <footer class="glass-panel terminal-footer">
+    <div class="log-stream" id="log-stream">
+      </div>
+    <div class="cli-container">
+      <div class="cli-label">BUREAU_OS // COMMAND_LINE</div>
+      <input type="text" id="cli-input" placeholder="Enter command (e.g. HELP, SCAN)..." autocomplete="off" spellcheck="false">
     </div>
   </footer>
+
 </div>
 
 <script>
 /* ============================================================
-   9. DATA REPOSITORY (THE MEAT)
+   1. DATA ARCHIVE (EXPANDED TO 8 ITEMS)
    ============================================================ */
-const projects = [
-  { id: "apparatus", name: "The Apparatus", desc: "Mechanical time displacement engine. Constructed by H.G. Tannhaus. Requires stable Higgs-Field input for activation.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--gold)" stroke-width="0.5"/><g><circle cx="50" cy="50" r="30" fill="none" stroke="var(--gold)" stroke-width="2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle></g><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--gold)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect><path d="M50 0 V100 M0 50 H100" stroke="var(--rust)" stroke-width="0.2"/></svg>` },
-  { id: "cesium", name: "Cesium-137", desc: "Isotope extracted from nuclear plant waste. Primary catalyst for the 33-year wormhole stability. Handle with extreme caution.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="var(--gold)"><animate attributeName="r" values="8;14;8" dur="1s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/></circle>${Array.from({length:16}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*40}" y2="${50+Math.sin(i)*40}" stroke="var(--gold)" stroke-width="0.2" opacity="0.3"/>`).join('')}</svg>` },
-  { id: "passage", name: "Winden Caves", desc: "Site of the first successful breach. Geological mapping shows abnormal quartz density around the central portal.", svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--gold)" stroke-width="1.5"/><path d="M30 90 Q50 50 70 90" fill="none" stroke="var(--gold)" stroke-width="0.5" opacity="0.4"/><path d="M0 80 H100" stroke="var(--rust)" stroke-width="0.2"/></svg>` },
-  { id: "emerald", name: "The Tablet", desc: "Alchemical text dating back centuries. 'Quod est superius, est sicut quod est inferius'. Translated: That which is above is like that which is below.", svg: `<svg viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" fill="none" stroke="var(--gold)" stroke-width="1"/><path d="M35 30 L65 70 M65 30 L35 70" stroke="var(--gold)" stroke-width="0.5"/><circle cx="50" cy="50" r="15" fill="none" stroke="var(--gold)" stroke-width="0.3"/></svg>` },
-  { id: "bunker", name: "The Bunker", desc: "Heavily fortified room beneath the Helge Doppler estate. Used for early chair prototypes. Temporal residue: High.", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="50" fill="none" stroke="var(--gold)" stroke-width="1"/><path d="M20 30 L50 10 L80 30" fill="none" stroke="var(--gold)" stroke-width="1"/><rect x="42" y="60" width="16" height="20" fill="none" stroke="var(--gold)" stroke-width="0.5"/></svg>` },
-  { id: "radio", name: "The Signal", desc: "Short-wave interception from 1986. Audio data contains a looped message regarding the 'White Devil'.", svg: `<svg viewBox="0 0 100 60">${Array.from({length:30}).map((_,i)=>`<rect x="${i*3.3}" y="${30-Math.random()*20}" width="1" height="${Math.random()*40}" fill="var(--gold)"><animate attributeName="height" values="5;40;5" dur="${0.2+Math.random()}s" repeatCount="indefinite"/></rect>`).join('')}</svg>` },
-  { id: "claudia", name: "White Devil", desc: "Subject profile: Claudia Tiedemann. Known to inhabit multiple timelines. Objective: Containment.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="40" r="15" fill="none" stroke="var(--gold)" stroke-width="1"/><path d="M30 80 Q50 60 70 80" fill="none" stroke="var(--gold)" stroke-width="1"/><circle cx="50" cy="50" r="45" fill="none" stroke="var(--gold)" stroke-width="0.1"/></svg>` },
-  { id: "cycle", name: "33-Year Cycle", desc: "Every 33 years, the planets align and the wormhole resets. The cycle is absolute. It cannot be broken.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="33" fill="none" stroke="var(--gold)" stroke-width="0.5" stroke-dasharray="2 2"/><circle cx="50" cy="17" r="4" fill="var(--gold)"/><circle cx="50" cy="83" r="4" fill="var(--gold)"/></svg>` }
+const archive = [
+  { 
+    id: "apparatus", 
+    name: "The Apparatus", 
+    class: "Class-A Core", 
+    desc: "Clockwork displacement engine. Requires Cesium-137. Do not engage without calculating the lunar periapsis. Hand-machined by H.G. Tannhaus in 1953.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 5">
+              <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="10s" repeatCount="indefinite"/>
+            </circle>
+            <rect x="40" y="40" width="20" height="20" fill="none" stroke="var(--accent)" stroke-width="1">
+              <animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="5s" repeatCount="indefinite"/>
+            </rect>
+            <path d="M50 0 V100 M0 50 H100" stroke="var(--panel-border)" stroke-width="0.5"/>
+          </svg>` 
+  },
+  { 
+    id: "particle", 
+    name: "God Particle", 
+    class: "Anomaly", 
+    desc: "Stable Higgs-field manifestation. Exists simultaneously across 1953, 1986, and 2019. Containment fields are fluctuating at 33Hz.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="15" fill="var(--accent)">
+              <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="12;16;12" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            ${Array.from({length:16}).map((_,i)=>`
+              <line x1="50" y1="50" x2="${50+Math.cos(i)*35}" y2="${50+Math.sin(i)*35}" stroke="var(--accent)" stroke-width="0.5" opacity="0.5">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="${10 + i}s" repeatCount="indefinite"/>
+              </line>
+            `).join('')}
+          </svg>` 
+  },
+  { 
+    id: "caves", 
+    name: "Winden Caves", 
+    class: "Geography", 
+    desc: "Tri-nodal tunnel system. The iron doors must remain closed to preserve the cycle's integrity. Radiation levels spike near the center.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <path d="M20 80 Q50 20 80 80" fill="none" stroke="var(--accent)" stroke-width="2"/>
+            <path d="M35 80 Q50 50 65 80" fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.5"/>
+            <circle cx="50" cy="20" r="3" fill="var(--alert)">
+              <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+            </circle>
+            <line x1="10" y1="80" x2="90" y2="80" stroke="var(--panel-border)" stroke-width="1"/>
+          </svg>` 
+  },
+  { 
+    id: "triquetra", 
+    name: "The Knot", 
+    class: "Philosophy", 
+    desc: "A symbol representing the closed time loop. Past, Present, and Future are inextricably tied together. Sic Mundus Creatus Est.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <path d="M50 20 C65 20 75 35 75 50 C75 65 65 80 50 80 C35 80 25 65 25 50 C25 35 35 20 50 20" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/>
+            <circle cx="50" cy="35" r="15" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <circle cx="37" cy="57" r="15" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <circle cx="63" cy="57" r="15" fill="none" stroke="var(--accent)" stroke-width="1"/>
+          </svg>` 
+  },
+  { 
+    id: "chair", 
+    name: "The Chair", 
+    class: "Prototype", 
+    desc: "Early displacement prototype located in the bunker. Energy amplification destroys the subject's ocular nerves. Morally compromised.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <rect x="35" y="40" width="30" height="10" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <line x1="35" y1="50" x2="35" y2="80" stroke="var(--accent)" stroke-width="1"/>
+            <line x1="65" y1="50" x2="65" y2="80" stroke="var(--accent)" stroke-width="1"/>
+            <path d="M35 40 Q50 20 65 40" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <circle cx="50" cy="25" r="8" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <line x1="10" y1="35" x2="90" y2="35" stroke="var(--alert)" stroke-width="0.5"/>
+          </svg>` 
+  },
+  { 
+    id: "cesium", 
+    name: "Cesium-137", 
+    class: "Isotope", 
+    desc: "Radioactive waste recovered from the power plant. The catalyst that allows the apparatus to open the bridge.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <polygon points="50,15 85,35 85,75 50,95 15,75 15,35" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <polygon points="50,30 70,42 70,66 50,78 30,66 30,42" fill="none" stroke="var(--accent)" stroke-width="0.5" stroke-dasharray="2 2"/>
+            <circle cx="50" cy="54" r="5" fill="var(--accent)">
+               <animate attributeName="r" values="4;7;4" dur="0.5s" repeatCount="indefinite"/>
+            </circle>
+          </svg>` 
+  },
+  { 
+    id: "diary", 
+    name: "The Notebook", 
+    class: "Document", 
+    desc: "Leather-bound journal detailing the events of the loop. Several pages have been torn out. The handwriting matches the Unknown.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <rect x="30" y="20" width="40" height="60" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+            <line x1="35" y1="35" x2="65" y2="35" stroke="var(--accent)" stroke-width="0.5"/>
+            <line x1="35" y1="45" x2="65" y2="45" stroke="var(--accent)" stroke-width="0.5"/>
+            <line x1="35" y1="55" x2="55" y2="55" stroke="var(--accent)" stroke-width="0.5"/>
+            <path d="M70 20 C80 40 80 60 70 80" fill="none" stroke="var(--accent)" stroke-width="0.5"/>
+          </svg>` 
+  },
+  { 
+    id: "blueprint", 
+    name: "Door Schematic", 
+    class: "Engineering", 
+    desc: "Blueprint for the heavy iron doors placed inside the cave passage. Designed to withstand extreme electromagnetic shifts.", 
+    svg: `<svg viewBox="0 0 100 100">
+            <rect x="25" y="15" width="50" height="70" fill="none" stroke="var(--accent)" stroke-width="1"/>
+            <line x1="25" y1="15" x2="75" y2="85" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
+            <line x1="75" y1="15" x2="25" y2="85" stroke="var(--accent)" stroke-width="0.5" opacity="0.5"/>
+            <circle cx="65" cy="50" r="4" fill="var(--accent)"/>
+            <rect x="15" y="10" width="70" height="80" fill="none" stroke="var(--panel-border)" stroke-width="1" stroke-dasharray="4 4"/>
+          </svg>` 
+  }
 ];
 
 /* ============================================================
-   10. SYSTEM LOGIC (AUDIO, VISUAL, CLI)
+   2. AUDIO ENGINE (WEB AUDIO API)
    ============================================================ */
-// AUDIO ENGINE (Mechanical Clicks & Hum)
 let audioCtx;
+
 function initAudio() {
   if (audioCtx) return;
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  
+  // Ambient Hum
   const hum = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  hum.type = 'sawtooth';
-  hum.frequency.setValueAtTime(50, audioCtx.currentTime);
-  gain.gain.setValueAtTime(0.005, audioCtx.currentTime);
+  hum.type = 'sine';
+  hum.frequency.setValueAtTime(45, audioCtx.currentTime); // Low freq hum
+  gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
   hum.connect(gain);
   gain.connect(audioCtx.destination);
   hum.start();
 }
-function playClick() {
+
+function playKeystroke() {
   if (!audioCtx) return;
   const osc = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
+  const gain = audioCtx.createGain();
   osc.type = 'square';
-  osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-  g.gain.setValueAtTime(0.05, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-  osc.connect(g); g.connect(audioCtx.destination);
-  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+  osc.frequency.setValueAtTime(800 + Math.random()*200, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.05);
 }
 
-// BOOT ENGINE
-const bootContainer = document.getElementById('boot-sequence');
-const bootLines = [
-  "BUREAU_TERMINAL_V1953_INITIALIZING...", "VOLTAGE: 220V [STABLE]", "VACUUM_TUBES_WARMING...",
-  "SEARCHING_TEMPORAL_NODES...", "NODE_1953: FOUND", "NODE_1986: ERROR_33", "NODE_2019: ERROR_66",
-  "ESTABLISHING_VOID_LINK...", "ACCESS_GRANTED_OPERATOR", "SYSTEM_READY."
+function playAlert() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
+}
+
+document.body.addEventListener('click', initAudio, { once: true });
+
+/* ============================================================
+   3. BOOT SEQUENCE
+   ============================================================ */
+const bootScreen = document.getElementById('boot-screen');
+const bootLogs = document.getElementById('boot-logs');
+const appGrid = document.getElementById('app-grid');
+
+const startupSequence = [
+  "INITIALIZING BUREAU MAINFRAME...",
+  "CHECKING VACUUM TUBE ARRAYS [OK]",
+  "MOUNTING MAGNETIC TAPE DRIVES...",
+  "SYNCING TO TEMPORAL NODE 1953...",
+  "DECRYPTING LEVEL 5 CLEARANCE FILES...",
+  "ESTABLISHING SECURE CONNECTION...",
+  "WELCOME, OPERATOR."
 ];
-bootLines.forEach((t, i) => {
-  const l = document.createElement('div');
-  l.className = 'boot-txt';
-  l.innerText = `> ${t}`;
-  bootContainer.appendChild(l);
-  setTimeout(() => l.style.opacity = '1', i * 300);
-});
-setTimeout(() => {
-  bootContainer.style.opacity = '0';
-  document.getElementById('app').style.opacity = '1';
-  document.getElementById('app').style.transform = 'scale(1)';
-  setTimeout(() => bootContainer.remove(), 2000);
-}, 4000);
 
-// UI CONTROLLER
-const nav = document.getElementById('nav-list');
-const stage = document.getElementById('svg-stage');
-const term = document.getElementById('terminal-out');
+function runBootSequence() {
+  let delay = 0;
+  
+  startupSequence.forEach((text, index) => {
+    setTimeout(() => {
+      const line = document.createElement('div');
+      line.className = 'boot-line';
+      line.innerText = `> ${text}`;
+      bootLogs.appendChild(line);
+      
+      // Trigger animation
+      setTimeout(() => {
+        line.style.opacity = '1';
+        line.style.transform = 'translateY(0)';
+        if(audioCtx) playKeystroke();
+      }, 50);
 
-function select(p) {
-  playClick();
-  document.querySelectorAll('.nav-row').forEach(r => r.classList.remove('active'));
-  document.getElementById(`nav-${p.id}`).classList.add('active');
-  document.getElementById('obj-name').innerText = p.name;
-  document.getElementById('obj-desc').innerText = p.desc;
-  stage.innerHTML = p.svg;
-  addLog(`FILE_LOADED: ${p.id.toUpperCase()}... DECRYPTION_COMPLETE.`);
+    }, delay);
+    
+    delay += 400 + Math.random() * 300;
+  });
+
+  // Fade out boot screen and show app
+  setTimeout(() => {
+    bootScreen.style.opacity = '0';
+    appGrid.style.opacity = '1';
+    appGrid.style.transform = 'scale(1)';
+    
+    setTimeout(() => {
+      bootScreen.remove();
+      addLog("SYSTEM BOOT COMPLETE. AWAITING INPUT.", true);
+    }, 1000);
+    
+  }, delay + 500);
 }
 
-projects.forEach(p => {
-  const d = document.createElement('div');
-  d.id = `nav-${p.id}`;
-  d.className = 'nav-row';
-  d.innerHTML = `<div>${p.name}</div><div class="meta">REF_ID: ${p.id.toUpperCase()}_53</div>`;
-  d.onclick = () => select(p);
-  nav.appendChild(d);
-});
+/* ============================================================
+   4. UI LOGIC & TYPEWRITER EFFECT
+   ============================================================ */
+const navList = document.getElementById('nav-list');
+const logStream = document.getElementById('log-stream');
+let typeTimeout;
 
-function addLog(msg) {
-  const d = document.createElement('div');
-  d.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  term.prepend(d);
-  if(term.childNodes.length > 8) term.lastChild.remove();
-}
-
-// CLI INPUT
-const cmdField = document.getElementById('cmd-field');
-cmdField.onkeydown = (e) => {
-  if(e.key === 'Enter') {
-    const v = cmdField.value.toLowerCase();
-    addLog(`CMD_EXEC: ${v.toUpperCase()}`);
-    if(v === 'help') addLog("VALID: SCAN, TIME, CLEAR, REBOOT, SYNC");
-    else if(v === 'reboot') window.location.reload();
-    else if(v === 'scan') triggerDefrag();
-    else if(v === 'clear') term.innerHTML = '';
-    else addLog("ERR: CMD_NOT_RECOGNIZED");
-    cmdField.value = '';
-    playClick();
+function addLog(msg, highlight = false, error = false) {
+  const div = document.createElement('div');
+  
+  let className = 'log-entry';
+  if(highlight) className += ' highlight';
+  if(error) className += ' error';
+  
+  div.className = className;
+  div.innerText = `> [${new Date().toLocaleTimeString()}] ${msg}`;
+  
+  logStream.prepend(div);
+  
+  if(logStream.children.length > 12) {
+    logStream.lastChild.remove();
   }
-};
+}
 
-// CANVAS SIGNAL ENGINE
-const canvas = document.getElementById('waveCanvas');
+function typeWriter(text, elementId, speed = 15) {
+  const el = document.getElementById(elementId);
+  el.innerHTML = '';
+  let i = 0;
+  clearTimeout(typeTimeout);
+  
+  function type() {
+    if (i < text.length) {
+      el.innerHTML += text.charAt(i);
+      i++;
+      if(i % 3 === 0 && audioCtx) playKeystroke(); // Play sound every 3 chars
+      typeTimeout = setTimeout(type, speed);
+    }
+  }
+  type();
+}
+
+function selectProject(p) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`nav-${p.id}`).classList.add('active');
+  
+  document.getElementById('svg-stage').innerHTML = p.svg;
+  document.getElementById('obj-title').innerText = p.name;
+  document.getElementById('obj-id-tag').innerText = `ID_${p.id.substring(0,3).toUpperCase()}`;
+  
+  typeWriter(p.desc, 'obj-desc');
+  
+  addLog(`ACCESSED RECORD: ${p.id.toUpperCase()}`);
+}
+
+// Populate Navigation
+archive.forEach(p => {
+  const div = document.createElement('div');
+  div.className = 'nav-item';
+  div.id = `nav-${p.id}`;
+  div.innerHTML = `
+    <span class="nav-title">${p.name}</span>
+    <span class="nav-meta">${p.class}</span>
+  `;
+  div.onclick = () => {
+    if(audioCtx) playKeystroke();
+    selectProject(p);
+  };
+  navList.appendChild(div);
+});
+
+/* ============================================================
+   5. THE ERA SLIDER (THEME ENGINE)
+   ============================================================ */
+const slider = document.getElementById('era-slider');
+const eras = ["1953", "1986", "2019"];
+
+slider.addEventListener('input', (e) => {
+  const val = e.target.value;
+  const currentEra = eras[val];
+  
+  document.body.setAttribute('data-era', currentEra);
+  
+  document.querySelectorAll('.slider-label').forEach(el => el.classList.remove('active'));
+  document.getElementById(`lbl-${currentEra}`).classList.add('active');
+  
+  playAlert();
+  addLog(`TEMPORAL SHIFT INITIATED: SYNCING PROTOCOLS TO ${currentEra}...`, true);
+  
+  // Update HUD text based on era
+  const syncStatus = document.getElementById('sync-status');
+  if(currentEra === "1953") syncStatus.innerText = "STABLE";
+  if(currentEra === "1986") syncStatus.innerText = "FLUCTUATING";
+  if(currentEra === "2019") syncStatus.innerText = "CRITICAL";
+});
+
+/* ============================================================
+   6. CANVAS TELEMETRY & RADAR
+   ============================================================ */
+const canvas = document.getElementById('telemetryCanvas');
 const ctx = canvas.getContext('2d');
-function res() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
-window.onresize = res; res();
 
-function drawWave(t) {
-  ctx.fillStyle = 'rgba(7, 7, 6, 0.2)';
-  ctx.fillRect(0,0,canvas.width, canvas.height);
+function resizeCanvas() { 
+  canvas.width = canvas.offsetWidth; 
+  canvas.height = canvas.offsetHeight; 
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function drawCanvas(time) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // Grid Lines
-  ctx.strokeStyle = 'rgba(212, 175, 55, 0.03)';
-  for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+  const computedStyle = getComputedStyle(document.body);
+  const accentColor = computedStyle.getPropertyValue('--accent').trim();
+  const alertColor = computedStyle.getPropertyValue('--alert').trim();
   
-  // Waveform
-  ctx.beginPath(); ctx.strokeStyle = 'var(--gold)'; ctx.lineWidth = 1;
-  for(let x=0; x<canvas.width; x+=5) {
-    const y = canvas.height/2 + Math.sin(x*0.02 + t*0.002) * 25 + Math.random()*10;
+  const complexity = parseInt(slider.value) + 1; // 1, 2, or 3 based on era
+  
+  // 1. Draw Background Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for(let i=0; i<canvas.width; i+=40) { 
+    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); 
+  }
+  for(let i=0; i<canvas.height; i+=40) { 
+    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); 
+  }
+
+  // 2. Draw Waveform (Amplitude changes with era)
+  ctx.beginPath();
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2;
+  
+  for(let x = 0; x < canvas.width; x += 4) {
+    const baseSine = Math.sin(x*0.02 + time*0.002);
+    const complexSine = Math.cos(x*0.05 + time*0.005);
+    const y = canvas.height/2 + (baseSine * 20 * complexity) + (complexSine * 10 * complexity);
     ctx.lineTo(x, y);
   }
   ctx.stroke();
-  requestAnimationFrame(drawWave);
-}
-drawWave(0);
 
-// HUD MOUSE TRACKER
-window.onmousemove = (e) => {
-  const hud = document.getElementById('biometric-hud');
-  hud.style.left = (e.clientX + 15) + 'px';
-  hud.style.top = (e.clientY + 15) + 'px';
-  hud.innerText = `POS_X: ${e.clientX} // POS_Y: ${e.clientY}`;
-};
+  // 3. Draw Radar Sweep Line
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const radius = Math.min(cx, cy) - 20;
+  
+  ctx.beginPath();
+  ctx.strokeStyle = `rgba(255,255,255,0.1)`;
+  ctx.lineWidth = 1;
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  const sweepAngle = (time * 0.001) % (Math.PI * 2);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(sweepAngle) * radius, cy + Math.sin(sweepAngle) * radius);
+  ctx.strokeStyle = alertColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-// TIMERS & ENTROPY
-setInterval(() => {
-  document.getElementById('master-clock').innerText = new Date().toLocaleTimeString();
-  document.getElementById('flux-meter').innerText = (0.0003 + Math.random()*0.0001).toFixed(5) + " Hz";
-  document.getElementById('temp-bar').style.width = (30 + Math.random()*10) + "%";
+  // Update HUD Data randomly
   if(Math.random() > 0.95) {
-    document.getElementById('app').classList.add('flicker');
-    setTimeout(() => document.getElementById('app').classList.remove('flicker'), 150);
+    const flux = (0.003 + Math.random()*0.002).toFixed(4);
+    const amp = (40 + Math.random()*10 * complexity).toFixed(1);
+    const rad = (0.02 * complexity + Math.random()*0.01).toFixed(3);
+    document.getElementById('hud-stats').innerHTML = `FLUX: ${flux}Hz<br>AMP: ${amp}V<br>RAD: ${rad}μSv/h`;
   }
+
+  requestAnimationFrame(drawCanvas);
+}
+
+/* ============================================================
+   7. COMMAND LINE INTERFACE (CLI)
+   ============================================================ */
+const cliInput = document.getElementById('cli-input');
+
+function executeCommand(cmd) {
+  addLog(`EXECUTING: ${cmd.toUpperCase()}`, true);
+  
+  if(cmd === 'OVERRIDE') {
+    playAlert();
+    document.body.style.filter = "invert(1) hue-rotate(180deg)";
+    setTimeout(() => {
+      document.body.style.filter = "none";
+    }, 200);
+    addLog("SECURITY OVERRIDE FAILED. O5 CLEARANCE REQUIRED.", false, true);
+  } else if (cmd === 'DECRYPT') {
+    addLog("DECRYPTING PACKETS... [OK]");
+  }
+}
+
+cliInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') {
+    const val = cliInput.value.trim().toUpperCase();
+    if(val === '') return;
+    
+    playKeystroke();
+    addLog(`USER_INPUT: ${val}`);
+    
+    switch(val) {
+      case 'HELP':
+        addLog("AVAILABLE COMMANDS: SCAN, OVERRIDE, CLEAR, REBOOT, STATUS");
+        break;
+      case 'CLEAR':
+        logStream.innerHTML = '';
+        break;
+      case 'REBOOT':
+        addLog("INITIATING SYSTEM REBOOT...", true);
+        setTimeout(() => window.location.reload(), 1000);
+        break;
+      case 'SCAN':
+        addLog("SCANNING LOCAL AREA FOR ANOMALIES...");
+        setTimeout(() => addLog("RESULT: 1 TEMPORAL ANOMALY DETECTED.", false, true), 1500);
+        break;
+      case 'STATUS':
+        addLog(`CURRENT ERA: ${eras[slider.value]} | INTEGRITY: NOMINAL`);
+        break;
+      case 'OVERRIDE':
+        executeCommand('OVERRIDE');
+        break;
+      default:
+        addLog(`COMMAND NOT RECOGNIZED: '${val}'`, false, true);
+    }
+    
+    cliInput.value = '';
+  }
+});
+
+/* ============================================================
+   8. CLOCK & INITIALIZATION
+   ============================================================ */
+setInterval(() => {
+  document.getElementById('clock').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-function triggerDefrag() {
-  playClick();
-  document.body.style.filter = "invert(1) contrast(5)";
-  setTimeout(() => document.body.style.filter = "none", 100);
-  addLog("CRITICAL: SECTOR_DEFRAG_COMPLETE.");
-}
+// Start
+window.onload = () => {
+  runBootSequence();
+  selectProject(archive[0]);
+  requestAnimationFrame(drawCanvas);
+};
 
-select(projects[0]);
 </script>
 </body>
 </html>
