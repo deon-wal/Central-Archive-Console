@@ -332,6 +332,952 @@ function init3DViewer() {
     previewCamera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
     previewCamera.position.z = 4.5;
 
+    // Upgraded Vertex Shader for high volatility tearing
+    const vertexShader = `
+        varying vec2 vUv;
+        varying float vNoise;
+        uniform float time;
+        uniform float speed;
+        uniform float intensity;
+        
+        float hash(float n) { return fract(sin(n) * 1e4); }
+        float noise(vec3 x) {
+            const vec3 step = vec3(110.0, 241.0, 171.0);
+            vec3 i = floor(x);
+            vec3 f = fract(x);
+            float n = dot(i, step);
+            vec3 u = f * f * (3.0 - 2.0 * f);
+            return mix(mix(mix( hash(n + dot(step, vec3(0, 0, 0))), hash(n + dot(step, vec3(1, 0, 0))), u.x),
+                           mix( hash(n + dot(step, vec3(0, 1, 0))), hash(n + dot(step, vec3(1, 1, 0))), u.x), u.y),
+                       mix(mix( hash(n + dot(step, vec3(0, 0, 1))), hash(n + dot(step, vec3(1, 0, 1))), u.x),
+                           mix( hash(n + dot(step, vec3(0, 1, 1))), hash(n + dot(step, vec3(1, 1, 1))), u.x), u.y), u.z);
+        }
+        
+        void main() {
+            vUv = uv;
+            vNoise = noise(position * 2.0 + (time * speed));
+            
+            // Add secondary high-frequency noise for volatile models
+            float microNoise = hash(dot(position, vec3(12.9898, 78.233, 45.164)) + time * speed * 2.0);
+            
+            // Displace normally, but add micro-tearing based on intensity
+            vec3 pos = position + normal * (vNoise * intensity) + (normal * microNoise * (intensity * 0.25));
+            
+            if(pos.y > 0.0) pos.y += pos.y * (sin(time)*0.2 + 0.2); 
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+    `;
+
+    const fragmentShader = `
+        varying float vNoise;
+        uniform float time;
+        uniform vec3 glitchColor;
+        
+        void main() {
+            vec3 c1 = vec3(0.9, 0.95, 0.95); // Bright white/ice
+            vec3 c2 = vec3(0.15, 0.15, 0.15); // Deep shadow
+            
+            float bands = sin(gl_FragCoord.y * 0.1 + time * 10.0);
+            vec3 col = mix(c2, c1, vNoise * 1.5);
+            
+            // Glitch lines using uniform color
+            if(bands > 0.95) col = mix(col, glitchColor, 0.7);
+            
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+        uniforms: previewUniforms,
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        wireframe: false
+    });
+
+    // Default object
+    const geometry = new THREE.IcosahedronGeometry(1.2, 32); 
+    previewMesh = new THREE.Mesh(geometry, material);
+    previewScene.add(previewMesh);
+
+    // Add outer wireframe cage
+    previewWireframe = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1.5, 1),
+        new THREE.MeshBasicMaterial({color: 0xc5a059, wireframe: true, transparent: true, opacity: 0.15})
+    );
+    previewScene.add(previewWireframe);
+
+    function animate3D() {
+        requestAnimationFrame(animate3D);
+        previewUniforms.time.value += 0.01;
+        previewMesh.rotation.y += 0.002;
+        previewMesh.rotation.x += 0.001;
+        previewWireframe.rotation.z -= 0.003;
+        previewWireframe.rotation.y -= 0.001;
+        previewRenderer.render(previewScene, previewCamera);
+    }
+    animate3D();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        previewRenderer.setSize(cw, ch);
+        previewCamera.aspect = cw / ch;
+        previewCamera.updateProjectionMatrix();
+    });
+}
+
+function getGeometryForType(type) {
+    switch(type) {
+        case 'apparatus': return new THREE.TorusKnotGeometry(0.8, 0.25, 100, 16);
+        case 'substrate': return new THREE.IcosahedronGeometry(1.4, 2);
+        case 'due': return new THREE.CylinderGeometry(0.8, 0.8, 2, 32, 16);
+        case 'observatory': return new THREE.OctahedronGeometry(1.2, 0); // Low poly for violent tearing
+        case 'test_node': return new THREE.BoxGeometry(1.4, 1.4, 1.4, 4, 4, 4);
+        default: return new THREE.IcosahedronGeometry(1.2, 32);
+    }
+}
+
+
+/* --- DATA & CONFIG WITH SEMANTIC 3D MODELS --- */
+const archiveData = [
+  { 
+    name: "The Apparatus", 
+    id: "apparatus", 
+    desc: "Brass transit device. Utilizing Cesium-137. Status: Decrypted.", 
+    url: "#",
+    imgText: "> QUERYING CENTRAL DB...\n> CONNECTING...\n> [DATA STREAM INTERCEPTED]\n\n> <span style='color:var(--alert)'>ERR 404: NO VISUAL RECORD FOUND.</span>\n> <span style='color:var(--alert)'>THE APPARATUS HAS BEEN MOVED.</span>",
+    // Gyroscopic / mechanical representation
+    model: { type: 'apparatus', speed: 1.5, intensity: 0.3, glitchColor: 0xc5a059, cageColor: 0xc5a059, wireframe: false }, 
+    imgUrl: "" 
+  },
+  { 
+    name: "Substrate Protocol", 
+    id: "substrate", 
+    desc: "SVC architecture. Hierarchical spatial mapping.", 
+    url: "https://deon-wal.github.io/Substrate-Protocol/", 
+    imgText: "> RETRIEVING BLUEPRINT DATA...\n> DECRYPTING SVC ARCHITECTURE...\n> MATCH FOUND.\n\n> <span style='color:var(--blue)'>STATUS: LINKED. READY FOR DEPLOYMENT.</span>",
+    // Pure energy / wireframe representation
+    model: { type: 'substrate', speed: 0.5, intensity: 0.4, glitchColor: 0x556b2f, cageColor: 0x556b2f, wireframe: true }, 
+  },
+  { 
+    name: "D.U.E. Archive", 
+    id: "due", 
+    desc: "Department of Unfinished Events. Chronological records vault.", 
+    url: "https://deon-wal.github.io/Department-Of-Unfinished-Events-DUE/", 
+    imgText: "> PINGING D.U.E. MAINFRAME...\n> HANDSHAKE ACCEPTED.\n\n> <span style='color:var(--accent)'>REMOTE UPLINK ESTABLISHED.</span>\n> WAITING FOR USER INPUT...",
+    // Database core / cylinder
+    model: { type: 'due', speed: 1.0, intensity: 0.1, glitchColor: 0x4a3b18, cageColor: 0x4a3b18, wireframe: false }, 
+  },
+  { 
+    name: "Anomaly Observatory", 
+    id: "observatory", 
+    desc: "Monitoring spatial irregularities across the Bureau network.", 
+    url: "https://deon-wal.github.io/Anomaly-Observatory/", 
+    imgText: "> ACCESSING LIVE FEED...\n> CALIBRATING SENSORS...\n\n> <span style='color:var(--alert)'>WARNING: PHASE SHIFT DETECTED IN SECTOR 4.</span>\n> RECOMMEND IMMEDIATE EVACUATION.",
+    // Highly volatile, physically tearing apart
+    model: { type: 'observatory', speed: 6.0, intensity: 1.8, glitchColor: 0x8b3a2b, cageColor: 0x8b3a2b, wireframe: false }, 
+  },
+  { 
+    name: "Kernel Diagnostics", 
+    id: "test_node", 
+    desc: "Diagnostic sandbox for kernel verification.", 
+    url: "https://deon-wal.github.io/Test/Test.html", 
+    imgText: "> RUNNING DIAGNOSTICS...\n> CHECKING MEMORY ALLOCATION...\n> VERIFYING INTEGRITY...\n\n> <span style='color:var(--blue)'>ALL SYSTEMS NOMINAL.</span>",
+    // Stable containment cube
+    model: { type: 'test_node', speed: 0.2, intensity: 0.05, glitchColor: 0xd1c7b7, cageColor: 0xc5a059, wireframe: false }, 
+  }
+];
+
+let systemBooted = false, sessionHeat = 0;
+let typeInterval = null;
+
+/* --- INTERFACE LOGIC & BOOT MEMORY --- */
+window.onload = () => {
+    init3DViewer();
+    // Check if the user has booted the terminal before
+    if (localStorage.getItem('bureau_booted') === 'true') {
+        unlockSystem(true); // Fast bypass
+    }
+};
+
+function runBootSequence() {
+    const btn = document.getElementById('boot-btn');
+    const status = document.getElementById('boot-status');
+    
+    btn.style.display = 'none';
+    document.body.classList.add('rumble');
+    
+    status.style.justifyContent = 'flex-start';
+    status.innerHTML = '';
+    
+    const bootLogs = [
+        "INITIATING WARM BOOT...",
+        "LOADING KERNEL 7.4.2 [OK]",
+        "AUTH: DEON_WAL [VERIFIED]",
+        "MOUNTING ENCRYPTED VOLUMES [OK]",
+        "BYPASSING SECURITY PROTOCOLS [OK]",
+        "ESTABLISHING MAINFRAME UPLINK...",
+        "UPLINK ESTABLISHED. WELCOME, OPERATIVE."
+    ];
+    
+    let i = 0;
+    const bootInterval = setInterval(() => {
+        if (i < bootLogs.length) {
+            status.innerHTML += `<div style="color: var(--text); text-align: left; margin-bottom: 4px;">> ${bootLogs[i]}</div>`;
+            status.scrollTop = status.scrollHeight;
+            i++;
+        } else {
+            clearInterval(bootInterval);
+            document.body.classList.remove('rumble');
+            
+            // Save state so we don't annoy the user on refresh
+            localStorage.setItem('bureau_booted', 'true');
+            setTimeout(() => unlockSystem(false), 400);
+        }
+    }, 250);
+}
+
+function unlockSystem(fastBoot = false) {
+    systemBooted = true;
+    document.getElementById('boot-modal').classList.add('hidden');
+    document.getElementById('os-panels').classList.add('booted');
+    
+    // Fix resize glitch for 3D canvas when flexbox becomes visible
+    window.dispatchEvent(new Event('resize'));
+    
+    if(!fastBoot) {
+        document.body.classList.add('rumble');
+        setTimeout(()=>document.body.classList.remove('rumble'), 400);
+        
+        // Staggered boot logs
+        setTimeout(() => addLog("SYSTEM_BOOT: OK."), 500);
+        setTimeout(() => addLog("INITIALIZING MAINFRAME CONNECTION..."), 1200);
+        setTimeout(() => addLog("AWAITING USER INPUT."), 2000);
+    } else {
+        addLog("SYSTEM_RESTORED: MEMORY OK.");
+    }
+    
+    startAnomalySystem();
+    drawCCTV(); 
+    document.getElementById('cli-input').focus();
+}
+
+// SLOWED DOWN DECRYPTION FUNCTION (Used for Preview & Dossier)
+const decryptText = (el, target) => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!<>-_\\/[]{}—=+*^?#";
+    let iterations = 0;
+    
+    if (el.decryptInterval) clearInterval(el.decryptInterval);
+    
+    el.decryptInterval = setInterval(() => {
+        el.innerText = target.split("").map((letter, index) => {
+            if(index < iterations) return target[index]; 
+            if(target[index] === " ") return " "; 
+            return chars[Math.floor(Math.random() * chars.length)]; 
+        }).join("");
+        
+        if(iterations >= target.length) clearInterval(el.decryptInterval);
+        
+        iterations += 0.15; // Slow, struggling decryption
+    }, 30); 
+};
+
+// Robust Typewriter effect for HTML strings
+const typeText = (el, htmlString) => {
+    if(typeInterval) clearInterval(typeInterval);
+    el.innerHTML = '';
+    
+    const parts = [];
+    let isTag = false;
+    let currentTag = "";
+    
+    for (let i = 0; i < htmlString.length; i++) {
+        const char = htmlString[i];
+        if (char === '<') { isTag = true; currentTag = char; }
+        else if (char === '>') { isTag = false; currentTag += char; parts.push(currentTag); currentTag = ""; }
+        else if (isTag) { currentTag += char; }
+        else if (char === '\n') { parts.push('<br>'); }
+        else { parts.push(char); }
+    }
+
+    let i = 0;
+    typeInterval = setInterval(() => {
+        if (i < parts.length) {
+            el.innerHTML += parts[i];
+            el.scrollTop = el.scrollHeight; // Auto-scroll
+            i++;
+        } else {
+            clearInterval(typeInterval);
+        }
+    }, 20); // Typing speed
+};
+
+function populate() {
+    const list = document.getElementById('nav-list');
+    list.innerHTML = '';
+    
+    // 1. Loop through normal projects
+    archiveData.forEach(item => {
+        const d = document.createElement('div');
+        d.className = 'fs-item';
+        
+        const titleBlock = document.createElement('div');
+        titleBlock.className = 'fs-item-title';
+        titleBlock.innerText = `// ${item.name}`; // No decryption here, instantly readable
+
+        const descBlock = document.createElement('div');
+        descBlock.className = 'fs-item-desc';
+        descBlock.innerText = item.desc;
+        
+        const btn = document.createElement('a');
+        btn.className = 'fs-action-btn';
+        if(item.url && item.url !== "#") {
+            btn.innerText = "[ ACCESS PROTOCOL ]";
+            btn.href = item.url;
+            btn.target = "_blank"; 
+        } else {
+            btn.innerText = "[ DATA CORRUPTED ]";
+            btn.onclick = (e) => { e.stopPropagation(); addLog(`<span style="color:var(--alert)">ERR: PROTOCOL ${item.id} IS CORRUPT.</span>`); };
+        }
+
+        d.appendChild(titleBlock);
+        d.appendChild(descBlock);
+        d.appendChild(btn);
+
+        // Making the whole card trigger the preview
+        const triggerPreview = () => {
+            if(!systemBooted) return;
+            document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
+            d.classList.add('active'); 
+            
+            // Decryption stays on the preview title!
+            decryptText(document.getElementById('obj-title'), ">> " + item.name.toUpperCase());
+            
+            typeText(document.getElementById('obj-logs'), item.imgText);
+            
+            const realImg = document.getElementById('project-real-img');
+            const svgContainer = document.getElementById('project-svg-container');
+            const canvas3d = document.getElementById('project-3d-canvas');
+            
+            if(item.imgUrl && item.imgUrl !== "") {
+                realImg.src = item.imgUrl;
+                realImg.style.display = "block";
+                svgContainer.style.display = "none";
+                canvas3d.style.display = "none";
+            } else {
+                realImg.style.display = "none";
+                svgContainer.style.display = "none";
+                canvas3d.style.display = "block";
+                
+                // Update 3D Model Parameters based on project data
+                if(item.model && previewMesh) {
+                    previewMesh.geometry.dispose(); // clean old
+                    previewWireframe.geometry.dispose();
+                    
+                    const newGeo = getGeometryForType(item.model.type);
+                    previewMesh.geometry = newGeo;
+                    
+                    // Toggle wireframe mode on the main material
+                    previewMesh.material.wireframe = item.model.wireframe || false;
+                    
+                    // Set cage geometry based on base type
+                    previewWireframe.geometry = getGeometryForType(item.model.type);
+                    // slightly scale up the cage so it encapsulates the main shape
+                    previewWireframe.scale.set(1.2, 1.2, 1.2);
+                    
+                    previewUniforms.speed.value = item.model.speed;
+                    previewUniforms.intensity.value = item.model.intensity;
+                    previewUniforms.glitchColor.value.setHex(item.model.glitchColor);
+                    previewWireframe.material.color.setHex(item.model.cageColor);
+                }
+            }
+            addLog(`MOUNTING: ${item.id}`);
+        };
+
+        titleBlock.onclick = triggerPreview;
+        descBlock.onclick = triggerPreview;
+        
+        list.appendChild(d);
+    });
+
+    // 2. Add the "More Content" Dossier section at the end of the grid
+    const dossierBlock = document.createElement('div');
+    dossierBlock.style.gridColumn = "1 / -1"; // Force to span all columns
+    dossierBlock.style.marginTop = "20px";
+    dossierBlock.style.borderTop = "1px dashed var(--accent-dim)";
+    dossierBlock.style.paddingTop = "20px";
+    
+    dossierBlock.innerHTML = `
+        <div style="font-family: 'Space Mono'; color: var(--rust); font-size: 14px; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px;">// CLASSIFIED_DOSSIERS</div>
+        <div class="fs-item" style="border-color: var(--rust); background: rgba(139, 58, 43, 0.05);" id="dossier-card">
+            <div class="fs-item-title" style="color: var(--rust); border-bottom-color: var(--rust); font-size: 16px;">// OPERATIVE_PROFILE</div>
+            <div class="fs-item-desc" style="color: var(--text);">Clearance Level: OMEGA. View authorization required. Contains agent history and technical skillsets.</div>
+            <a class="fs-action-btn" style="border-color: var(--rust); color: var(--rust);">[ DECRYPT PROFILE ]</a>
+        </div>
+    `;
+    
+    list.appendChild(dossierBlock);
+    
+    // Logic for Dossier Card (Keeps the hover decryption effect)
+    const dossierCard = document.getElementById('dossier-card');
+    
+    dossierCard.addEventListener('mouseenter', () => {
+         if(!dossierCard.classList.contains('active')) {
+             decryptText(dossierCard.querySelector('.fs-item-title'), `// OPERATIVE_PROFILE`);
+         }
+    });
+
+    dossierCard.onclick = () => {
+        if(!systemBooted) return;
+        document.querySelectorAll('.fs-item').forEach(el => el.classList.remove('active'));
+        dossierCard.classList.add('active');
+        
+        document.getElementById('obj-title').innerText = ">> DOSSIER: SUBJECT_001";
+        
+        const dossierText = "> NAME: DEON WAL\n> ROLE: UI/UX ARCHITECT\n> CLEARANCE: OMEGA\n> STATUS: ACTIVE\n\n> <span style='color:var(--accent)'>KNOWN PROTOCOLS (SKILLS):</span>\n> - FRONTEND ARCHITECTURE\n> - SYSTEM ENGINEERING\n> - SPATIAL DESIGN\n> - 3D / WEBGL SYSTEMS\n\n> <span style='color:var(--alert)'>WARNING: SUBJECT IS HIGHLY VOLATILE.</span>";
+        typeText(document.getElementById('obj-logs'), dossierText);
+        
+        const svgContainer = document.getElementById('project-svg-container');
+        document.getElementById('project-real-img').style.display = "none";
+        document.getElementById('project-3d-canvas').style.display = "none";
+        svgContainer.style.display = "block";
+        
+        // A Personalized Gritty ID Badge SVG
+        svgContainer.innerHTML = `<svg viewBox="0 0 100 100" style="width:100%; height:100%; filter: drop-shadow(0 0 8px rgba(139, 58, 43, 0.3));">
+            <rect x="20" y="10" width="60" height="80" fill="rgba(139, 58, 43, 0.1)" stroke="var(--rust)" stroke-width="2"/>
+            <rect x="30" y="20" width="40" height="35" fill="none" stroke="var(--accent-dim)" stroke-width="1" stroke-dasharray="2 2"/>
+            <!-- Avatar Silhouette -->
+            <path d="M40 55 C40 45, 60 45, 60 55 Z" fill="var(--accent-dim)"/>
+            <circle cx="50" cy="35" r="8" fill="var(--accent-dim)"/>
+            
+            <text x="50" y="70" font-family="Space Mono" font-size="6" fill="var(--accent)" text-anchor="middle" font-weight="bold">DEON WAL</text>
+            <text x="50" y="78" font-family="Space Mono" font-size="4" fill="var(--rust)" text-anchor="middle">LEVEL: OMEGA</text>
+            <line x1="25" y1="85" x2="75" y2="85" stroke="var(--rust)" stroke-width="2" stroke-dasharray="5 2 2 2 10 2"/>
+        </svg>`;
+        
+        addLog(`MOUNTING: DOSSIER // DEON_WAL`);
+    };
+}
+
+/* --- EXPANDED TERMINAL --- */
+const cli = document.getElementById('cli-input');
+cli.onkeydown = (e) => {
+    if(!systemBooted) return;
+    if(e.key === 'Enter') {
+        const val = cli.value.toUpperCase().trim();
+        
+        if(val === 'HELP') { 
+            addLog("CMDS: HELP, SCAN, CLEAR, WHOAMI, DEFRAG, SUDO"); 
+        } 
+        else if(val === 'CLEAR') { 
+            document.getElementById('log-stream').innerHTML = ''; 
+        } 
+        else if(val === 'SCAN') { 
+            addLog("INITIATING SCAN...");
+            setTimeout(() => addLog("SECTOR 1: CLEAR"), 800);
+            setTimeout(() => addLog("SECTOR 2: CLEAR"), 1600);
+            setTimeout(() => addLog("SECTOR 3: <span style='color:var(--alert)'>ANOMALY DETECTED</span>"), 2400);
+        }
+        else if(val === 'WHOAMI') {
+            addLog("> AUTHORIZED USER: DEON WAL");
+            addLog("> CLEARANCE: OMEGA");
+        }
+        else if(val === 'DEFRAG') {
+            addLog("INITIATING MEMORY DEFRAGMENTATION...");
+            document.getElementById('os-panels').style.filter = "grayscale(1) blur(10px) contrast(2)";
+            setTimeout(() => {
+                document.getElementById('os-panels').style.filter = "grayscale(0) blur(0px)";
+                addLog("DEFRAG COMPLETE. KERNEL OPTIMIZED.");
+            }, 2000);
+        }
+        else if(val === 'SUDO') {
+            addLog("<span style='color:var(--alert)'>ERR: UNAUTHORIZED ACCESS ATTEMPT. INCIDENT LOGGED.</span>");
+            document.body.classList.add('rumble');
+            setTimeout(() => document.body.classList.remove('rumble'), 500);
+        }
+        else if(val !== '') { 
+            addLog(`<span style="color:var(--alert)">ERR: UNKNOWN COMMAND '${val}'.</span>`); 
+        }
+        
+        cli.value = '';
+    }
+};
+
+function addLog(m) {
+    const s = document.getElementById('log-stream');
+    const d = document.createElement('div');
+    d.innerHTML = `<span style="color:var(--accent-dim)">[${new Date().toLocaleTimeString()}]</span> > ${m}`;
+    s.prepend(d); 
+    if(s.children.length > 20) s.lastChild.remove();
+}
+
+if(navigator.getBattery) {
+    navigator.getBattery().then(bat => {
+        const up = () => { document.getElementById('integrity-val').innerText = (bat.level * 100).toFixed(0) + "%"; }
+        bat.addEventListener('levelchange', up); up();
+    });
+}
+
+setInterval(() => {
+    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    if(!systemBooted) return;
+    document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
+    sessionHeat = Math.min(sessionHeat + 0.1, 100);
+    document.documentElement.style.setProperty('--burn', sessionHeat / 200);
+}, 1000);
+
+populate();
+
+function startAnomalySystem() {
+    setInterval(() => {
+        if (systemBooted && Math.random() < 0.1) {
+            document.body.classList.add('rumble');
+            setTimeout(() => document.body.classList.remove('rumble'), 400);
+            addLog("<span style='color:var(--alert)'>WARN: SPATIAL FLUCTUATION DETECTED.</span>");
+            document.getElementById('cctv-status').innerText = "STATUS: INTERFERENCE";
+            setTimeout(() => document.getElementById('cctv-status').innerText = "STATUS: ACTIVE SCANNING", 3000);
+        }
+    }, 15000); 
+}
+
+/* --- 3D WIREFRAME CCTV FEED + TELEMETRY --- */
+const cctvCanvas = document.getElementById('cctvCanvas');
+const cCtx = cctvCanvas.getContext('2d');
+let timeAngle = 0;
+
+function drawCCTV() {
+    if(!systemBooted) return;
+    
+    const rect = cctvCanvas.getBoundingClientRect();
+    if(cctvCanvas.width !== rect.width || cctvCanvas.height !== rect.height) {
+        cctvCanvas.width = rect.width;
+        cctvCanvas.height = rect.height;
+    }
+    
+    const w = cctvCanvas.width;
+    const h = cctvCanvas.height;
+    
+    cCtx.fillStyle = '#050404';
+    cCtx.fillRect(0, 0, w, h);
+    
+    cCtx.save();
+    cCtx.translate(w/2, h/2);
+    timeAngle += 0.015;
+    
+    const size = Math.min(w, h) * 0.25;
+    const nodes = [[-1,-1,-1], [-1,-1,1], [-1,1,-1], [-1,1,1], [1,-1,-1], [1,-1,1], [1,1,-1], [1,1,1]];
+    const edges = [[0,1], [1,3], [3,2], [2,0], [4,5], [5,7], [7,6], [6,4], [0,4], [1,5], [2,6], [3,7]];
+    
+    cCtx.strokeStyle = 'rgba(197, 160, 89, 0.4)'; 
+    cCtx.lineWidth = 1;
+    
+    cCtx.beginPath();
+    edges.forEach(edge => {
+        const p1 = nodes[edge[0]], p2 = nodes[edge[1]];
+        const cosA = Math.cos(timeAngle), sinA = Math.sin(timeAngle);
+        const y1 = p1[1]*cosA - p1[2]*sinA, z1 = p1[1]*sinA + p1[2]*cosA;
+        const x1 = p1[0]*cosA - z1*sinA, zz1 = p1[0]*sinA + z1*cosA;
+        const y2 = p2[1]*cosA - p2[2]*sinA, z2 = p2[1]*sinA + p2[2]*cosA;
+        const x2 = p2[0]*cosA - z2*sinA, zz2 = p2[0]*sinA + z2*cosA;
+
+        const fov = 150;
+        const scale1 = fov / (fov + zz1*size), scale2 = fov / (fov + zz2*size);
+        cCtx.moveTo(x1 * size * scale1, y1 * size * scale1);
+        cCtx.lineTo(x2 * size * scale2, y2 * size * scale2);
+    });
+    cCtx.stroke();
+    cCtx.restore();
+
+    cCtx.fillStyle = 'rgba(197, 160, 89, 0.7)';
+    cCtx.font = '9px Space Mono';
+    cCtx.fillText(`AX: ${(Math.sin(timeAngle)*100).toFixed(2)}`, 10, 20);
+    cCtx.fillText(`AY: ${(Math.cos(timeAngle)*100).toFixed(2)}`, 10, 35);
+    cCtx.fillText(`TRG: ${Math.random().toString(16).substr(2, 6).toUpperCase()}`, w - 70, 20);
+
+    const imgData = cCtx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        if(Math.random() > 0.5) {
+            const noise = Math.random() * 25; 
+            data[i] += noise; data[i+1] += noise; data[i+2] += noise;        
+        }
+    }
+    cCtx.putImageData(imgData, 0, 0);
+
+    if (Math.random() > 0.99) {
+        cCtx.fillStyle = 'rgba(139, 58, 43, 0.5)';
+        cCtx.fillRect(0, 0, w, h);
+    }
+
+    document.getElementById('cctv-time').innerText = new Date().toISOString().substr(11, 8) + "Z";
+    requestAnimationFrame(drawCCTV);
+}
+
+let complianceTimer;
+function triggerComplianceCheck() {
+    if (!systemBooted) return;
+    const modal = document.getElementById('compliance-modal');
+    if(modal.style.display === 'block') return; 
+    
+    modal.style.display = 'block';
+    document.body.classList.add('rumble');
+    setTimeout(() => document.body.classList.remove('rumble'), 400);
+    addLog("<span style='color:var(--alert)'>WARN: COMPLIANCE CHECK INITIATED.</span>");
+    
+    complianceTimer = setTimeout(() => {
+        modal.style.display = 'none';
+        addLog("<span style='color:var(--alert)'>ERR: WORKER UNRESPONSIVE. DEMERIT LOGGED.</span>");
+        document.documentElement.style.setProperty('--burn', '0.6'); 
+        setTimeout(() => document.documentElement.style.setProperty('--burn', sessionHeat / 200), 2000);
+    }, 10000); 
+}
+
+function verifyCompliance() {
+    clearTimeout(complianceTimer);
+    document.getElementById('compliance-modal').style.display = 'none';
+    addLog("COMPLIANCE VERIFIED. GLORY TO THE STATE.");
+}
+
+setInterval(() => {
+    if(systemBooted && Math.random() < 0.08) triggerComplianceCheck();
+}, 25000);
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>THE BUREAU // NODE_7 // TERMINUS</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <!-- IMPORT THREE.JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            /* 1984 / BRAZIL / DARK ANALOG PALETTE */
+            --accent: #c5a059; /* Tarnished Brass */
+            --accent-dim: #4a3b18; /* Dark Brass/Oil */
+            --bg: #070605; /* Deepest warm gray/black */
+            --panel: #110f0e; /* Dark bureaucratic brown/grey */
+            --rust: #8b3a2b; /* Dried blood / rust */
+            --alert: #d9381e; /* Harsh CRT Red */
+            --blue: #556b2f; /* Olive / Sickly Phosphor Green */
+            --text: #d1c7b7; /* Faded parchment */
+            --burn: 0;
+            --system-opacity: 0.05;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; 
+            min-height: 100vh; touch-action: auto; 
+        }
+
+        #os-workspace { position: relative; width: 100vw; min-height: 100vh; background: #050404; display: flex; flex-direction: column; }
+
+        /* THE UPGRADED SPREAD-OUT GRID */
+        #os-panels {
+            flex: 1;
+            padding: 70px 20px 45px 20px; 
+            display: none; 
+            grid-template-columns: 1fr 380px; 
+            grid-template-rows: minmax(350px, 1fr) 240px 180px; 
+            gap: 15px;
+            opacity: var(--system-opacity);
+            transition: opacity 1.5s ease, filter 1.5s ease;
+            filter: grayscale(1) blur(4px);
+        }
+
+        #os-panels.booted {
+            display: grid;
+            opacity: 1;
+            filter: grayscale(0) blur(0px);
+        }
+
+        /* LOCKED BRUTALIST WINDOWS */
+        .window {
+            background: var(--panel); border: 2px solid var(--accent-dim);
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.8); 
+            position: relative;
+        }
+
+        /* Specific Window Placements */
+        #win-nav { grid-column: 1; grid-row: 1 / span 2; } 
+        #win-man { grid-column: 2; grid-row: 1; } 
+        #win-cctv { grid-column: 2; grid-row: 2; } 
+        #win-cli { grid-column: 1 / span 2; grid-row: 3; } 
+
+        .window-header {
+            padding: 8px 12px; background: #080706; color: var(--accent);
+            font-family: 'Space Mono'; font-size: 10px; font-weight: bold; text-transform: uppercase;
+            display: flex; justify-content: space-between; align-items: center; user-select: none;
+            border-bottom: 2px solid var(--accent-dim);
+            letter-spacing: 1px;
+        }
+
+        #boot-modal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 20000; text-align: center; width: 500px;
+            background: #0a0908; border: 2px solid var(--accent-dim);
+            padding: 50px; box-shadow: 20px 20px 0px rgba(0,0,0,0.9);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.95); pointer-events: none; }
+
+        @keyframes btn-pulse { 0% { box-shadow: 0 0 5px var(--accent-dim); } 50% { box-shadow: 0 0 20px var(--accent); } 100% { box-shadow: 0 0 5px var(--accent-dim); } }
+        #boot-btn { animation: btn-pulse 2s infinite; }
+
+        /* UPGRADED GRID REGISTRY ITEMS */
+        #nav-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 15px; 
+            padding: 20px; overflow-y: auto; flex: 1; 
+            align-content: start;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050404; border-left: 1px solid var(--accent-dim); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-dim); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        .fs-item { 
+            padding: 18px; border: 1px solid var(--accent-dim); 
+            background: rgba(0,0,0,0.6); font-family: 'Space Mono'; 
+            transition: all 0.1s ease; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--accent-dim); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
+            min-height: 140px; cursor: pointer;
+            position: relative;
+        }
+        .fs-item::before { 
+            content: ''; position: absolute; top: 0; left: 0; width: 8px; height: 8px;
+            border-top: 2px solid var(--accent-dim); border-left: 2px solid var(--accent-dim);
+        }
+        .fs-item:hover {
+            border-color: var(--accent); background: rgba(197, 160, 89, 0.03); color: var(--text);
+            box-shadow: inset 0 0 15px rgba(197, 160, 89, 0.05);
+        }
+        .fs-item-title { font-size: 16px; font-weight: bold; color: var(--accent); border-bottom: 1px dashed var(--accent-dim); padding-bottom: 10px; letter-spacing: 2px;}
+        .fs-item-desc { font-size: 10px; line-height: 1.5; color: var(--text); opacity: 0.6; flex: 1; }
+        
+        .fs-action-btn {
+            background: var(--bg); color: var(--accent); border: 1px solid var(--accent-dim); padding: 8px;
+            font-family: 'Space Mono'; font-size: 10px; font-weight: bold; cursor: pointer;
+            text-align: center; text-decoration: none; transition: 0.2s;
+        }
+        .fs-action-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        
+        .fs-item.active { 
+            border: 2px solid var(--accent); background: rgba(197, 160, 89, 0.08); 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.8); transform: translate(-2px, -2px); 
+        }
+        .fs-item.active .fs-item-desc { opacity: 0.9; }
+        .fs-item.active .fs-action-btn { border-color: var(--accent); }
+
+        #svg-stage { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 2px solid var(--accent-dim); padding: 1px; overflow: hidden; position: relative; }
+        
+        /* 3D Canvas Styling */
+        #project-3d-canvas { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 10px rgba(197, 160, 89, 0.2)); }
+
+        .project-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; mix-blend-mode: luminosity; display: none; filter: contrast(1.2) sepia(0.5); }
+
+        /* Terminal Input Area */
+        .terminal-container { display: flex; flex-direction: column; flex: 1; background: #050404; }
+        #log-stream { flex: 1; font-size: 10px; color: var(--text); padding: 15px; overflow-y: auto; font-family: 'Space Mono'; display: flex; flex-direction: column-reverse; line-height: 1.4; }
+        .input-wrapper { display: flex; align-items: center; border-top: 2px solid var(--accent-dim); background: #0a0908; padding: 0 15px;}
+        .input-prompt { color: var(--accent); font-family: 'Space Mono'; font-size: 11px; font-weight: bold; margin-right: 10px; }
+        #cli-input { flex: 1; background: transparent; border: none; color: var(--text); padding: 15px 0; font-family: 'Space Mono'; font-size: 11px; outline: none; }
+        #cli-input::placeholder { color: var(--accent-dim); opacity: 0.5; }
+        
+        .cursor-blink::after { content: '█'; animation: blink 1s step-end infinite; color: var(--accent); margin-left: 4px; vertical-align: bottom; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* ENHANCED CRT GRIME & VIGNETTE */
+        .crt::before {
+            content: " "; display: block; position: absolute; inset: 0;
+            background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+            z-index: 4999; pointer-events: none;
+        }
+        .crt::after {
+            content: " "; display: block; position: absolute; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px; z-index: 5000; pointer-events: none; opacity: 0.6;
+            filter: sepia(var(--burn));
+            animation: crt-flicker 0.15s infinite;
+        }
+        @keyframes crt-flicker { 0% { opacity: 0.55; } 50% { opacity: 0.6; } 100% { opacity: 0.55; } }
+
+        .rumble { animation: rumble 0.1s infinite; filter: contrast(1.6) sepia(0.8) hue-rotate(-10deg); }
+        @keyframes rumble { 0% { transform: translate(0,0); } 50% { transform: translate(-4px, 4px); } 100% { transform: translate(0,0); } }
+
+        .btn-breach { background: transparent; border: 2px solid var(--accent); color: var(--accent); padding: 15px 40px; font-family: 'Space Mono'; cursor: pointer; transition: 0.2s; font-weight: bold; width: 100%; letter-spacing: 2px; }
+        .btn-breach:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
+
+        /* HEADER & FOOTER */
+        #bureau-header {
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+            background: var(--bg); border-bottom: 2px solid var(--accent-dim);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px; font-family: 'Space Mono'; font-size: 13px; color: var(--accent); z-index: 9000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        #bureau-footer {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 30px;
+            background: var(--accent-dim); color: #000;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px; font-family: 'Space Mono'; font-size: 10px; font-weight: bold; z-index: 9000; border-top: 2px solid var(--accent);
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 900px) {
+            #os-panels { padding-top: 70px; }
+            #os-panels.booted { grid-template-columns: 1fr; grid-template-rows: auto 350px 250px 200px; }
+            #win-nav { grid-column: 1; grid-row: 1; min-height: 500px; }
+            #win-man { grid-column: 1; grid-row: 2; }
+            #win-cctv { grid-column: 1; grid-row: 3; }
+            #win-cli { grid-column: 1; grid-row: 4; }
+        }
+    </style>
+</head>
+<body class="crt">
+
+    <div id="os-workspace">
+        
+        <div id="bureau-header">
+            <div style="font-weight: bold; letter-spacing: 2px;">NODE_7_SYSTEM_INTEGRITY // PORTFOLIO_INDEX</div>
+            <div style="display:flex; gap: 30px;">
+                <div id="connection-status" style="color:var(--blue);">UPLINK SECURE</div>
+                <div>BAT_SYNC: <span id="integrity-val" style="color:#fff;">--%</span></div>
+                <div id="clock" style="font-weight: bold; color:#fff;">00:00:00</div>
+            </div>
+        </div>
+
+        <div id="boot-modal">
+            <svg viewBox="0 0 100 100" style="width: 70px; height: 70px; margin: 0 auto 20px auto; display: block; filter: drop-shadow(0 0 8px var(--alert));">
+                <path d="M50 5 L95 95 L5 95 Z" fill="none" stroke="var(--alert)" stroke-width="4"/>
+                <circle cx="50" cy="65" r="12" fill="var(--alert)"/>
+                <line x1="50" y1="20" x2="50" y2="45" stroke="var(--alert)" stroke-width="6"/>
+            </svg>
+            <div style="font-family:'Space Mono'; color:var(--accent); letter-spacing:10px; margin-bottom:15px; font-size: 1.2rem; border-bottom: 1px dashed var(--accent-dim); padding-bottom: 15px;">MINISTRY OF ANOMALIES</div>
+            <h1 style="font-size: 1.8rem; font-weight: 900; margin-bottom: 30px; color:var(--text); letter-spacing: -1px; text-shadow: 2px 2px 0px rgba(0,0,0,1);">SIC MUNDUS CREATUS EST.</h1>
+            <div id="boot-status" style="font-family:'Space Mono'; font-size: 10px; opacity: 0.8; margin-bottom: 40px; color: var(--alert); background: rgba(217, 56, 30, 0.05); padding: 15px; border: 1px solid var(--rust); height: 80px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
+                <div class="cursor-blink" style="text-align: center;">TERMINAL OFFLINE. AWAITING MANUAL OVERRIDE.</div>
+            </div>
+            <button id="boot-btn" class="btn-breach" onclick="runBootSequence()">[ POWER ON NODE_7 ]</button>
+        </div>
+
+        <div id="os-panels">
+            
+            <!-- REGISTRY (LEFT, MASSIVE SPREAD) -->
+            <div class="window" id="win-nav">
+                <div class="window-header">
+                    <span>MASTER_REGISTRY_VOL_I</span>
+                    <span style="color:var(--accent-dim);">DIR: /ROOT/ARCHIVE</span>
+                </div>
+                <div id="nav-list"></div>
+                <div style="padding:15px; border-top:2px solid var(--accent-dim); background:#0a0908; display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size:9px; color:var(--accent-dim); font-family: 'Space Mono'; font-weight: bold;">CORE_ENTROPY</div>
+                    <div style="height:4px; background:#111; flex: 1; position: relative; border: 1px solid #000;">
+                        <div id="entropy-fill" style="height:100%; background:var(--rust); width:0%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MANIFEST ANALYSIS (RIGHT TOP) -->
+            <div class="window" id="win-man">
+                <div class="window-header">
+                    <span>MANIFEST_PREVIEW</span>
+                    <span style="color:var(--rust);">[RESTRICTED]</span>
+                </div>
+                <div id="svg-stage">
+                    <img id="project-real-img" class="project-image" src="" alt="Project Image">
+                    
+                    <!-- NEW 3D CANVAS INSTEAD OF SVG -->
+                    <canvas id="project-3d-canvas"></canvas>
+                    
+                    <!-- Container for Dossier SVG only -->
+                    <div id="project-svg-container" style="width: 100%; height: 100%; display:none; position: absolute; top:0; left:0; padding:10px;"></div>
+                </div>
+                <div style="padding:15px; flex: 1; display: flex; flex-direction: column; background: #050404;">
+                    <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom:10px; font-size: 12px; font-weight: bold;">--</h2>
+                    <div id="obj-logs" class="cursor-blink" style="font-size: 10px; font-family: 'Space Mono'; color: var(--text); opacity: 0.8; line-height: 1.6; height: 100%; overflow-y: auto;">AWAITING SELECTION...</div>
+                </div>
+            </div>
+
+            <!-- CCTV (RIGHT BOTTOM) -->
+            <div class="window" id="win-cctv">
+                <div class="window-header">
+                    <span>CONTAINMENT_CELL_CAM</span>
+                    <span style="color:var(--blue);">REC ●</span>
+                </div>
+                <canvas id="cctvCanvas" style="width: 100%; flex: 1; background: #000; border-bottom: 2px solid var(--accent-dim);"></canvas>
+                <div style="padding: 8px 12px; font-size: 9px; font-family: 'Space Mono'; color: var(--accent-dim); background: #050404; display: flex; justify-content: space-between;">
+                    <span id="cctv-status">STATUS: ACTIVE SCANNING</span>
+                    <span id="cctv-time">--:--</span>
+                </div>
+            </div>
+
+            <!-- TERMINAL (BOTTOM FULL WIDTH) -->
+            <div class="window" id="win-cli" onclick="document.getElementById('cli-input').focus()">
+                <div class="window-header">
+                    <span>BUREAU_TERMINAL_V9</span>
+                    <span style="color:var(--accent-dim);">SYS_OP</span>
+                </div>
+                <div class="terminal-container">
+                    <div id="log-stream"></div>
+                    <div class="input-wrapper">
+                        <span class="input-prompt">CMD:></span>
+                        <input type="text" id="cli-input" placeholder="TYPE 'HELP' FOR COMMANDS..." autocomplete="off" spellcheck="false">
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMPLIANCE CHECK POP-UP -->
+            <div id="compliance-modal" style="position: absolute; bottom: 80px; right: 20px; width: 300px; background: var(--rust); border: 2px solid #000; z-index: 15000; padding: 20px; display: none; box-shadow: 10px 10px 0 rgba(0,0,0,0.9);">
+                <div style="font-family: 'Space Mono'; font-size: 12px; color: #000; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 8px;">ATTENTION WORKER:</div>
+                <div style="font-family: 'Space Mono'; font-size: 10px; color: #fff; margin-bottom: 20px; line-height: 1.5; font-weight: bold;">RANDOM COMPLIANCE CHECK TRIGGERED.<br><br>VERIFY PRESENCE IMMEDIATELY OR FACE SEVERE PENALTY.</div>
+                <button class="btn-breach" style="background: #000; color: var(--accent); border-color: var(--accent-dim); padding: 12px; font-size: 10px; box-shadow: none;" onclick="verifyCompliance()">[ ACKNOWLEDGE PRESENCE ]</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- THE FOOTER -->
+    <div id="bureau-footer">
+        <div>DEPT. OF UNFINISHED EVENTS // AUTHORIZED PERSONNEL ONLY</div>
+        <div>TICK TOCK.</div>
+        <div style="color: var(--rust);">GLORY TO THE STATE.</div>
+    </div>
+
+<script>
+/* --- 3D ENGINE SETUP (FOR MANIFEST PREVIEW) --- */
+let previewScene, previewCamera, previewRenderer, previewMesh, previewWireframe;
+const previewUniforms = {
+    time: { value: 0 },
+    speed: { value: 1.0 },
+    intensity: { value: 0.4 },
+    glitchColor: { value: new THREE.Color(0xc5a059) } // Default Brass
+};
+
+function init3DViewer() {
+    const canvas = document.getElementById('project-3d-canvas');
+    const container = canvas.parentElement;
+    
+    previewRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    previewRenderer.setSize(container.clientWidth, container.clientHeight);
+    
+    previewScene = new THREE.Scene();
+    previewCamera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
+    previewCamera.position.z = 4.5;
+
     const vertexShader = `
         varying vec2 vUv;
         varying float vNoise;
