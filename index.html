@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>THE BUREAU // NODE_7 // SECURE_ACCESS</title>
+    <title>THE BUREAU // NODE_7 // TERMINUS</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
         :root {
@@ -13,23 +13,32 @@
             --rust: #2a1f16;
             --alert: #ff0000;
             --text: #c4beaf;
+            --drift: 0px;
+            --burn: 0;
         }
 
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;900&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Inter', sans-serif; overflow: hidden; 
+            height: 100vh; transition: filter 0.5s;
+        }
 
+        /* --- THE CRT SHUTTER --- */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
             background-size: 100% 4px; z-index: 1000; pointer-events: none;
+            filter: sepia(var(--burn)); /* Simulated screen burn-in */
         }
 
+        /* --- LANDING / FLASHLIGHT --- */
         #view-landing {
             position: fixed; inset: 0; z-index: 100;
             background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(212, 175, 55, 0.15) 0%, rgba(0,0,0,1) 25%);
-            transition: opacity 1s ease; display: flex; flex-direction: column;
+            transition: opacity 1s ease; display: flex; flex-direction: column; overflow-y: auto;
         }
 
         #view-terminal { position: fixed; inset: 0; opacity: 0; pointer-events: none; z-index: 5; background: #050505; }
@@ -38,9 +47,7 @@
         .panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; }
         .panel-header { padding: 10px; background: var(--rust); color: var(--accent); font-size: 10px; font-family: 'Space Mono'; font-weight: bold; display: flex; justify-content: space-between; }
 
-        #nav-list { overflow-y: auto; flex: 1; }
         .nav-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 10px; }
-        .nav-item:hover { background: rgba(212, 175, 55, 0.1); }
         .nav-item.active { border-left: 4px solid var(--accent); background: rgba(212, 175, 55, 0.05); }
 
         #svg-stage { height: 260px; display: flex; align-items: center; justify-content: center; background: #000; border-bottom: 1px solid var(--rust); }
@@ -49,8 +56,9 @@
         #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; }
         #log-stream { font-size: 9px; color: var(--accent); padding: 10px; overflow: hidden; font-family: 'Space Mono'; line-height: 1.5; }
 
-        #static-overlay { position: fixed; inset: 0; background: #111; z-index: 10000; opacity: 0; pointer-events: none; }
-        .emergency { animation: rumble 0.1s infinite; filter: contrast(1.5) brightness(1.2); }
+        /* --- DYNAMIC OVERLAYS --- */
+        #static-overlay { position: fixed; inset: 0; background: #0a0a0a; z-index: 10000; opacity: 0; pointer-events: none; }
+        .emergency { animation: rumble 0.1s infinite; filter: contrast(1.5) brightness(1.2) hue-rotate(10deg); }
         @keyframes rumble { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 2px); } 100% { transform: translate(0,0); } }
     </style>
 </head>
@@ -59,31 +67,36 @@
 <div id="static-overlay"></div>
 
 <section id="view-landing">
-    <nav style="padding:40px;">
+    <nav style="padding:40px; border-bottom:1px solid rgba(212,175,55,0.1);">
         <a href="#" style="font-family:'Space Mono'; color:var(--accent); font-weight:700; letter-spacing:8px; text-decoration:none;">THE BUREAU</a>
     </nav>
     <main style="text-align: center; margin: auto;">
-        <h1 style="font-size: 6vw; font-weight: 900; letter-spacing: -3px; color: #fff;">EVERYTHING IS CONNECTED.</h1>
+        <h1 style="font-size: 7vw; font-weight: 900; letter-spacing: -4px; color: #fff;">EVERYTHING IS CONNECTED.</h1>
         <div id="landing-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin: 40px auto; opacity: 0.6;"></div>
-        <button onclick="initiateBreach()" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:15px 40px; font-family:'Space Mono'; cursor:pointer; margin-top:30px;">[ INITIALIZE BREACH ]</button>
+        <button onclick="initiateBreach()" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:15px 50px; font-family:'Space Mono'; cursor:pointer; font-size:1.1rem; border-radius:30px;">[ ACCESS NODE ]</button>
     </main>
+    <footer style="text-align:center; padding:20px; font-size:9px; opacity:0.3; font-family:'Space Mono';">WINDEN_33 // CORE_STABILITY_CRITICAL</footer>
 </section>
 
 <section id="view-terminal">
     <div class="app-container">
         <header class="panel" style="grid-column: 1/span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
-            <div style="font-family:'Space Mono'; color:var(--accent); font-weight: bold;">STATION_TAS_7 // AUTH_LEVEL: MASTER</div>
+            <div style="font-family:'Space Mono'; color:var(--accent); font-weight: bold;">STATION_TAS_7 // DRIFT: <span id="drift-val">0.00ms</span></div>
             <div id="clock" style="font-family:'Space Mono'; color:var(--accent);">00:00:00</div>
         </header>
 
         <aside class="panel">
             <div class="panel-header">REGISTRY_VOL_I</div>
             <div id="nav-list"></div>
+            <div style="padding:15px; border-top:1px solid var(--rust); background:#080807;">
+                <div style="font-size:8px; color:var(--accent); margin-bottom:5px;">SIMULATED_CORE_TEMP</div>
+                <div style="height:2px; background:#1a1a1a; width:100%;"><div id="burn-fill" style="height:100%; background:var(--accent); width:0%;"></div></div>
+            </div>
         </aside>
 
         <main class="panel" style="background:#000;">
-            <div class="panel-header">VOID_OSCILLATION // <span id="tele-meta">SYNC_55HZ</span></div>
-            <canvas id="teleCanvas"></canvas>
+            <div class="panel-header">VOID_OSCILLATION // <span id="tele-meta">SYNCING...</span></div>
+            <canvas id="teleCanvas" style="cursor: cell;"></canvas>
         </main>
 
         <aside class="panel">
@@ -97,9 +110,9 @@
         </aside>
 
         <footer class="panel" style="grid-column: 1/span 3; display: grid; grid-template-columns: 1fr 450px; padding: 15px; background: #080807; gap: 20px;">
-            <div id="log-stream" style="overflow: hidden;"></div>
+            <div id="log-stream"></div>
             <div>
-                <input type="text" id="cli-input" placeholder="MEMO, LOGS, CLEAR..." autocomplete="off">
+                <input type="text" id="cli-input" placeholder="MEMO, LOGS, CLEAR, WINDEN_33..." autocomplete="off">
             </div>
         </footer>
     </div>
@@ -107,37 +120,26 @@
 
 <script>
 /* ========================================
-   DATA ARCHIVE
+   1. THE ARCHIVE DATA (8 PROJECTS)
    ======================================== */
 const archiveData = [
-  { name: "The Apparatus", id: "apparatus", desc: "Dual-chamber brass device utilizing Cesium-137. Key for transit.", freq: 55, amp: 40, type: 'sawtooth', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle></svg>` },
-  { name: "Substrate Protocol", id: "substrate", desc: "Recursive data architecture for visual telemetry.", freq: 110, amp: 80, type: 'sine', url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
-  { name: "D.U.E.", id: "due", desc: "Department of Unfinished Events. Chronological displaced records.", freq: 44, amp: 20, type: 'square', url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
-  { name: "Anomaly Observatory", id: "obs", desc: "Live monitoring of seismic/solar collapse.", freq: 88, amp: 100, type: 'triangle', url: "Anomaly-Observatory/", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="10;30;10" dur="4s" repeatCount="indefinite"/></circle></svg>` },
-  { name: "Project Noah", id: "noah", desc: "The cycle is complete. Sic Mundus.", freq: 33, amp: 150, type: 'sawtooth', hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="1.5"/></svg>` }
+  { name: "The Apparatus", id: "apparatus", desc: "Dual-chamber brass device utilizing Cesium-137. Key for transit.", freq: 55, type: 'sawtooth', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="15s" repeatCount="indefinite"/></circle></svg>` },
+  { name: "Substrate Protocol", id: "substrate", desc: "Recursive data architecture for visual telemetry. Deep mapping.", freq: 110, type: 'sine', url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
+  { name: "D.U.E.", id: "due", desc: "Department of Unfinished Events. Displaced chronological records.", freq: 44, type: 'square', url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
+  { name: "Anomaly Observatory", id: "obs", desc: "Live monitoring of seismic/solar collapse.", freq: 88, type: 'triangle', url: "Anomaly-Observatory/", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="10;30;10" dur="4s" repeatCount="indefinite"/></circle></svg>` },
+  { name: "Higgs Field", id: "higgs", desc: "Manifestation of the God Particle. Magnetic containment fluctuating.", freq: 70, type: 'sine', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="15" fill="var(--accent)"><animate attributeName="opacity" values="1;0.2;1" dur="1s" repeatCount="indefinite"/></circle></svg>` },
+  { name: "Passage 33", id: "caves", desc: "Geological survey of Winden Cave system. Tunnel intersection.", freq: 40, type: 'sawtooth', svg: `<svg viewBox="0 0 100 100"><path d="M10 90 Q50 10 90 90" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg>` },
+  { name: "Emerald Tablet", id: "tablet", desc: "Ancient text. 'Sic Mundus Creatus Est'. FOUND: 1921.", freq: 60, type: 'triangle', svg: `<svg viewBox="0 0 100 100"><rect x="25" y="25" width="50" height="50" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M25 25 L75 75" stroke="var(--accent)" stroke-width="0.5"/></svg>` },
+  { name: "Project Noah", id: "noah", desc: "The cycle is complete. The beginning is the end.", freq: 33, type: 'sawtooth', hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="#ff0000" stroke-width="1.5"/></svg>` }
 ];
 
 /* ========================================
-   REACTIVE ENGINES
+   2. REFINED AUDIO & VISUAL ENGINES
    ======================================== */
-let audioCtx, mainOsc, mainGain;
-let currentFreq = 55;
-let currentAmp = 40;
+let audioCtx, mainOsc, mainGain, currentFreq = 55;
+let sessionHeat = 0;
 
-const decryptText = (element, target) => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#@%&*0123456789";
-    let iterations = 0;
-    const interval = setInterval(() => {
-        element.innerText = target.split("").map((char, index) => {
-            if(index < iterations) return target[index];
-            return chars[Math.floor(Math.random() * chars.length)];
-        }).join("");
-        if(iterations >= target.length) clearInterval(interval);
-        iterations += 1/3;
-    }, 30);
-};
-
-function startAudio(freq = 55, type = 'sine') {
+const startAudio = (freq = 55, type = 'sine') => {
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if(mainOsc) mainOsc.stop();
     mainOsc = audioCtx.createOscillator();
@@ -145,20 +147,50 @@ function startAudio(freq = 55, type = 'sine') {
     mainOsc.type = type;
     mainOsc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     mainGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400;
+    const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 400 - (sessionHeat * 2);
     mainOsc.connect(mainGain); mainGain.connect(filter); filter.connect(audioCtx.destination);
     mainOsc.start();
-}
+};
 
+const playClick = () => {
+    if(!audioCtx) return;
+    const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+    osc.frequency.setValueAtTime(200 + Math.random()*100, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+};
+
+// Text Decryption
+const decryptText = (el, target) => {
+    const chars = "!<>-_\\/[]{}—=+*^?#________";
+    let iterations = 0;
+    const interval = setInterval(() => {
+        el.innerText = target.split("").map((letter, index) => {
+            if(index < iterations) return target[index];
+            return chars[Math.floor(Math.random() * chars.length)];
+        }).join("");
+        if(iterations >= target.length) clearInterval(interval);
+        iterations += 1/3;
+    }, 25);
+};
+
+/* ========================================
+   3. SYSTEM FUNCTIONS
+   ======================================== */
 document.addEventListener('mousemove', e => {
-    document.getElementById('view-landing').style.setProperty('--x', e.clientX + 'px');
-    document.getElementById('view-landing').style.setProperty('--y', e.clientY + 'px');
+    const landing = document.getElementById('view-landing');
+    landing.style.setProperty('--x', e.clientX + 'px');
+    landing.style.setProperty('--y', e.clientY + 'px');
+    const drift = (Math.abs(e.movementX) + Math.abs(e.movementY)) / 10;
+    document.getElementById('drift-val').innerText = drift.toFixed(2) + "ms";
 });
 
 function initiateBreach() {
-    startAudio(archiveData[0].freq, archiveData[0].type);
+    startAudio();
     const ov = document.getElementById('static-overlay');
-    ov.style.opacity = '0.8';
+    ov.style.opacity = '0.7';
     document.body.classList.add('emergency');
     setTimeout(() => {
         ov.style.opacity = '0';
@@ -166,7 +198,7 @@ function initiateBreach() {
         document.getElementById('view-terminal').style.opacity = '1';
         document.getElementById('view-terminal').style.pointerEvents = 'all';
         document.body.classList.remove('emergency');
-        addLog("SYSTEM_7_BOOT: COMPLETE.");
+        addLog("CONNECTION_SECURE. STATION_7_NODE_ACTIVE.");
     }, 800);
 }
 
@@ -174,39 +206,34 @@ function populate() {
     const list = document.getElementById('nav-list');
     const grid = document.getElementById('landing-grid');
     list.innerHTML = ''; grid.innerHTML = '';
-
     archiveData.filter(i => !i.hidden).forEach(item => {
-        const card = document.createElement('div');
-        card.style.border = "1px solid rgba(212,175,55,0.2)";
-        card.style.padding = "15px";
-        card.innerHTML = `<div style="font-size:9px; color:var(--accent);">${item.id}</div><div style="font-size:12px;">${item.name}</div>`;
-        grid.appendChild(card);
-
         const div = document.createElement('div');
         div.className = 'nav-item';
         div.innerText = item.name.toUpperCase();
         div.onclick = () => {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             div.classList.add('active');
-            
-            // Decrypt Effects
             decryptText(document.getElementById('obj-title'), item.name);
             decryptText(document.getElementById('obj-desc'), item.desc);
             document.getElementById('svg-stage').innerHTML = item.svg;
-            
-            // Sync Telemetry & Audio
             currentFreq = item.freq;
-            currentAmp = item.amp;
             document.getElementById('tele-meta').innerText = `SYNC_${item.freq}HZ`;
             startAudio(item.freq, item.type);
-            addLog(`MOUNTING_${item.id}... [OK]`);
+            addLog(`MOUNTING_OBJECT: ${item.id}`);
         };
         list.appendChild(div);
+
+        const card = document.createElement('div');
+        card.style.border = "1px solid rgba(212,175,55,0.2)";
+        card.style.padding = "20px";
+        card.innerHTML = `<div style="font-size:10px; color:var(--accent); font-family:'Space Mono';">${item.id}</div><div style="font-size:14px; margin:10px 0;">${item.name}</div><a class="dir-link" onclick="initiateBreach()">ACCESS</a>`;
+        grid.appendChild(card);
     });
 }
 
 const cli = document.getElementById('cli-input');
 cli.onkeydown = (e) => {
+    playClick();
     if(e.key === 'Enter') {
         const val = cli.value.toUpperCase().trim();
         if(val.startsWith('MEMO ')) {
@@ -218,8 +245,8 @@ cli.onkeydown = (e) => {
             const m = JSON.parse(localStorage.getItem('b_m') || '[]');
             m.forEach(i => addLog(`MEMO: ${i.c}`));
         } else if(val === 'WINDEN_33') {
-            addLog("AUTH_SUCCESS: NOAH_UNLOCKED.");
-            archiveData[4].hidden = false; populate();
+            addLog("!!! AUTH_SUCCESS: PROJECT_NOAH_RESTORED.");
+            archiveData[7].hidden = false; populate();
         } else if(val === 'CLEAR') {
             document.getElementById('log-stream').innerHTML = '';
         }
@@ -227,29 +254,52 @@ cli.onkeydown = (e) => {
     }
 };
 
-function addLog(m) {
+function addLog(msg) {
     const s = document.getElementById('log-stream');
     const d = document.createElement('div');
-    d.style.color = "var(--accent)";
-    d.innerText = `[${new Date().toLocaleTimeString()}] > ${m}`;
+    d.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
     s.prepend(d);
 }
 
+// Telemetry Canvas with Click Interruption
 const canvas = document.getElementById('teleCanvas');
 const ctx = canvas.getContext('2d');
+let ripple = 0;
+canvas.onmousedown = () => {
+    ripple = 100;
+    addLog("VOID_SYNC_INTERRUPTED.");
+    if(audioCtx) {
+        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        osc.frequency.value = 30; g.gain.value = 0.2;
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    }
+};
+
 function draw(t) {
     canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-    ctx.clearRect(0,0,canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = '#d4af37';
     ctx.beginPath();
     for(let i=0; i<canvas.width; i+=2) {
-        // Wave reacts to currentFreq and currentAmp
-        const y = canvas.height/2 + Math.sin(i * (currentFreq / 2000) + t * 0.002) * currentAmp + (Math.random() * 5);
-        ctx.lineTo(i,y);
+        const y = canvas.height/2 + Math.sin(i * (currentFreq/2000) + t * 0.002) * (40 + ripple) + (Math.random() * (ripple/10));
+        ctx.lineTo(i, y);
     }
     ctx.stroke();
+    if(ripple > 0) ripple -= 2;
     requestAnimationFrame(draw);
 }
+
+// Global Entropy & Burn-in Loop
+setInterval(() => {
+    sessionHeat = Math.min(sessionHeat + 0.1, 100);
+    document.getElementById('burn-fill').style.width = sessionHeat + "%";
+    document.documentElement.style.setProperty('--burn', sessionHeat / 200);
+    if(sessionHeat > 90 && Math.random() > 0.95) {
+        document.body.classList.add('emergency');
+        setTimeout(() => document.body.classList.remove('emergency'), 200);
+    }
+}, 2000);
 
 populate();
 draw(0);
