@@ -2,72 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>THE BUREAU // NODE_7 // SECURE_ARCHIVE</title>
+    <title>THE BUREAU // NODE_7 // THE VOID</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
         :root {
             --accent: #d4af37;
             --accent-dim: #5c4a1e;
-            --bg: #050505;
-            --panel: #11100e;
-            --rust: #3d2b1f;
+            --bg: #000000;
+            --panel: #0d0d0c;
+            --rust: #2a1f16;
             --alert: #ff0000;
             --text: #c4beaf;
-            --subtext: #888888;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
+        
         body { 
             background: var(--bg); color: var(--text); 
-            font-family: 'Inter', sans-serif; overflow-x: hidden; 
-            height: 100vh; cursor: crosshair;
+            font-family: 'Inter', sans-serif; overflow: hidden; 
+            height: 100vh;
         }
 
-        /* --- CRT FX --- */
+        /* --- THE FLASHLIGHT (LANDING) --- */
+        #view-landing {
+            position: fixed; inset: 0; z-index: 10;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
+                        rgba(212, 175, 55, 0.15) 0%, 
+                        rgba(0,0,0,1) 25%);
+            transition: opacity 1s ease;
+            display: flex; flex-direction: column;
+        }
+
+        /* --- CRT & GLITCH --- */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px; z-index: 100; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px; z-index: 1000; pointer-events: none;
         }
 
-        #static-overlay { position: fixed; inset: 0; z-index: 10000; pointer-events: none; background: #fff; opacity: 0; }
-
-        /* --- LANDING --- */
-        #view-landing { position: relative; z-index: 1; transition: opacity 1s ease; background: var(--bg); min-height: 100vh; overflow-y: auto; }
-        nav { padding: 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
-        .logo { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 5px; color: var(--accent); text-decoration: none; }
-        .nav-links a { color: var(--subtext); text-decoration: none; margin-left: 30px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; }
-        .highlight { border: 1px solid var(--accent); padding: 8px 15px; border-radius: 20px; color: var(--accent) !important; }
-
-        .directory-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1px; background: rgba(212, 175, 55, 0.1); width: 100%; max-width: 1200px; margin: 40px auto; border: 1px solid rgba(212, 175, 55, 0.1);
+        .emergency {
+            filter: invert(1) hue-rotate(180deg) contrast(3) !important;
+            animation: rumble 0.1s infinite !important;
         }
-        .dir-item { background: var(--bg); padding: 40px; transition: 0.4s; }
-        .dir-item h3 { font-weight: 300; letter-spacing: 2px; margin-bottom: 10px; color: #fff; }
-        .dir-item p { font-size: 13px; color: var(--subtext); margin-bottom: 20px; font-family: 'Inter'; }
-        .dir-link { font-family: 'Space Mono'; font-size: 10px; color: var(--accent); text-decoration: none; cursor: pointer; }
 
-        /* --- TERMINAL --- */
-        #view-terminal { position: fixed; inset: 0; opacity: 0; pointer-events: none; z-index: 2; background: var(--bg); }
-        .app-container { display: grid; grid-template-columns: 320px 1fr 420px; grid-template-rows: 60px 1fr 180px; height: 100vh; gap: 10px; padding: 10px; }
-        .panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; position: relative; }
-        .panel-header { padding: 8px 15px; background: var(--rust); color: var(--accent); font-size: 10px; font-weight: bold; font-family: 'Space Mono'; }
+        @keyframes rumble { 
+            0% { transform: translate(0,0); } 
+            25% { transform: translate(-4px, 2px); } 
+            50% { transform: translate(4px, -2px); } 
+            100% { transform: translate(0,0); } 
+        }
+
+        /* --- TERMINAL GRID --- */
+        #view-terminal { position: fixed; inset: 0; opacity: 0; pointer-events: none; z-index: 5; background: #050505; }
         
-        #nav-list { overflow-y: auto; flex: 1; }
-        .nav-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-family: 'Space Mono'; font-size: 10px; }
-        .nav-item:hover { background: rgba(212, 175, 55, 0.08); }
-        .nav-item.active { border-left: 4px solid var(--accent); background: rgba(212, 175, 55, 0.05); }
+        .app-container { 
+            display: grid; grid-template-columns: 320px 1fr 400px; 
+            grid-template-rows: 60px 1fr 200px; height: 100vh; gap: 10px; padding: 10px; 
+        }
 
-        #svg-stage { height: 250px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1917 0%, #0a0a09 100%); border-bottom: 1px solid var(--rust); }
-        svg { width: 55%; height: auto; filter: drop-shadow(0 0 10px var(--accent-dim)); }
+        .panel { 
+            background: var(--panel); border: 1px solid var(--rust); 
+            overflow: hidden; display: flex; flex-direction: column; 
+            box-shadow: inset 0 0 50px rgba(0,0,0,1);
+        }
 
-        #cli-input { width: 100%; background: #000; border: 1px solid var(--accent-dim); color: var(--accent); padding: 12px; font-family: 'Space Mono'; outline: none; font-size: 11px; }
+        .panel-header { 
+            padding: 10px; background: var(--rust); color: var(--accent); 
+            font-size: 10px; font-weight: bold; font-family: 'Space Mono'; 
+            display: flex; justify-content: space-between;
+        }
 
-        @keyframes rumble { 0% { transform: translate(0,0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 100% { transform: translate(0,0); } }
-        .rumble { animation: rumble 0.15s infinite; }
+        #nav-list { overflow-y: auto; }
+        .nav-item { 
+            padding: 18px; border-bottom: 1px solid rgba(255,255,255,0.02); 
+            transition: 0.3s; font-family: 'Space Mono'; font-size: 11px;
+        }
+        .nav-item:hover { background: rgba(212, 175, 55, 0.1); }
+        .nav-item.active { border-left: 4px solid var(--accent); background: rgba(212,175,55,0.05); }
+
+        #svg-stage { height: 260px; display: flex; align-items: center; justify-content: center; background: #000; }
+        svg { width: 50%; transition: 0.5s; }
+
+        #cli-input { 
+            width: 100%; background: #000; border: 1px solid var(--accent-dim); 
+            color: var(--accent); padding: 15px; font-family: 'Space Mono'; outline: none; 
+        }
+
+        /* --- UI COMPONENTS --- */
+        .btn-main {
+            background: transparent; border: 1px solid var(--accent);
+            color: var(--accent); padding: 12px; font-family: 'Space Mono';
+            font-size: 10px; cursor: pointer; margin-top: 15px; width: 100%;
+        }
+        .btn-main:hover { background: var(--accent); color: #000; }
+
+        .logo { font-family: 'Space Mono'; font-weight: 900; letter-spacing: 10px; color: var(--accent); font-size: 2rem; margin-bottom: 20px; }
+        
+        #static-overlay { position: fixed; inset: 0; background: #fff; z-index: 10000; opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body class="crt">
@@ -75,54 +108,50 @@
 <div id="static-overlay"></div>
 
 <section id="view-landing">
-    <nav>
-        <a href="#" class="logo">THE BUREAU</a>
-        <div class="nav-links">
-            <a href="#">Initiatives</a>
-            <a onclick="initiateBreach()" class="highlight">Node Access</a>
-        </div>
-    </nav>
-    <main style="padding: 10vh 20px; text-align: center;">
-        <h1 style="font-size: 7vw; font-weight: 900; letter-spacing: -5px; line-height: 1; color: #fff;">EVERYTHING IS CONNECTED.</h1>
-        <p style="font-family:'Space Mono'; color:var(--accent); margin-top:10px; letter-spacing:3px;">TEMPORAL_ARCHIVE_NODE_7</p>
-        <div class="directory-grid" id="landing-grid"></div>
-    </main>
-    <footer style="text-align:center; opacity:0.3; font-size:10px; font-family:'Space Mono'; padding: 40px;">
-        CMD: MEMO [TEXT] // LOGS // WINDEN_33
-    </footer>
+    <div style="margin: auto; text-align: center; max-width: 800px; padding: 20px;">
+        <div class="logo">THE BUREAU</div>
+        <p style="font-family: 'Space Mono'; color: var(--accent); letter-spacing: 5px; margin-bottom: 40px;">SEARCH THE VOID TO ACTIVATE NODE</p>
+        
+        <div id="landing-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; opacity: 0.8;"></div>
+        
+        <button class="btn-main" onclick="initiateBreach()" style="margin-top: 50px; border-radius: 50px; padding: 20px 40px; font-size: 14px;">[ ACCESS ENCRYPTED NODE ]</button>
+    </div>
+    <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); font-size: 9px; opacity: 0.4; font-family: 'Space Mono';">
+        HINT: EVERYTHING IS CONNECTED // WINDEN_33
+    </div>
 </section>
 
 <section id="view-terminal">
     <div class="app-container">
         <header class="panel" style="grid-column: 1/span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
-            <div style="color:var(--accent); font-weight: bold; letter-spacing: 3px; font-family: 'Space Mono';">STATION_TAS_7</div>
-            <div id="clock" style="font-family: 'Space Mono'; color:var(--accent);">00:00:00</div>
+            <div style="font-family:'Space Mono'; color:var(--accent); font-weight: bold;">STATION_TAS_7 // STATUS: <span id="sync-status">STABLE</span></div>
+            <div id="clock" style="font-family:'Space Mono'; color:var(--accent);">00:00:00</div>
         </header>
 
         <aside class="panel">
-            <div class="panel-header">REGISTRY_VOL_I</div>
+            <div class="panel-header">OBJECT_REGISTRY <span>VOL. 33</span></div>
             <div id="nav-list"></div>
         </aside>
 
         <main class="panel" style="background:#000;">
-            <div class="panel-header">LIVE_VOID_OSCILLATION // SYNC: 99.9%</div>
-            <canvas id="teleCanvas"></canvas>
+            <div class="panel-header">VOID_OSCILLATION <span>LIVE_FEED</span></div>
+            <canvas id="teleCanvas" style="flex:1;"></canvas>
         </main>
 
         <aside class="panel">
-            <div class="panel-header">OBJECT_MANIFEST</div>
+            <div class="panel-header">MANIFEST_VIEWER</div>
             <div id="svg-stage"></div>
-            <div id="manifest-content" style="padding:20px;">
-                <h2 id="obj-title" style="color:var(--accent); margin-bottom:10px; font-family:'Space Mono'; text-transform:uppercase; font-size: 1.1rem;">--</h2>
-                <p id="obj-desc" style="font-size:11px; line-height:1.6; font-family:'Inter'; opacity: 0.8; height: 80px;"></p>
-                <button id="action-btn" onclick="deepScan()" style="margin-top:20px; width:100%; cursor:pointer; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; font-family:'Space Mono'; font-size:10px;">INITIALIZE_SCAN</button>
+            <div style="padding: 20px;">
+                <h2 id="obj-title" style="color:var(--accent); font-family:'Space Mono'; margin-bottom: 10px;">--</h2>
+                <p id="obj-desc" style="font-size: 11px; line-height: 1.6; height: 70px;"></p>
+                <button id="action-btn" class="btn-main">INITIALIZE_SCAN</button>
             </div>
         </aside>
 
-        <footer class="panel" style="grid-column: 1/span 3; display:grid; grid-template-columns: 1fr 450px; padding:15px; gap:20px; background:#080807;">
-            <div id="log-stream" style="font-size:9px; color:var(--accent); overflow:hidden; font-family:'Space Mono'; opacity:0.7;"></div>
+        <footer class="panel" style="grid-column: 1/span 3; display: grid; grid-template-columns: 1fr 400px; padding: 15px; background: #050505; gap: 20px;">
+            <div id="log-stream" style="font-family:'Space Mono'; font-size: 10px; color:var(--accent); overflow:hidden;"></div>
             <div>
-                <input type="text" id="cli-input" placeholder="CMD: MEMO [TEXT], LOGS, CLEAR..." autocomplete="off">
+                <input type="text" id="cli-input" placeholder="CMD: HELP, MEMO [TEXT], LOGS, PURGE..." autocomplete="off">
             </div>
         </footer>
     </div>
@@ -130,54 +159,18 @@
 
 <script>
 /* ========================================
-   THE MASTER ARCHIVE DATA
+   1. DATA DEFINITION
    ======================================== */
 const archiveData = [
-  { 
-    name: "The Apparatus", 
-    desc: "A dual-chamber brass device utilizing Cesium-137. Designed for localized transit.", 
-    id: "apparatus",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent)" stroke-width="0.5"/><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="10 5"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s" repeatCount="indefinite"/></circle><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="0.5"><animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` 
-  },
-  { 
-    name: "Substrate Protocol", 
-    desc: "A recursive architecture for visual telemetry. Deep-layer data mapping.", 
-    id: "substrate-protocol",
-    url: "Substrate-Protocol/",
-    svg: `<svg viewBox="0 0 100 100"><path d="M10 10 H90 V90 H10 Z M25 25 H75 V75 H25 Z" fill="none" stroke="var(--accent)" stroke-width="0.5"/><line x1="10" y1="10" x2="90" y2="90" stroke="var(--accent)" stroke-width="0.2"/></svg>`
-  },
-  { 
-    name: "Department of Unfinished Events", 
-    name_short: "D.U.E.",
-    desc: "The central repository for chronologically displaced artifacts and records.", 
-    id: "due",
-    url: "Department-Of-Unfinished-Events-DUE",
-    svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--accent)" stroke-width="1"/><path d="M20 40 H80 M20 60 H80" stroke="var(--accent)" stroke-width="0.5"/></svg>`
-  },
-  { 
-    name: "Anomaly Observatory", 
-    desc: "Live monitoring of seismic and solar collapse. Everything is connected.", 
-    id: "anomaly-observatory",
-    url: "Anomaly-Observatory/",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="5;25;5" dur="4s" repeatCount="indefinite"/></circle><circle cx="50" cy="50" r="35" fill="none" stroke="var(--accent)" stroke-width="0.2" stroke-dasharray="5 2"/></svg>`
-  },
-  { 
-    name: "Higgs Field", 
-    desc: "Visible manifestation of the God Particle. Magnetic containment is fluctuating.", 
-    id: "higgs",
-    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="12" fill="var(--accent)"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/></circle>${Array.from({length:8}).map((_,i)=>`<line x1="50" y1="50" x2="${50+Math.cos(i)*40}" y2="${50+Math.sin(i)*40}" stroke="var(--accent)" stroke-width="0.2"/>`).join('')}</svg>`
-  },
-  { 
-    name: "Project Noah", 
-    desc: "The cycle is complete. The beginning is the end. Sic Mundus Creatus Est.", 
-    id: "noah", 
-    hidden: true, 
-    svg: `<svg viewBox="0 0 100 100"><path d="M50 10 L90 85 H10 Z" fill="none" stroke="var(--alert)" stroke-width="1"/><circle cx="50" cy="55" r="15" fill="none" stroke="var(--alert)" stroke-width="1"/></svg>` 
-  }
+    { name: "The Apparatus", id: "apparatus", desc: "Dual-chamber brass device. Primary transit key.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="35" y="35" width="30" height="30" fill="none" stroke="var(--accent)" stroke-width="1"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` },
+    { name: "Substrate Protocol", id: "substrate", desc: "Recursive data mapping for visual telemetry.", url: "Substrate-Protocol/", svg: `<svg viewBox="0 0 100 100"><path d="M10 10 L90 90 M90 10 L10 90" stroke="var(--accent)" stroke-width="0.5"/><rect x="25" y="25" width="50" height="50" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
+    { name: "D.U.E.", id: "due", desc: "Department of Unfinished Events. Chronological records.", url: "Department-Of-Unfinished-Events-DUE", svg: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="15" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="20" y="45" width="60" height="15" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="20" y="70" width="60" height="15" fill="none" stroke="var(--accent)" stroke-width="1"/></svg>` },
+    { name: "Anomaly Observatory", id: "obs", desc: "Live monitoring of seismic/solar collapse.", url: "Anomaly-Observatory/", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="none" stroke="var(--accent)" stroke-width="1"><animate attributeName="r" values="5;25;5" dur="3s" repeatCount="indefinite"/></circle><path d="M10 50 H90 M50 10 V90" stroke="var(--accent)" stroke-width="0.2"/></svg>` },
+    { name: "Project Noah", id: "noah", desc: "The beginning is the end. Sic Mundus.", hidden: true, svg: `<svg viewBox="0 0 100 100"><path d="M50 10 L90 85 H10 Z" fill="none" stroke="var(--alert)" stroke-width="2"/></svg>` }
 ];
 
 /* ========================================
-   CORE SYSTEM ENGINE
+   2. AUDIO & VISUAL ENGINES
    ======================================== */
 let audioCtx;
 const startAudio = () => {
@@ -191,128 +184,139 @@ const startAudio = () => {
             const white = Math.random() * 2 - 1;
             out[i] = (lastOut + (0.02 * white)) / 1.02;
             lastOut = out[i];
-            out[i] *= 0.06; 
+            out[i] *= 0.08; 
         }
     };
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass'; filter.frequency.value = 300;
-    node.connect(filter); filter.connect(audioCtx.destination);
+    const f = audioCtx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 300;
+    node.connect(f); f.connect(audioCtx.destination);
 };
 
-const playClick = () => {
+const playTick = () => {
     if(!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.frequency.setValueAtTime(150 + Math.random()*50, audioCtx.currentTime);
+    const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+    osc.frequency.setValueAtTime(120, audioCtx.currentTime);
     g.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
     osc.connect(g); g.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.04);
 };
 
+// Flashlight
+document.addEventListener('mousemove', e => {
+    const landing = document.getElementById('view-landing');
+    landing.style.setProperty('--x', e.clientX + 'px');
+    landing.style.setProperty('--y', e.clientY + 'px');
+});
+
+// Malfunction Engine
+setInterval(() => {
+    if(Math.random() > 0.96 && document.getElementById('view-terminal').style.opacity == 1) {
+        document.body.classList.add('emergency');
+        addLog("!!! TEMPORAL MALFUNCTION DETECTED !!!");
+        setTimeout(() => {
+            document.body.classList.remove('emergency');
+            addLog("STABILIZING_FLUX...");
+        }, 1200);
+    }
+}, 10000);
+
+/* ========================================
+   3. SYSTEM FUNCTIONS
+   ======================================== */
 function initiateBreach() {
     startAudio();
-    const overlay = document.getElementById('static-overlay');
+    const ov = document.getElementById('static-overlay');
+    ov.style.opacity = '1';
     document.body.classList.add('rumble');
-    overlay.style.opacity = '1';
     let f = 0;
     const g = setInterval(() => {
-        overlay.style.background = f % 2 === 0 ? '#fff' : '#000';
-        if(f++ > 10) {
+        ov.style.background = f % 2 === 0 ? '#fff' : '#000';
+        if(f++ > 15) {
             clearInterval(g);
-            overlay.style.opacity = '0';
+            ov.style.opacity = '0';
             document.getElementById('view-landing').style.display = 'none';
             document.getElementById('view-terminal').style.opacity = '1';
             document.getElementById('view-terminal').style.pointerEvents = 'all';
             document.body.classList.remove('rumble');
-            addLog("STATION_7 ONLINE. SYNC_COMPLETE.");
+            addLog("STATION_7 ONLINE. WELCOME OPERATOR.");
         }
     }, 50);
 }
 
-function populateUI() {
+function populate() {
     const list = document.getElementById('nav-list');
     const grid = document.getElementById('landing-grid');
     list.innerHTML = ''; grid.innerHTML = '';
 
     archiveData.filter(i => !i.hidden).forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'dir-item';
-        card.innerHTML = `<h3>${item.name}</h3><p>${item.desc}</p><a class="dir-link" onclick="initiateBreach()">ACCESS_FILE</a>`;
-        grid.appendChild(card);
-
         const div = document.createElement('div');
         div.className = 'nav-item';
-        div.innerText = (item.name_short || item.name).toUpperCase();
+        div.innerText = item.name.toUpperCase();
         div.onclick = () => {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             div.classList.add('active');
             document.getElementById('obj-title').innerText = item.name;
             document.getElementById('obj-desc').innerText = item.desc;
             document.getElementById('svg-stage').innerHTML = item.svg;
-            
             const btn = document.getElementById('action-btn');
             if(item.url) {
-                btn.innerText = "LAUNCH_REMOTE_PROTOCOL";
+                btn.innerText = "LAUNCH_PROTOCOL";
                 btn.onclick = () => window.open(item.url, '_blank');
             } else {
-                btn.innerText = "INITIALIZE_DEEP_SCAN";
+                btn.innerText = "INITIALIZE_SCAN";
                 btn.onclick = deepScan;
             }
-            addLog(`MOUNTING_OBJECT: ${item.id}`);
         };
         list.appendChild(div);
+
+        const card = document.createElement('div');
+        card.style.border = "1px solid rgba(212,175,55,0.2)";
+        card.style.padding = "20px";
+        card.innerHTML = `<div style="font-size:10px; color:var(--accent); font-family:'Space Mono';">${item.id}</div><div style="font-size:14px; margin:10px 0;">${item.name}</div>`;
+        grid.appendChild(card);
     });
 }
 
-const saveMemo = (txt) => {
-    const m = JSON.parse(localStorage.getItem('b_memos') || '[]');
-    m.push({t: new Date().toLocaleTimeString(), c: txt});
-    localStorage.setItem('b_memos', JSON.stringify(m));
-    addLog("MEMO_RECORDS_UPDATED.");
-};
-
-const listMemos = () => {
-    const m = JSON.parse(localStorage.getItem('b_memos') || '[]');
-    if(m.length === 0) return addLog("ERR: NO_RECORDS.");
-    m.forEach(i => addLog(`[${i.t}] >> ${i.c}`));
-};
-
-function deepScan() {
-    document.body.classList.add('rumble');
-    document.body.style.filter = "brightness(3) invert(1)";
-    addLog("SCANNING_VOID_LAYERS...");
-    setTimeout(() => {
-        document.body.style.filter = "none";
-        document.body.classList.remove('rumble');
-    }, 200);
+function addLog(m) {
+    const s = document.getElementById('log-stream');
+    const d = document.createElement('div');
+    d.innerText = `[${new Date().toLocaleTimeString()}] > ${m}`;
+    s.prepend(d);
 }
 
 const cli = document.getElementById('cli-input');
 cli.onkeydown = (e) => {
-    playClick();
+    playTick();
     if(e.key === 'Enter') {
         const input = cli.value.trim();
         const [cmd, ...args] = input.split(' ');
-        const upperCmd = cmd.toUpperCase();
+        const uCmd = cmd.toUpperCase();
 
-        if(upperCmd === 'MEMO') saveMemo(args.join(' '));
-        else if(upperCmd === 'LOGS') listMemos();
-        else if(upperCmd === 'WINDEN_33') {
-            addLog("!!! AUTH_SUCCESS: NOAH_RESTORED.");
-            archiveData[archiveData.length-1].hidden = false; populateUI();
-        } else if(upperCmd === 'HELP') addLog("CMDS: MEMO [TEXT], LOGS, CLEAR, SCAN, WINDEN_33");
-        else if(upperCmd === 'CLEAR') document.getElementById('log-stream').innerHTML = '';
-        
+        if(uCmd === 'MEMO') {
+            const m = JSON.parse(localStorage.getItem('b_memos') || '[]');
+            m.push({t: new Date().toLocaleTimeString(), c: args.join(' ')});
+            localStorage.setItem('b_memos', JSON.stringify(m));
+            addLog("MEMO_SAVED_TO_LOCAL_BUFFER.");
+        } else if(uCmd === 'LOGS') {
+            const m = JSON.parse(localStorage.getItem('b_memos') || '[]');
+            m.forEach(i => addLog(`MEMO: ${i.c}`));
+        } else if(uCmd === 'WINDEN_33') {
+            addLog("PROJECT_NOAH_DECRYPTED.");
+            archiveData[4].hidden = false; populate();
+        } else if(uCmd === 'PURGE') {
+            document.body.classList.add('emergency');
+            setTimeout(() => document.body.classList.remove('emergency'), 500);
+        } else {
+            addLog("ERR: CMD_NOT_RECOGNIZED.");
+        }
         cli.value = '';
     }
 };
 
-function addLog(msg) {
-    const s = document.getElementById('log-stream');
-    const d = document.createElement('div');
-    d.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
-    s.prepend(d);
+function deepScan() {
+    document.body.style.filter = "brightness(5) invert(1)";
+    addLog("PERFORMING_DEEP_VOID_SCAN...");
+    setTimeout(() => document.body.style.filter = "none", 150);
 }
 
 const canvas = document.getElementById('teleCanvas');
@@ -320,17 +324,17 @@ const ctx = canvas.getContext('2d');
 function draw(t) {
     canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
     ctx.clearRect(0,0,canvas.width, canvas.height);
-    ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 1;
+    ctx.strokeStyle = '#d4af37';
     ctx.beginPath();
     for(let i=0; i<canvas.width; i+=2) {
-        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * 45 + (Math.random() * 5);
+        const y = canvas.height/2 + Math.sin(i * 0.01 + t * 0.002) * 60 + (Math.random() * 8);
         ctx.lineTo(i,y);
     }
     ctx.stroke();
     requestAnimationFrame(draw);
 }
 
-populateUI();
+populate();
 draw(0);
 setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 </script>
