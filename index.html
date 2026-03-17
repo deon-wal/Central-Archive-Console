@@ -2,273 +2,273 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>THE BUREAU // SIC MUNDUS // ARCHIVE_STATION_7</title>
+<title>THE BUREAU // NODE_7</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
 /* ========================================
-   1. SYSTEM VARS & ROOT
+   1. CORE VARS & KINETICS
    ======================================== */
 :root {
   --accent: #d4af37;
   --accent-dim: #5c4a1e;
-  --bg: #0a0a09;
+  --bg: #050505;
   --panel: #11100e;
   --rust: #3d2b1f;
-  --alert: #8b0000;
-  --crt-glow: 0 0 15px rgba(212, 175, 55, 0.2);
-  --text: #c4beaf; /* Bumped contrast for readability */
+  --alert: #ff0000;
+  --text: #c4beaf;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
 
-/* ========================================
-   2. GLOBAL ATMOSPHERE
-   ======================================== */
-* { box-sizing: border-box; cursor: crosshair; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body { 
-  margin: 0; background: var(--bg); color: var(--text); 
-  font-family: 'Space Mono', monospace; overflow: hidden;
-  height: 100vh; text-transform: uppercase; font-size: clamp(9px, 0.8vw, 11px);
+    background: var(--bg); color: var(--text); 
+    font-family: 'Space Mono', monospace; overflow: hidden; 
+    height: 100vh; cursor: crosshair;
 }
 
-#grain {
-  position: fixed; inset: 0; pointer-events: none; z-index: 9000;
-  background: url('https://grainy-gradients.vercel.app/noise.svg');
-  opacity: 0.12; filter: contrast(150%);
+/* --- THE KINETIC SHAKE --- */
+@keyframes rumble {
+    0% { transform: translate(0,0); }
+    10% { transform: translate(-2px, -2px); }
+    20% { transform: translate(2px, 2px); }
+    30% { transform: translate(-2px, 2px); }
+    100% { transform: translate(0,0); }
 }
-
-body::after {
-  content: " "; display: block; position: absolute; inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-              linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  z-index: 8000; pointer-events: none; background-size: 100% 3px, 3px 100%;
-}
+.rumble { animation: rumble 0.2s cubic-bezier(.36,.07,.19,.97) both; }
 
 /* ========================================
-   3. BOOT SEQUENCE
+   2. VIEW STATES
    ======================================== */
-#boot-wrap {
-  position: fixed; inset: 0; background: #000; z-index: 9999;
-  padding: 5vw; color: var(--accent); display: flex; flex-direction: column;
+#view-landing, #view-terminal { position: fixed; inset: 0; transition: opacity 1s ease; }
+#view-terminal { opacity: 0; pointer-events: none; z-index: 2; }
+.hidden { display: none !important; }
+
+/* --- LANDING STYLES --- */
+.landing-content {
+    height: 100vh; display: flex; flex-direction: column; 
+    justify-content: center; align-items: center; text-align: center;
+    font-family: 'Inter', sans-serif;
 }
-.boot-line { margin-bottom: 8px; font-size: 12px; height: 1.2em; visibility: hidden; }
+.landing-content h1 { font-size: 8vw; font-weight: 900; letter-spacing: -5px; }
+.btn-access {
+    margin-top: 40px; padding: 20px 60px; background: transparent;
+    border: 1px solid var(--accent); color: var(--accent);
+    font-family: 'Space Mono'; cursor: pointer; transition: 0.3s;
+}
+.btn-access:hover { background: var(--accent); color: #000; box-shadow: 0 0 50px rgba(212,175,55,0.3); }
+
+/* --- STATIC OVERLAY (THE BREACH) --- */
+#static-overlay {
+    position: fixed; inset: 0; z-index: 10000; pointer-events: none;
+    background: #fff; opacity: 0;
+}
 
 /* ========================================
-   4. RESPONSIVE GRID
+   3. TERMINAL ARCHITECTURE (REFINED)
    ======================================== */
 .app-container {
   display: grid;
-  grid-template-columns: minmax(250px, 320px) 1fr minmax(300px, 400px);
-  grid-template-rows: 60px 1fr minmax(150px, 180px);
-  height: 100vh; gap: 15px; padding: 15px;
-  opacity: 0; transition: opacity 1.5s ease;
+  grid-template-columns: 320px 1fr 380px;
+  grid-template-rows: 60px 1fr 180px;
+  height: 100vh; gap: 10px; padding: 10px;
 }
+.panel { background: var(--panel); border: 1px solid var(--rust); overflow: hidden; display: flex; flex-direction: column; }
+.panel-header { padding: 8px 15px; background: var(--rust); color: var(--accent); font-size: 10px; font-weight: bold; }
+canvas { width: 100%; height: 100%; filter: sepia(0.5) contrast(1.2); }
+#cli-input { width: 100%; background: transparent; border: 1px solid var(--accent-dim); color: var(--accent); padding: 10px; font-family: inherit; outline: none; }
+.nav-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); cursor: pointer; font-size: 11px; }
+.nav-item:hover { background: rgba(212,175,55,0.1); }
+.nav-item.active { border-left: 4px solid var(--accent); background: rgba(212,175,55,0.05); }
 
-header { grid-column: 1 / span 3; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--rust); background: var(--panel); padding: 0 20px; }
-.panel { background: var(--panel); border: 1px solid var(--rust); position: relative; display: flex; flex-direction: column; overflow: hidden; }
-.panel-header { padding: 8px 12px; background: var(--rust); color: var(--accent); font-weight: 700; font-size: 9px; letter-spacing: 2px; display: flex; justify-content: space-between; }
-
-/* ========================================
-   5. NAVIGATION
-   ======================================== */
-.nav-scroll { flex: 1; overflow-y: auto; }
-.nav-item {
-  padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.03);
-  transition: 0.2s; cursor: pointer;
-}
-.nav-item:hover { background: rgba(212, 175, 55, 0.05); }
-.nav-item.active { background: rgba(212, 175, 55, 0.12); border-left: 4px solid var(--accent); color: #fff; }
-.nav-tag { font-size: 8px; opacity: 0.5; display: block; margin-top: 4px; }
-
-/* ========================================
-   6. VIEWPORT & SCHEMATICS
-   ======================================== */
-.main-viewport { grid-column: 2; background: #050504; }
-canvas { width: 100%; height: 100%; filter: sepia(0.3) brightness(1.1); }
-
-.schematic-viewer { flex: 1; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1917 0%, #0a0a09 100%); }
-svg { width: 80%; max-height: 250px; filter: drop-shadow(var(--crt-glow)); }
-
-/* ========================================
-   7. TERMINAL FOOTER
-   ======================================== */
-.terminal-footer { 
-  grid-column: 1 / span 3; background: #080807; 
-  padding: 15px; border: 1px solid var(--rust); 
-  display: grid; grid-template-columns: 1fr 300px 200px; gap: 20px;
-}
-#log-stream { overflow: hidden; line-height: 1.6; color: var(--accent); font-size: 9px; }
-#cli-input { background: transparent; border: 1px solid var(--accent-dim); color: var(--accent); padding: 8px; font-family: inherit; margin-top: 5px; outline: none; width: 100%; }
-
-/* ========================================
-   8. HUD & UTILS
-   ======================================== */
-#hud-cursor { position: fixed; pointer-events: none; z-index: 9500; font-size: 8px; color: var(--accent); background: rgba(0,0,0,0.5); padding: 2px 5px; }
-.status-led { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; background: var(--alert); animation: blink 1s infinite; }
-@keyframes blink { 50% { opacity: 0.2; } }
-
-.btn-action { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 8px; font-family: inherit; font-size: 9px; cursor: pointer; }
-.btn-action:hover { background: var(--accent); color: var(--bg); }
-
-@media (max-width: 1000px) {
-  .app-container { grid-template-columns: 250px 1fr; grid-template-rows: 60px 1fr 1fr 150px; }
-  .terminal-footer { grid-template-columns: 1fr 1fr; }
+/* --- CRT FX --- */
+.crt::after {
+    content: " "; display: block; position: absolute; inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+    background-size: 100% 4px; z-index: 10; pointer-events: none;
 }
 </style>
 </head>
-<body>
+<body class="crt">
 
-<div id="grain"></div>
-<div id="boot-wrap"></div>
-<div id="hud-cursor">X:000 Y:000</div>
+<div id="static-overlay"></div>
 
-<div class="app-container" id="main-ui">
-  <header>
-    <div style="display: flex; align-items: center;">
-      <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent); letter-spacing: 3px;">THE BUREAU</div>
-      <div style="margin-left: 20px; border-left: 1px solid var(--rust); padding-left: 20px; opacity: 0.7;">NODE: STATION_TAS_7</div>
+<section id="view-landing">
+    <div class="landing-content">
+        <h1 id="landing-title">THE BUREAU</h1>
+        <p style="color:var(--accent); letter-spacing: 5px;">STATION_7 // PUBLIC_GATEWAY</p>
+        <button class="btn-access" onclick="initiateBreach()">INITIALIZE NODE ACCESS</button>
+        <div style="position:fixed; bottom:20px; font-size:9px; opacity:0.3;">
+            REF_KEY: <span style="color:var(--accent)">WINDEN_33</span>
+        </div>
     </div>
-    <div id="clock" style="font-size: 1.2rem; color: var(--accent); font-weight: bold;">00:00:00</div>
-  </header>
+</section>
 
-  <aside class="panel">
-    <div class="panel-header"><span>REGISTRY_VOL_I</span><span>SEC_5</span></div>
-    <div class="nav-scroll" id="nav-list"></div>
-  </aside>
+<section id="view-terminal">
+    <div class="app-container">
+        <header class="panel" style="grid-column: 1/span 3; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 20px;">
+            <div style="color:var(--accent); font-weight: bold; letter-spacing: 3px;">INTERNAL_ARCHIVE_7</div>
+            <div id="clock">00:00:00</div>
+        </header>
 
-  <main class="panel main-viewport">
-    <div class="panel-header"><span><span class="status-led"></span>LIVE_VOID_OSCILLATION</span></div>
-    <canvas id="teleCanvas"></canvas>
-  </main>
+        <aside class="panel">
+            <div class="panel-header">OBJECT_REGISTRY</div>
+            <div id="nav-list" style="overflow-y:auto"></div>
+        </aside>
 
-  <aside class="panel">
-    <div class="panel-header">OBJECT_MANIFEST</div>
-    <div class="schematic-viewer" id="svg-stage"></div>
-    <div style="padding: 15px; border-top: 1px solid var(--rust);">
-      <h2 id="obj-title" style="margin: 0 0 10px 0; color: var(--accent); font-size: 1rem;">--</h2>
-      <p id="obj-desc" style="font-size: 9px; opacity: 0.8; height: 60px; overflow: hidden;"></p>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <button class="btn-action" onclick="deepScan()">INIT_SCAN</button>
-        <button class="btn-action" style="border-color:var(--alert); color:var(--alert);">PURGE</button>
-      </div>
+        <main class="panel" style="background:#000;">
+            <div class="panel-header">VOID_SCANNER_ACTIVE</div>
+            <canvas id="teleCanvas"></canvas>
+        </main>
+
+        <aside class="panel">
+            <div class="panel-header">MANIFEST_DATA</div>
+            <div id="manifest-content" style="padding:20px;">
+                <h2 id="obj-title" style="color:var(--accent); margin-bottom:10px;">--</h2>
+                <p id="obj-desc" style="font-size:11px; line-height:1.6;"></p>
+            </div>
+        </aside>
+
+        <footer class="panel" style="grid-column: 1/span 3; display:grid; grid-template-columns: 1fr 400px; padding:15px; gap:20px;">
+            <div id="log-stream" style="font-size:9px; color:var(--accent); overflow:hidden;"></div>
+            <div>
+                <div style="font-size:9px; opacity:0.5; margin-bottom:5px;">COMMAND_INPUT</div>
+                <input type="text" id="cli-input" placeholder="ENTER AUTH CODE OR CMD..." autocomplete="off">
+            </div>
+        </footer>
     </div>
-  </aside>
-
-  <footer class="terminal-footer">
-    <div id="log-stream"></div>
-    <div class="cli-wrap">
-      <div style="font-size: 8px; opacity: 0.5;">BUREAU_CLI_V1.0.4</div>
-      <input type="text" id="cli-input" placeholder="COMMAND..." autocomplete="off">
-    </div>
-    <div style="border-left: 1px solid var(--rust); padding-left: 15px; font-size: 8px; opacity: 0.6;">
-        TEMPORAL_FOCUS:<br><span style="color:var(--accent)">>> 1953_CYC [ACTIVE]</span>
-    </div>
-  </footer>
-</div>
+</section>
 
 <script>
-const archiveData = [
-  { id: "app-01", name: "The Apparatus", desc: "Dual-chamber brass device. Status: Critical.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" stroke-width="1"/><rect x="30" y="30" width="40" height="40" fill="none" stroke="var(--accent)" stroke-width="1"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="10s" repeatCount="indefinite"/></rect></svg>` },
-  { id: "god-p", name: "Higgs Field", desc: "Magnetic containment fluctuating. Lead shielding required.", svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="10" fill="var(--accent)"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/></circle></svg>` }
-];
+/* ========================================
+   4. AUDIO ENGINE (GENERATIVE)
+   ======================================== */
+let audioCtx;
+function startAudio() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Low Brown Noise Hum
+    const bufferSize = 4096;
+    const brownNoise = (() => {
+        let lastOut = 0.0;
+        const node = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+        node.onaudioprocess = (e) => {
+            const output = e.outputBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = output[i];
+                output[i] *= 3.5; // volume
+            }
+        };
+        return node;
+    })();
 
-const bootLines = ["INITIALIZING...", "MOUNTING_DRIVES...", "SYNCING_TIME...", "WELCOME, OPERATOR."];
-const bootContainer = document.getElementById('boot-wrap');
-const mainUI = document.getElementById('main-ui');
+    const lowFilter = audioCtx.createBiquadFilter();
+    lowFilter.type = 'lowpass';
+    lowFilter.frequency.value = 400;
 
-// 1. IMPROVED BOOT LOGIC
-const hasBooted = sessionStorage.getItem('bureau_booted');
-if (hasBooted) {
-    bootContainer.remove();
-    mainUI.style.opacity = '1';
-} else {
-    bootLines.forEach((t, i) => {
-        const l = document.createElement('div');
-        l.className = 'boot-line';
-        l.innerText = `> ${t}`;
-        bootContainer.appendChild(l);
-        setTimeout(() => l.style.visibility = 'visible', i * 400);
-    });
-    setTimeout(() => {
-        bootContainer.style.opacity = '0';
-        mainUI.style.opacity = '1';
-        sessionStorage.setItem('bureau_booted', 'true');
-        setTimeout(() => bootContainer.remove(), 1000);
-    }, 2500);
+    brownNoise.connect(lowFilter);
+    lowFilter.connect(audioCtx.destination);
 }
 
-// 2. REACTIVE TELEMETRY
+/* ========================================
+   5. DATA & LOGIC
+   ======================================== */
+const data = [
+    { id: "01", name: "The Device", desc: "Brass transit apparatus. Requires Cesium injection." },
+    { id: "02", name: "The Map", desc: "Detailed layout of the cave system. 1953/1986/2019 intersection." },
+    { id: "SECRET", name: "Project Noah", desc: "The cycle is complete. Sic Mundus Creatus Est.", hidden: true }
+];
+
+function initiateBreach() {
+    startAudio();
+    const overlay = document.getElementById('static-overlay');
+    document.body.classList.add('rumble');
+    
+    // The "Glitch" Sequence
+    overlay.style.opacity = '1';
+    let flashes = 0;
+    const interval = setInterval(() => {
+        overlay.style.background = flashes % 2 === 0 ? '#fff' : '#000';
+        flashes++;
+        if(flashes > 10) {
+            clearInterval(interval);
+            overlay.style.opacity = '0';
+            document.getElementById('view-landing').classList.add('hidden');
+            document.getElementById('view-terminal').style.opacity = '1';
+            document.getElementById('view-terminal').style.pointerEvents = 'all';
+            document.body.classList.remove('rumble');
+            addLog("CONNECTION ESTABLISHED... NODE_7 ONLINE");
+        }
+    }, 50);
+}
+
+// Terminal Logic
+const navList = document.getElementById('nav-list');
+function buildNav() {
+    navList.innerHTML = '';
+    data.filter(i => !i.hidden).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'nav-item';
+        div.innerText = item.name;
+        div.onclick = () => {
+            document.getElementById('obj-title').innerText = item.name;
+            document.getElementById('obj-desc').innerText = item.desc;
+            addLog(`ACCESSING: ${item.name}`);
+        };
+        navList.appendChild(div);
+    });
+}
+buildNav();
+
+const cli = document.getElementById('cli-input');
+cli.onkeydown = (e) => {
+    if(e.key === 'Enter') {
+        const val = cli.value.toUpperCase();
+        addLog(`CMD: ${val}`);
+        if(val === 'WINDEN_33') {
+            addLog("!!! ACCESS GRANTED: SECRET_ARCHIVE_UNLOCKED");
+            data[2].hidden = false;
+            buildNav();
+            document.body.classList.add('rumble');
+            setTimeout(() => document.body.classList.remove('rumble'), 500);
+        } else if (val === 'PURGE') {
+            document.body.style.filter = "invert(1)";
+            setTimeout(() => document.body.style.filter = "none", 200);
+        }
+        cli.value = '';
+    }
+};
+
+function addLog(msg) {
+    const log = document.getElementById('log-stream');
+    const d = document.createElement('div');
+    d.innerText = `> ${msg}`;
+    log.prepend(d);
+}
+
+// Canvas Visualizer
 const canvas = document.getElementById('teleCanvas');
 const ctx = canvas.getContext('2d');
-let scanActive = false;
-
-function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
-window.onresize = resize; resize();
-
 function draw(t) {
-    ctx.fillStyle = 'rgba(10, 10, 9, 0.15)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    ctx.strokeStyle = '#d4af37';
     ctx.beginPath();
-    ctx.strokeStyle = scanActive ? '#fff' : 'var(--accent)';
-    ctx.lineWidth = 1;
-    let amplitude = scanActive ? 100 : 40;
-    for(let x=0; x<canvas.width; x+=5) {
-        const y = canvas.height/2 + Math.sin(x*0.02 + t*0.005) * amplitude;
-        ctx.lineTo(x, y);
+    for(let i=0; i<canvas.width; i+=2) {
+        const y = canvas.height/2 + Math.sin(i*0.01 + t*0.002) * 50 + (Math.random()*10);
+        ctx.lineTo(i,y);
     }
     ctx.stroke();
     requestAnimationFrame(draw);
 }
 draw(0);
 
-// 3. UI INTERACTION
-function selectProject(p) {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if(document.getElementById(`nav-${p.id}`)) document.getElementById(`nav-${p.id}`).classList.add('active');
-    document.getElementById('obj-title').innerText = p.name;
-    document.getElementById('obj-desc').innerText = p.desc;
-    document.getElementById('svg-stage').innerHTML = p.svg;
-    addLog(`ACCESSING: ${p.name}`);
-}
-
-const navList = document.getElementById('nav-list');
-archiveData.forEach(p => {
-    const d = document.createElement('div');
-    d.id = `nav-${p.id}`;
-    d.className = 'nav-item';
-    d.innerHTML = `<div>${p.name}</div><span class="nav-tag">REF_${p.id.toUpperCase()}</span>`;
-    d.onclick = () => selectProject(p);
-    navList.appendChild(d);
-});
-
-function addLog(msg) {
-    const l = document.createElement('div');
-    l.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-    document.getElementById('log-stream').prepend(l);
-}
-
-function deepScan() {
-    scanActive = true;
-    addLog("CRITICAL_SCAN_INITIATED...");
-    document.body.style.filter = "invert(1) contrast(2)";
-    setTimeout(() => {
-        document.body.style.filter = "none";
-        scanActive = false;
-    }, 500);
-}
-
-window.onmousemove = (e) => {
-    const hud = document.getElementById('hud-cursor');
-    hud.style.left = (e.clientX + 10) + 'px';
-    hud.style.top = (e.clientY + 10) + 'px';
-    hud.innerText = `X:${e.clientX} Y:${e.clientY}`;
-};
-
 setInterval(() => {
     document.getElementById('clock').innerText = new Date().toLocaleTimeString();
 }, 1000);
-
-selectProject(archiveData[0]);
 </script>
 </body>
 </html>
