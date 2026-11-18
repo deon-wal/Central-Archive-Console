@@ -568,15 +568,14 @@ let typeInterval = null;
 window.onload = () => {
     init3DViewer();
     // Subtle boot glitch effect on load
-    setInterval(() => {
-        const offTxt = document.getElementById('offline-txt');
-        if(offTxt) {
-            if(Math.random() > 0.95) offTxt.style.opacity = 0.3;
-            else offTxt.style.opacity = 1;
-        }
-        // Random session ID flicker
-        document.getElementById('session-id').innerText = Math.random().toString(36).substring(2, 6).toUpperCase();
-    }, 100);
+   setInterval(() => {
+    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    if(!systemBooted) return;
+    if(!defragLocked) {
+        document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
+    }
+    sessionHeat = Math.min(sessionHeat + 0.1, 100);
+}, 1000);
 };
 
 function runBootSequence() {
