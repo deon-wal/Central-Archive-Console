@@ -7,6 +7,8 @@
     <!-- IMPORT THREE.JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
+
         :root {
             /* 1984 / BRAZIL / DARK ANALOG PALETTE - REFINED FOR CONTRAST */
             --accent: #d4af37; /* Brighter Classic Gold/Brass */
@@ -20,8 +22,6 @@
             --burn: 0;
             --system-opacity: 0.05;
         }
-
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;900&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
         body { 
@@ -77,9 +77,9 @@
 
         #boot-modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 20000; text-align: center; width: 600px;
+            z-index: 20000; text-align: center; width: min(600px, 92vw);
             background: #0a0908; border: 2px solid var(--accent-dim);
-            padding: 60px; box-shadow: 25px 25px 0px rgba(0,0,0,0.9);
+            padding: clamp(25px, 5vw, 60px); box-shadow: 25px 25px 0px rgba(0,0,0,0.9);
             transition: opacity 0.5s, transform 0.5s;
         }
         #boot-modal.hidden { opacity: 0; transform: translate(-50%, -40%) scale(0.95); pointer-events: none; }
@@ -449,13 +449,11 @@ function init3DViewer() {
     function animate3D() {
         requestAnimationFrame(animate3D);
         previewUniforms.time.value += 0.01;
-        // Slowed down rotational speeds for a more ominous, massive feel
         previewMesh.rotation.y += 0.0008;
         previewMesh.rotation.x += 0.0003;
         previewWireframe.rotation.z -= 0.0008;
         previewWireframe.rotation.y -= 0.0003;
         
-        // Swarm rotation
         previewParticles.rotation.y += 0.0004;
         previewParticles.rotation.x -= 0.0001;
 
@@ -474,7 +472,6 @@ function init3DViewer() {
 }
 
 function getGeometryForType(type) {
-    // Greatly increased segment detail for high fidelity
     switch(type) {
         case 'apparatus': return new THREE.TorusKnotGeometry(0.8, 0.2, 256, 32);
         case 'substrate': return new THREE.IcosahedronGeometry(1.4, 4);
@@ -483,6 +480,7 @@ function getGeometryForType(type) {
         case 'test_node': return new THREE.BoxGeometry(1.4, 1.4, 1.4, 12, 12, 12);
         case 'ring': return new THREE.TorusGeometry(1.0, 0.1, 64, 128);
         case 'spike': return new THREE.ConeGeometry(1.2, 2.5, 32, 16);
+        case 'euc_sec': return new THREE.DodecahedronGeometry(1.2, 1);
         default: return new THREE.IcosahedronGeometry(1.2, 32);
     }
 }
@@ -540,26 +538,21 @@ const archiveData = [
     model: { type: 'ring', speed: 1.5, intensity: 0.6, glitchColor: 0x556b2f, cageColor: 0x8b3a2b, wireframe: true }, 
   },
   { 
-  { 
-   { 
     name: "Redline Alpha", 
     id: "alpha_unit", 
     desc: "Primary offensive protocol for network containment.", 
     url: "#", 
     imgText: "> LOADING WEAPONRY SYSTEMS...\n> REDLINE AUTHORIZED.\n> TARGET LOCKED.",
     model: { type: 'spike', speed: 3.0, intensity: 0.9, glitchColor: 0xff4433, cageColor: 0xff4433, wireframe: false }, 
-  }, // <-- Must have a comma here
-  {
-    name: "EUC Security FY27", 
-    id: "euc_sec_fy27",
-    { 
+  },
+  { 
     name: "EUC Security FY27", 
     id: "euc_sec_fy27", 
     desc: "End-User Computing security directives and FY27 compliance protocols.", 
     url: "https://deon-wal.github.io/EUC-Security-FY27/Index.html", 
     imgText: "> ACCESSING EUC SECURITY MATRIX...\n> VERIFYING FY27 CLEARANCE...\n> HANDSHAKE ACCEPTED.\n\n> <span style='color:var(--blue)'>STATUS: DIRECTIVES ACTIVE.</span>",
     model: { type: 'euc_sec', speed: 0.25, intensity: 0.3, glitchColor: 0xd4af37, cageColor: 0x556b2f, wireframe: true }, 
-  },
+  }
 ];
 
 let systemBooted = false, sessionHeat = 0;
@@ -569,14 +562,15 @@ let typeInterval = null;
 window.onload = () => {
     init3DViewer();
     // Subtle boot glitch effect on load
-   setInterval(() => {
-    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-    if(!systemBooted) return;
-    if(!defragLocked) {
-        document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
-    }
-    sessionHeat = Math.min(sessionHeat + 0.1, 100);
-}, 1000);
+    setInterval(() => {
+        const offTxt = document.getElementById('offline-txt');
+        if(offTxt) {
+            if(Math.random() > 0.95) offTxt.style.opacity = 0.3;
+            else offTxt.style.opacity = 1;
+        }
+        // Random session ID flicker
+        document.getElementById('session-id').innerText = Math.random().toString(36).substring(2, 6).toUpperCase();
+    }, 100);
 };
 
 function runBootSequence() {
@@ -618,7 +612,6 @@ function unlockSystem(fastBoot = false) {
     document.getElementById('os-panels').classList.add('booted');
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
     window.dispatchEvent(new Event('resize'));
     
     if(!fastBoot) {
@@ -873,7 +866,6 @@ cli.onkeydown = (e) => {
                     addLog(`<span style='color:var(--alert)'>ERR: VOLUME '${arg}' NOT FOUND IN REGISTRY.</span>`);
                 } else {
                     const target = archiveData[matchIndex];
-                    // Trigger the card click to load the 3D preview & logs
                     const cards = document.querySelectorAll('#nav-list > .fs-item');
                     if (cards[matchIndex]) cards[matchIndex].querySelector('.fs-item-title').click();
 
@@ -956,13 +948,6 @@ function addLog(m) {
     s.prepend(d); 
 }
 
-function addLog(m) {
-    const s = document.getElementById('log-stream');
-    const d = document.createElement('div');
-    d.innerHTML = `<span style="color:var(--accent-dim)">[${new Date().toLocaleTimeString()}]</span> > ${m}`;
-    s.prepend(d); 
-}
-
 if(navigator.getBattery) {
     navigator.getBattery().then(bat => {
         const up = () => { document.getElementById('integrity-val').innerText = (bat.level * 100).toFixed(0) + "%"; }
@@ -973,7 +958,9 @@ if(navigator.getBattery) {
 setInterval(() => {
     document.getElementById('clock').innerText = new Date().toLocaleTimeString();
     if(!systemBooted) return;
-    document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
+    if(!defragLocked) {
+        document.getElementById('entropy-fill').style.width = Math.random()*100 + "%";
+    }
     sessionHeat = Math.min(sessionHeat + 0.1, 100);
 }, 1000);
 
