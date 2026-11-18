@@ -797,23 +797,164 @@ function populate() {
 
 /* --- TERMINAL --- */
 const cli = document.getElementById('cli-input');
+const cmdHistory = [];
+let historyIndex = -1;
+let defragLocked = false;
+let sudoActive = false;
+
 cli.onkeydown = (e) => {
-    if(!systemBooted) return;
-    if(e.key === 'Enter') {
-        const val = cli.value.toUpperCase().trim();
-        if(val === 'HELP') { addLog("CMDS: HELP, SCAN, CLEAR, WHOAMI, DEFRAG, SUDO, LOGOUT"); } 
-        else if(val === 'CLEAR') { document.getElementById('log-stream').innerHTML = ''; } 
-        else if(val === 'SCAN') { 
-            addLog("INITIATING SCAN...");
-            setTimeout(() => addLog("SECTOR 1: CLEAR"), 800);
-            setTimeout(() => addLog("SECTOR 3: <span style='color:var(--alert)'>ANOMALY DETECTED</span>"), 2400);
+    if (!systemBooted) return;
+
+    // 1. COMMAND HISTORY NAVIGATION
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (cmdHistory.length > 0) {
+            historyIndex = Math.min(historyIndex + 1, cmdHistory.length - 1);
+            cli.value = cmdHistory[historyIndex];
         }
-        else if(val === 'WHOAMI') { addLog("> AUTHORIZED USER: DEON WAL // CLEARANCE: OMEGA"); }
-        else if(val === 'LOGOUT') { location.reload(); }
-        else if(val !== '') { addLog(`<span style="color:var(--alert)">ERR: UNKNOWN COMMAND '${val}'.</span>`); }
+        return;
+    }
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+            historyIndex--;
+            cli.value = cmdHistory[historyIndex];
+        } else {
+            historyIndex = -1;
+            cli.value = '';
+        }
+        return;
+    }
+
+    // 2. COMMAND EXECUTION
+    if (e.key === 'Enter') {
+        const raw = cli.value.trim();
+        if (!raw) return;
+
+        cmdHistory.unshift(raw);
+        historyIndex = -1;
+
+        const parts = raw.toUpperCase().split(/\s+/);
+        const cmd = parts[0];
+        const arg = parts.slice(1).join(' ');
+
+        addLog(`<span style="color:var(--accent)">CMD:> ${raw.toUpperCase()}</span>`);
+
+        if (cmd === 'HELP') {
+            addLog("AVAILABLE PROTOCOLS:");
+            addLog("  LS           - LIST REGISTERED ARCHIVE VOLUMES");
+            addLog("  OPEN [ID]    - MOUNT & LAUNCH PROTOCOL BY ID/NAME");
+            addLog("  SCAN         - SWEEP SECTORS FOR SPATIAL ANOMALIES");
+            addLog("  DEFRAG       - PURGE CORE ENTROPY & STABILIZE KERNEL");
+            addLog("  WHOAMI       - DISPLAY OPERATIVE CREDENTIALS");
+            addLog("  SUDO         - [RESTRICTED] OMEGA CLEARANCE OVERRIDE");
+            addLog("  CLEAR / LOGOUT");
+        } 
+        else if (cmd === 'LS') {
+            addLog("MOUNTED VOLUMES IN /ROOT/ARCHIVE:");
+            archiveData.forEach(item => {
+                const status = (item.url && item.url !== "#") 
+                    ? "<span style='color:var(--blue)'>[ONLINE]</span>" 
+                    : "<span style='color:var(--rust)'>[CORRUPT]</span>";
+                addLog(`  > ${item.id.padEnd(14, ' ')} ${status} — ${item.name.toUpperCase()}`);
+            });
+        }
+        else if (cmd === 'OPEN') {
+            if (!arg) {
+                addLog("<span style='color:var(--alert)'>ERR: SPECIFY TARGET ID (E.G., 'OPEN EUC_SEC_FY27'). TYPE 'LS' FOR LIST.</span>");
+            } else {
+                const matchIndex = archiveData.findIndex(item => 
+                    item.id.toUpperCase() === arg || 
+                    item.id.toUpperCase().includes(arg) || 
+                    item.name.toUpperCase().includes(arg)
+                );
+
+                if (matchIndex === -1) {
+                    addLog(`<span style='color:var(--alert)'>ERR: VOLUME '${arg}' NOT FOUND IN REGISTRY.</span>`);
+                } else {
+                    const target = archiveData[matchIndex];
+                    // Trigger the card click to load the 3D preview & logs
+                    const cards = document.querySelectorAll('#nav-list > .fs-item');
+                    if (cards[matchIndex]) cards[matchIndex].querySelector('.fs-item-title').click();
+
+                    if (target.url && target.url !== "#") {
+                        addLog(`<span style='color:var(--blue)'>UPLINK ESTABLISHED. LAUNCHING ${target.name.toUpperCase()}...</span>`);
+                        setTimeout(() => window.open(target.url, '_blank'), 450);
+                    } else {
+                        addLog(`<span style='color:var(--alert)'>WARN: ${target.name.toUpperCase()} HAS NO EXTERNAL UPLINK. LOCAL PREVIEW ONLY.</span>`);
+                    }
+                }
+            }
+        }
+        else if (cmd === 'DEFRAG') {
+            addLog("INITIATING CORE ENTROPY PURGE...");
+            defragLocked = true;
+            document.body.classList.remove('rumble');
+            document.documentElement.style.setProperty('--burn', '0');
+            
+            let pct = 100;
+            const purgeInt = setInterval(() => {
+                pct -= 20;
+                document.getElementById('entropy-fill').style.width = Math.max(0, pct) + "%";
+                if (pct <= 0) {
+                    clearInterval(purgeInt);
+                    sessionHeat = 0;
+                    addLog("<span style='color:var(--blue)'>DEFRAG COMPLETE. CORE ENTROPY STABILIZED AT 0.0%.</span>");
+                    setTimeout(() => { defragLocked = false; }, 15000);
+                }
+            }, 150);
+        }
+        else if (cmd === 'SUDO') {
+            sudoActive = !sudoActive;
+            const root = document.documentElement;
+            if (sudoActive) {
+                root.style.setProperty('--accent', '#ff4433');
+                root.style.setProperty('--accent-dim', '#6e1d16');
+                root.style.setProperty('--blue', '#d4af37');
+                if (previewUniforms) previewUniforms.glitchColor.value.setHex(0xff4433);
+                if (previewWireframe) previewWireframe.material.color.setHex(0xff4433);
+                document.body.classList.add('rumble');
+                setTimeout(() => document.body.classList.remove('rumble'), 350);
+                addLog("<span style='color:var(--alert)'>[!] OMEGA ROOT OVERRIDE ENGAGED. TELEMETRY UNLOCKED.</span>");
+                addLog("> BACKDOOR NODE: https://deon-wal.github.io/ // ALL LOCKS BYPASSED.");
+            } else {
+                root.style.setProperty('--accent', '#d4af37');
+                root.style.setProperty('--accent-dim', '#5c4a1e');
+                root.style.setProperty('--blue', '#556b2f');
+                if (previewUniforms) previewUniforms.glitchColor.value.setHex(0xd4af37);
+                if (previewWireframe) previewWireframe.material.color.setHex(0xd4af37);
+                addLog("OMEGA OVERRIDE DISENGAGED. STANDARD BUREAU PARAMETERS RESTORED.");
+            }
+        }
+        else if (cmd === 'CLEAR') { 
+            document.getElementById('log-stream').innerHTML = ''; 
+        } 
+        else if (cmd === 'SCAN') { 
+            addLog("INITIATING DEEP SECTOR SCAN...");
+            setTimeout(() => addLog("SECTOR 1 [SUBSTRATE]: CLEAR"), 600);
+            setTimeout(() => addLog("SECTOR 2 [EUC_FY27]: HARDENED"), 1200);
+            setTimeout(() => addLog("SECTOR 3 [SYTH-FOLD]: <span style='color:var(--alert)'>ANOMALY DETECTED</span>"), 1900);
+        }
+        else if (cmd === 'WHOAMI') { 
+            addLog(`> OPERATIVE: DEON WAL // CLEARANCE: ${sudoActive ? 'ROOT_OMEGA [UNRESTRICTED]' : 'OMEGA'}`); 
+        }
+        else if (cmd === 'LOGOUT') { 
+            location.reload(); 
+        }
+        else { 
+            addLog(`<span style="color:var(--alert)">ERR: UNKNOWN COMMAND '${cmd}'. TYPE 'HELP' FOR LIST.</span>`); 
+        }
+
         cli.value = '';
     }
 };
+
+function addLog(m) {
+    const s = document.getElementById('log-stream');
+    const d = document.createElement('div');
+    d.innerHTML = `<span style="color:var(--accent-dim)">[${new Date().toLocaleTimeString()}]</span> > ${m}`;
+    s.prepend(d); 
+}
 
 function addLog(m) {
     const s = document.getElementById('log-stream');
